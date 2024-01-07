@@ -3,6 +3,8 @@ name: Dalkak dev CD
 on:
   push:
     branches: [main]
+    tags:
+      - test-v*
   workflow_dispatch:
 
 jobs:
