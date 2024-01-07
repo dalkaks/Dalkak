@@ -39,7 +39,8 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         run: |
           docker build -t dalkak:${{ steps.extract_version.outputs.VERSION }} -f server/Dockerfile.dev server
-          docker tag ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:${{ steps.extract_version.outputs.VERSION }} ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
+          docker tag dalkak:${{ steps.extract_version.outputs.VERSION }} ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:${{ steps.extract_version.outputs.VERSION }}
+          docker tag dalkak:${{ steps.extract_version.outputs.VERSION }} ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:${{ steps.extract_version.outputs.VERSION }}
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
       
