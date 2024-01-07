@@ -1,15 +1,32 @@
-name: Dalkak CD
+name: Dalkak test
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'test-v*'
-  
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
 jobs:
-  ## test-server
+  testand-build-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21.5'
+          cache: false
+
+      - name: Test Go
+        run: make -C server test
+
+      - name: Build Go
+        run: make -C server build
+
   deploy-test-server:
+    needs: testand-build-server
     if: startsWith(github.ref, 'refs/tags/test-v')
     runs-on: ubuntu-latest
 
@@ -38,6 +55,11 @@ jobs:
         id: extract_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
+      - name: Check current directory and list files
+        run: |
+          pwd
+          ls -l
+
       - name: Build, tag, and push image to Amazon ECR
         run: |
           docker build -t dalkak:${{ steps.extract_version.outputs.VERSION }} -f server/Dockerfile.dev .
@@ -52,20 +74,35 @@ jobs:
           
       #     aws lambda update-function-code --function-name $FUNCTION_NAME --image-uri $NEW_IMAGE_URI > /dev/null
 
+      
+
+  notify-slack:
+    needs: [testand-build-server, deploy-test-server]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
       - name: Notify Slack
-        if: always()
         uses: 8398a7/action-slack@v3
         with:
           status: custom
-          fields: repo,workflow,custom_payload
+          fields: repo,workflow
           custom_payload: |
             {
+              text: '${{ needs.testand-build-server.result }}: CI for ${{ github.repository }}',
               attachments: [{
-                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-                text: 'TEST-SERVER CD Process   ${{ job.status }}   for ${{ github.repository }}',
+                color: '${{ needs.testand-build-server.result }}' === 'success' ? 'good' : 'danger',
+                text: 'CI Process: ${{ needs.testand-build-server.result }}'
               }]
+            }
+            ${
+              needs.deploy-test-server.result ? `, {
+                text: '${{ needs.deploy-test-server.result }}: CD for ${{ github.repository }}',
+                attachments: [{
+                  color: '${{ needs.deploy-test-server.result }}' === 'success' ? 'good' : 'danger',
+                  text: 'CD Process: ${{ needs.deploy-test-server.result }}'
+                }]
+              }` : ''
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        
