@@ -38,8 +38,8 @@ jobs:
           custom_payload: |
             {
               attachments: [{
-                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-                text: 'CI Process   ${{ job.status }}   for ${{ github.repository }}',
+                color: '${{ needs.testand-build-server.result }}' === 'success' ? 'good' : '${{ needs.testand-build-server.result }}' === 'failure' ? 'danger' : 'warning',
+                text: 'CI Process ${{ needs.testand-build-server.result }} for ${{ github.repository }}',
               }]
             }
         env:

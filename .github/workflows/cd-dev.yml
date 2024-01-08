@@ -93,8 +93,8 @@ jobs:
           custom_payload: |
             {
               attachments: [{
-                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-                text: 'Dev CD Process   ${{ job.status }}   for ${{ github.repository }}',
+                color: '${{ needs.deploy-test-server.result }}' === 'success' ? 'good' : '${{ needs.deploy-test-server.result }}' === 'failure' ? 'danger' : 'warning',
+                text: 'Dev CD Process ${{ needs.deploy-test-server.result }} for ${{ github.repository }}',
               }]
             }
         env:
