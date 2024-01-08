@@ -60,7 +60,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{env.CONTAINER_NAME}}
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
 
       - name: Update ECS Service
         run: |
