@@ -10,6 +10,7 @@ env:
   AWS_DEV_ECS_CLUSTER: dalkak-dev-cluster
   AWS_DEV_ECS_SERVICE: dalkak-dev-service
   AWS_DEV_ECS_TASK: dalkak-dev-task
+  CONTAINER_NAME: main
 
 jobs:
   deploy-test-server:
@@ -52,7 +53,15 @@ jobs:
       - name: Download existing task definition
         run: |
           aws ecs describe-task-definition --task-definition ${{ env.AWS_DEV_ECS_TASK }} --query 'taskDefinition' > task-definition.json
-      
+
+      - name: 새로운 ECR 이미지로 Container 생성
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{env.CONTAINER_NAME}}
+          image: ${{ steps.build-image.outputs.image }}
+
       - name: Update ECS Service
         run: |
           aws ecs update-service --cluster ${{ env.AWS_DEV_ECS_CLUSTER }} --service ${{ env.AWS_DEV_ECS_SERVICE }} --desired-count 1
@@ -61,8 +70,8 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: task-definition.json
-          service: ${{ env.AWS_DEV_ECS_CLUSTER }}
-          cluster: ${{ env.AWS_DEV_ECS_SERVICE }}
+          service: ${{ env.AWS_DEV_ECS_SERVICE }}
+          cluster: ${{ env.AWS_DEV_ECS_CLUSTER }}
           wait-for-service-stability: true
 
       - name: Get deployed task ARN
@@ -70,7 +79,7 @@ jobs:
         run: |
           TASK_ARN=$(aws ecs list-tasks --cluster ${{ env.AWS_DEV_ECS_CLUSTER }} --service-name ${{ env.AWS_DEV_ECS_SERVICE }} --query "taskArns" --output text)
           echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_OUTPUT"
-            
+
   notify-slack:
     needs: deploy-test-server
     runs-on: ubuntu-latest
