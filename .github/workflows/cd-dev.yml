@@ -44,6 +44,24 @@ jobs:
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:${{ steps.extract_version.outputs.VERSION }}
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
       
+      - name: Update ECS Service
+        run: |
+          aws ecs update-service --cluster ${{ secrets.AWS_DEV_ECS_CLUSTER }} --service ${{ secrets.AWS_DEV_ECS_SERVICE }} --desired-count 1
+
+      - name: Deploy new task definition to ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          service: ${{ env.AWS_DEV_ECS_CLUSTER }}
+          cluster: ${{ env.AWS_DEV_ECS_SERVICE }}
+          wait-for-service-stability: true
+
+      - name: Get deployed task ARN
+        id: get-task-arn
+        run: |
+          TASK_ARN=$(aws ecs list-tasks --cluster ${{ env.AWS_DEV_ECS_CLUSTER }} --service-name ${{ env.AWS_DEV_ECS_SERVICE }} --query "taskArns" --output text)
+          echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_OUTPUT"
+            
   notify-slack:
     needs: deploy-test-server
     runs-on: ubuntu-latest
