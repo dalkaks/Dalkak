@@ -2,7 +2,8 @@ name: Dalkak dev CD
 
 on:
   push:
-    branches: [main]
+    tags:
+      - test-v*
   workflow_dispatch:
 
 jobs:
@@ -35,26 +36,32 @@ jobs:
         id: extract_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Check current directory and list files
-        run: |
-          pwd
-          ls -l
-
       - name: Build, tag, and push image to Amazon ECR
         run: |
-          docker build -t dalkak:${{ steps.extract_version.outputs.VERSION }} -f server/Dockerfile.dev .
+          docker build -t dalkak:${{ steps.extract_version.outputs.VERSION }} -f server/Dockerfile.dev server
           docker tag dalkak:${{ steps.extract_version.outputs.VERSION }} ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:${{ steps.extract_version.outputs.VERSION }}
+          docker tag dalkak:${{ steps.extract_version.outputs.VERSION }} ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:${{ steps.extract_version.outputs.VERSION }}
-
-      # - name: Update Lambda Function Container Image
-      #   if: success()
-      #   run: |
-      #     FUNCTION_NAME=${{ secrets.AWS_LAMBDA_TEST_SERVER_FUNC_NAME }}
-      #     NEW_IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:${{ steps.extract_version.outputs.VERSION }}"
-
-      #     aws lambda update-function-code --function-name $FUNCTION_NAME --image-uri $NEW_IMAGE_URI > /dev/null
-
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
       
+      - name: Update ECS Service
+        run: |
+          aws ecs update-service --cluster ${{ secrets.AWS_DEV_ECS_CLUSTER }} --service ${{ secrets.AWS_DEV_ECS_SERVICE }} --desired-count 1
+
+      - name: Deploy new task definition to ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          service: ${{ env.AWS_DEV_ECS_CLUSTER }}
+          cluster: ${{ env.AWS_DEV_ECS_SERVICE }}
+          wait-for-service-stability: true
+
+      - name: Get deployed task ARN
+        id: get-task-arn
+        run: |
+          TASK_ARN=$(aws ecs list-tasks --cluster ${{ env.AWS_DEV_ECS_CLUSTER }} --service-name ${{ env.AWS_DEV_ECS_SERVICE }} --query "taskArns" --output text)
+          echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_OUTPUT"
+            
   notify-slack:
     needs: deploy-test-server
     runs-on: ubuntu-latest
