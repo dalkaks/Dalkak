@@ -6,6 +6,12 @@ on:
       - test-v*
   workflow_dispatch:
 
+env:
+  AWS_DEV_ECS_CLUSTER: dalkak-dev-cluster
+  AWS_DEV_ECS_SERVICE: dalkak-dev-service
+  AWS_DEV_ECS_TASK: dalkak-dev-task
+  CONTAINER_NAME: main
+
 jobs:
   deploy-test-server:
     if: startsWith(github.ref, 'refs/tags/test-v')
@@ -43,17 +49,29 @@ jobs:
           docker tag dalkak:${{ steps.extract_version.outputs.VERSION }} ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:${{ steps.extract_version.outputs.VERSION }}
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
-      
+
+      - name: Download existing task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.AWS_DEV_ECS_TASK }} --query 'taskDefinition' > task-definition.json
+
+      - name: 새로운 ECR 이미지로 Container 생성
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{env.CONTAINER_NAME}}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_ECR_TEST_SERVER_REPOSITORY }}:latest
+
       - name: Update ECS Service
         run: |
-          aws ecs update-service --cluster ${{ secrets.AWS_DEV_ECS_CLUSTER }} --service ${{ secrets.AWS_DEV_ECS_SERVICE }} --desired-count 1
+          aws ecs update-service --cluster ${{ env.AWS_DEV_ECS_CLUSTER }} --service ${{ env.AWS_DEV_ECS_SERVICE }} --desired-count 1
 
       - name: Deploy new task definition to ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: task-definition.json
-          service: ${{ env.AWS_DEV_ECS_CLUSTER }}
-          cluster: ${{ env.AWS_DEV_ECS_SERVICE }}
+          service: ${{ env.AWS_DEV_ECS_SERVICE }}
+          cluster: ${{ env.AWS_DEV_ECS_CLUSTER }}
           wait-for-service-stability: true
 
       - name: Get deployed task ARN
@@ -61,7 +79,7 @@ jobs:
         run: |
           TASK_ARN=$(aws ecs list-tasks --cluster ${{ env.AWS_DEV_ECS_CLUSTER }} --service-name ${{ env.AWS_DEV_ECS_SERVICE }} --query "taskArns" --output text)
           echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_OUTPUT"
-            
+
   notify-slack:
     needs: deploy-test-server
     runs-on: ubuntu-latest
@@ -75,8 +93,8 @@ jobs:
           custom_payload: |
             {
               attachments: [{
-                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-                text: 'Dev CD Process   ${{ job.status }}   for ${{ github.repository }}',
+                color: '${{ needs.deploy-test-server.result }}' === 'success' ? 'good' : '${{ needs.deploy-test-server.result }}' === 'failure' ? 'danger' : 'warning',
+                text: 'Dev CD Process ${{ needs.deploy-test-server.result }} for ${{ github.repository }}',
               }]
             }
         env:
