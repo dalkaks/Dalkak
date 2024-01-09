@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+var Mode string
 const port = 8080
 
 type application struct {
@@ -19,7 +20,7 @@ func main() {
 
 	ctx := context.TODO()
 
-	appConfig, err := config.LoadConfig[config.AppConfig](ctx, "DEV", "AppConfig")
+	appConfig, err := config.LoadConfig[config.AppConfig](ctx, Mode, "AppConfig")
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
