@@ -1,7 +1,8 @@
 package main
 
 import (
-	"flag"
+	"context"
+	"dalkak/config"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,17 +10,25 @@ import (
 
 const port = 8080
 
-type application struct{
-  Origin string
+type application struct {
+	Origin string
 }
 
 func main() {
 	var app application
-  flag.StringVar(&app.Origin, "origin", "http://dev-api.dalkak.com", "the origin url")
+
+	ctx := context.TODO()
+
+	appConfig, err := config.LoadConfig[config.AppConfig](ctx, "DEV", "AppConfig")
+	if err != nil {
+		log.Fatalf("Error loading config: %v", err)
+	}
+
+	app.Origin = appConfig.Origin
 
 	log.Printf("Starting server on port %d", port)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), app.routes())
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), app.routes())
 	if err != nil {
 		log.Fatal(err)
 	}
