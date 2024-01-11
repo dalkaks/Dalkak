@@ -75,6 +75,7 @@ jobs:
           service: ${{ env.AWS_DEV_ECS_SERVICE }}
           cluster: ${{ env.AWS_DEV_ECS_CLUSTER }}
           wait-for-service-stability: true
+        timeout-minutes: 12
 
       - name: Get deployed task ARN
         id: get-task-arn
