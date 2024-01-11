@@ -13,8 +13,11 @@ RUN go mod download
 # Copy the rest of the source code
 COPY . .
 
+# Build argument for setting the mode (with a default value)
+ARG MODE=DEV
+
 # Build the application
-RUN go build -o main ./cmd/api
+RUN go build -o main -tags ${MODE} -ldflags "-X main.Mode=${MODE}" ./cmd/api
 
 # This container exposes port 8080 to the outside world
 EXPOSE 8080
