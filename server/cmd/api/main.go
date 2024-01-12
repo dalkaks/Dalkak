@@ -12,7 +12,7 @@ import (
 
 var Mode string
 
-const port = 8080
+const port = 80
 
 type application struct {
 	Origin   string
