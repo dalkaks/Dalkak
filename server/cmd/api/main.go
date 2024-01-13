@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"dalkak/config"
+	"dalkak/domain/user"
 	"fmt"
 	"log"
 	"net/http"
@@ -38,9 +39,13 @@ func main() {
 	}
 	app.dbClient = dbClient
 
+  // Create instance
+  userService := user.NewService()
+
 	log.Printf("Starting server on port %d", port)
 
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), app.routes())
+  router := app.NewRouter(userService)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	if err != nil {
 		log.Fatal(err)
 	}
