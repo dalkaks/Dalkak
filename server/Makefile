@@ -17,6 +17,11 @@ run:
 	@echo "Running $(PROJECT_NAME)..."
 	@go run -ldflags "-X main.Mode=$(MODE)" ./cmd/api/.
 
+run-local: MODE = LOCAL
+run-local:
+	@echo "Running $(PROJECT_NAME)..."
+	@go run -ldflags "-X main.Mode=$(MODE)" ./cmd/api/.
+
 test:
 	@echo "Testing $(PROJECT_NAME)..."
 	@MODE=$(MODE) go test ./...
