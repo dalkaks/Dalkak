@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prod": "NODE_ENV=production vite build",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "clean-source-maps": "rm -rf ./dist/**/*.map"
   },
   "dependencies": {
+    "@metamask/sdk-react": "^0.14.2",
+    "@metamask/sdk-react-ui": "^0.14.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
