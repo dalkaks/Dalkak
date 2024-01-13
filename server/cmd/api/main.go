@@ -39,12 +39,12 @@ func main() {
 	}
 	app.dbClient = dbClient
 
-  // Create instance
-  userService := user.NewService()
+	// Create instance
+	userService := user.NewUserService()
 
 	log.Printf("Starting server on port %d", port)
 
-  router := app.NewRouter(userService)
+	router := app.NewRouter(userService)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	if err != nil {
 		log.Fatal(err)

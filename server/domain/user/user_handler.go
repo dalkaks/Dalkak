@@ -10,8 +10,8 @@ type UserHandler struct {
 	userService UserService
 }
 
-func NewUserHandler(userService *UserService) *UserHandler {
-	return &UserHandler{userService: *userService}
+func NewUserHandler(userService UserService) *UserHandler {
+	return &UserHandler{userService: userService}
 }
 
 func (handler *UserHandler) Routes() chi.Router {

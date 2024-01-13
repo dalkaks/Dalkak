@@ -1,8 +1,11 @@
 package user
 
-type UserService struct {
+type UserService interface {
 }
 
-func NewService() *UserService {
-	return &UserService{}
+type UserServiceImpl struct {
+}
+
+func NewUserService() UserService {
+	return &UserServiceImpl{}
 }
