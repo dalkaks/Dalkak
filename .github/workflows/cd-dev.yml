@@ -113,8 +113,8 @@ jobs:
 
           cat << EOF > .env
           SKIP_PREFLIGHT_CHECK=true
-          VITE_SERVER_URL = "${{ secrets.VITE_SERVER_PROD_URL }}"
-          VITE_CLIENT_URL = "${{ secrets.VITE_CLIENT_PROD_URL }}"
+          VITE_SERVER_URL = "${{ env.VITE_SERVER_URL }}"
+          VITE_CLIENT_URL = "${{ env.VITE_CLIENT_URL }}"
           VITE_MODE = "development"
           EOF
 
