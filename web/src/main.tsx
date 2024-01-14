@@ -4,10 +4,22 @@ import { MetaMaskUIProvider } from '@metamask/sdk-react-ui';
 import App from './App.tsx';
 import './index.css';
 import CriticalErrorBoundary from './pages/CriticalErrorBoundary.tsx';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const root = ReactDOM.createRoot(
 	document.getElementById('root')! as HTMLElement
 );
+
+const globalQueryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			retry: 0,
+		},
+		mutations: {
+			retry: 0,
+		},
+	},
+});
 
 root.render(
 	<React.StrictMode>
@@ -25,8 +37,8 @@ root.render(
 		</MetaMaskUIProvider>
 		<CriticalErrorBoundary>
 			<p>hello</p>
-			{/* <QueryClientProvider client={globalQueryClient}>
-				<HelmetProvider>
+			<QueryClientProvider client={globalQueryClient}>
+				{/* <HelmetProvider>
 					<ThemeProvider theme={theme}>
 						<SkeletonTheme
 							enableAnimation={false}
@@ -38,8 +50,8 @@ root.render(
 						</SkeletonTheme>
 					</ThemeProvider>
 				</HelmetProvider>
-				<ReactQueryDevtools initialIsOpen={false} />
-			</QueryClientProvider> */}
+				<ReactQueryDevtools initialIsOpen={false} /> */}
+			</QueryClientProvider>
 		</CriticalErrorBoundary>
 	</React.StrictMode>
 );

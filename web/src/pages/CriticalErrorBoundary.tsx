@@ -30,13 +30,7 @@ const CriticalErrorBoundary = ({
 				} else {
 					errorToast(CLIENT_ERR['UNKNOWN_ERR']);
 				}
-
-				return (
-					<div>
-						<h1> 알 수 없는 에러가 발생했습니다. </h1>
-						<footer> {error.message} </footer>
-					</div>
-				);
+        return null;
 			}}
 		>
 			{children}
