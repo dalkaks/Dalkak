@@ -7,7 +7,6 @@ import {
 	useSDK,
 	useSignMessage,
 } from '@metamask/sdk-react-ui';
-import './App.css';
 
 // function App() {
 // 	const [count, setCount] = useState(0);

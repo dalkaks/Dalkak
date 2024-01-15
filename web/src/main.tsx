@@ -2,9 +2,16 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MetaMaskUIProvider } from '@metamask/sdk-react-ui';
 import App from './App.tsx';
-import './index.css';
 import CriticalErrorBoundary from './pages/CriticalErrorBoundary.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { HelmetProvider } from 'react-helmet-async';
+import { ThemeProvider } from '@emotion/react';
+import { SkeletonTheme } from 'react-loading-skeleton';
+import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import theme from './styles/theme.tsx';
+import GlobalStyle from './styles/GlobalStyle.tsx';
+import { RouterInfo } from './router/router.tsx';
 
 const root = ReactDOM.createRoot(
 	document.getElementById('root')! as HTMLElement
@@ -21,6 +28,8 @@ const globalQueryClient = new QueryClient({
 	},
 });
 
+const RouterObject = createBrowserRouter(RouterInfo);
+
 root.render(
 	<React.StrictMode>
 		<MetaMaskUIProvider
@@ -36,21 +45,19 @@ root.render(
 			<App />
 		</MetaMaskUIProvider>
 		<CriticalErrorBoundary>
-			<p>hello</p>
 			<QueryClientProvider client={globalQueryClient}>
-				{/* <HelmetProvider>
+				<HelmetProvider>
 					<ThemeProvider theme={theme}>
 						<SkeletonTheme
 							enableAnimation={false}
 							baseColor={theme.color.gray50}
 						>
-							<RouterProvider router={router} />
+							<RouterProvider router={RouterObject} />
 							<GlobalStyle />
-							<Toaster toastOptions={toasterOptions} />
 						</SkeletonTheme>
 					</ThemeProvider>
 				</HelmetProvider>
-				<ReactQueryDevtools initialIsOpen={false} /> */}
+				<ReactQueryDevtools initialIsOpen={false} />
 			</QueryClientProvider>
 		</CriticalErrorBoundary>
 	</React.StrictMode>
