@@ -8,10 +8,10 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from '@emotion/react';
 import { SkeletonTheme } from 'react-loading-skeleton';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 import theme from './styles/theme.tsx';
 import GlobalStyle from './styles/GlobalStyle.tsx';
-import { RouterInfo } from './router/router.tsx';
+import router from './router/router.tsx';
 
 const root = ReactDOM.createRoot(
 	document.getElementById('root')! as HTMLElement
@@ -27,8 +27,6 @@ const globalQueryClient = new QueryClient({
 		},
 	},
 });
-
-const RouterObject = createBrowserRouter(RouterInfo);
 
 root.render(
 	<React.StrictMode>
@@ -52,7 +50,7 @@ root.render(
 							enableAnimation={false}
 							baseColor={theme.color.gray50}
 						>
-							<RouterProvider router={RouterObject} />
+							<RouterProvider router={router} />
 							<GlobalStyle />
 						</SkeletonTheme>
 					</ThemeProvider>

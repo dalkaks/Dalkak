@@ -15,22 +15,17 @@ const CriticalErrorBoundary = ({
 		<ErrorBoundary
 			onReset={reset}
 			onError={(error) => {
-				if (
-					// 이 ErrorBoundary에서 처리하면 안되는 오류의 경우 상위 ErrorBoundary로 위임
-					!isAxiosError(error) ||
-					!error.response
-				) {
-					return;
+				if (isAxiosError(error)) {
+					throw error;
 				}
-				throw error;
 			}}
 			fallbackRender={({ error }) => {
-				if (!SERVER_ERR[error.message]) {
+				if (SERVER_ERR[error.message]) {
 					errorToast(SERVER_ERR[error.message]);
 				} else {
 					errorToast(CLIENT_ERR['UNKNOWN_ERR']);
 				}
-        return null;
+				return null;
 			}}
 		>
 			{children}
