@@ -84,6 +84,23 @@ jobs:
           TASK_ARN=$(aws ecs list-tasks --cluster ${{ env.AWS_DEV_ECS_CLUSTER }} --service-name ${{ env.AWS_DEV_ECS_SERVICE }} --query "taskArns" --output text)
           echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_OUTPUT"
 
+      - name: notify slack for deploy success
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: repo,workflow
+          custom_payload: |
+            {
+              attachments: [{
+                color: '${{ needs.deploy-test-server.result }}' === 'success' ? 'good' : '${{ needs.deploy-test-server.result }}' === 'failure' ? 'danger' : 'warning',
+                text: 'Dev CD Process ${{ needs.deploy-test-server.result }} for ${{ github.repository }}',
+              }]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   deploy-test-web:
     if: startsWith(github.ref, 'refs/tags/test-v')
     runs-on: ubuntu-latest
@@ -139,12 +156,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  notify-slack:
-    needs: [deploy-test-web, deploy-test-server]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Notify Slack
+      - name: notify slack for deploy success
+        if: always()
         uses: 8398a7/action-slack@v3
         with:
           status: custom
@@ -152,10 +165,6 @@ jobs:
           custom_payload: |
             {
               attachments: [{
-                color: '${{ needs.deploy-test-server.result }}' === 'success' ? 'good' : '${{ needs.deploy-test-server.result }}' === 'failure' ? 'danger' : 'warning',
-                text: 'Dev CD Process ${{ needs.deploy-test-server.result }} for ${{ github.repository }}',
-              },
-              {
                 color: '${{ needs.deploy-test-web.result }}' === 'success' ? 'good' : '${{ needs.deploy-test-web.result }}' === 'failure' ? 'danger' : 'warning',
                 text: 'Dev CD Process ${{ needs.deploy-test-web.result }} for ${{ github.repository }}',
               }]
@@ -163,3 +172,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
