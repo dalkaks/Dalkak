@@ -124,15 +124,17 @@ jobs:
       - name: Build
         working-directory: ./web
         run: |
+          npm i -g pnpm  
+
           cat << EOF > .env
           SKIP_PREFLIGHT_CHECK=true
-          VITE_SERVER_URL = "${{ env.SERVER_URL }}"
-          VITE_CLIENT_URL = "${{ env.CLIENT_URL }}"
-          VITE_MODE = "development"
+          SERVER_URL = "${{ env.SERVER_URL }}"
+          CLIENT_URL = "${{ env.CLIENT_URL }}"
+          MODE = "development"
           EOF
 
-          npm install --omit=dev
-          npm run build
+          pnpm install
+          pnpm run build
 
       - name: Upload /out to AWS S3
         working-directory: ./web
