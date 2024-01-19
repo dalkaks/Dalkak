@@ -12,8 +12,8 @@ env:
   AWS_DEV_ECS_TASK: dalkak-dev-task
   CONTAINER_NAME: main
   AWS_S3_DEV_BUCKET: dev.dalkak.com
-  VITE_SERVER_URL: https://dev-api.dalkak.com
-  VITE_CLIENT_URL: https://dev.dalkak.com
+  SERVER_URL: https://dev-api.dalkak.com
+  CLIENT_URL: https://dev.dalkak.com
 
 jobs:
   deploy-test-server:
@@ -84,6 +84,23 @@ jobs:
           TASK_ARN=$(aws ecs list-tasks --cluster ${{ env.AWS_DEV_ECS_CLUSTER }} --service-name ${{ env.AWS_DEV_ECS_SERVICE }} --query "taskArns" --output text)
           echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_OUTPUT"
 
+      - name: notify slack for deploy success
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: repo,workflow
+          custom_payload: |
+            {
+              attachments: [{
+                color: '${{ needs.deploy-test-server.result }}' === 'success' ? 'good' : '${{ needs.deploy-test-server.result }}' === 'failure' ? 'danger' : 'warning',
+                text: 'Dev CD Process ${{ needs.deploy-test-server.result }} for ${{ github.repository }}',
+              }]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   deploy-test-web:
     if: startsWith(github.ref, 'refs/tags/test-v')
     runs-on: ubuntu-latest
@@ -99,33 +116,31 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
-      - name: Set up Node.js v18.16.0
-        uses: actions/setup-node@v3
+      - name: Set up Node.js v20.9.0
+        uses: actions/setup-node@v4
         with:
-          node-version: '18.16.0'
+          node-version: '20.9.0'
 
-      - name: Build React
+      - name: Build
         working-directory: ./web
         run: |
-          npm cache clean --force
-          npm i -g pnpm
-          pnpm install --frozen-lockfile
+          npm i -g pnpm  
 
           cat << EOF > .env
           SKIP_PREFLIGHT_CHECK=true
-          VITE_SERVER_URL = "${{ secrets.VITE_SERVER_PROD_URL }}"
-          VITE_CLIENT_URL = "${{ secrets.VITE_CLIENT_PROD_URL }}"
-          VITE_MODE = "development"
+          SERVER_URL = "${{ env.SERVER_URL }}"
+          CLIENT_URL = "${{ env.CLIENT_URL }}"
+          MODE = "development"
           EOF
 
-          pnpm build
-          pnpm clean-source-maps
+          pnpm install
+          pnpm run build
 
-      - name: Upload /dist to AWS S3
+      - name: Upload /out to AWS S3
         working-directory: ./web
         run: |
-          aws s3 rm s3://${{ env.AWS_S3_DEV_BUCKET }} --recursive --exclude "*" --include "*.map"
-          aws s3 sync dist/ s3://${{ env.AWS_S3_DEV_BUCKET }}
+          aws s3 rm s3://${{ env.AWS_S3_DEV_BUCKET }}
+          aws s3 sync out/ s3://${{ env.AWS_S3_DEV_BUCKET }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -139,12 +154,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  notify-slack:
-    needs: [deploy-test-web, deploy-test-server]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Notify Slack
+      - name: notify slack for deploy success
+        if: always()
         uses: 8398a7/action-slack@v3
         with:
           status: custom
@@ -152,10 +163,6 @@ jobs:
           custom_payload: |
             {
               attachments: [{
-                color: '${{ needs.deploy-test-server.result }}' === 'success' ? 'good' : '${{ needs.deploy-test-server.result }}' === 'failure' ? 'danger' : 'warning',
-                text: 'Dev CD Process ${{ needs.deploy-test-server.result }} for ${{ github.repository }}',
-              },
-              {
                 color: '${{ needs.deploy-test-web.result }}' === 'success' ? 'good' : '${{ needs.deploy-test-web.result }}' === 'failure' ? 'danger' : 'warning',
                 text: 'Dev CD Process ${{ needs.deploy-test-web.result }} for ${{ github.repository }}',
               }]
@@ -163,3 +170,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          

@@ -11,7 +11,7 @@ type DB struct {
 	client *dynamodb.Client
 }
 
-func (app *application) connectToDB(ctx context.Context) (*dynamodb.Client, error) {
+func (app *Application) connectToDB(ctx context.Context) (*dynamodb.Client, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err

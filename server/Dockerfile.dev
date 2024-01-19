@@ -19,8 +19,8 @@ ARG MODE=DEV
 # Build the application
 RUN go build -o main -tags ${MODE} -ldflags "-X main.Mode=${MODE}" ./cmd/api
 
-# This container exposes port 8080 to the outside world
-EXPOSE 8080
+# This container exposes port 80 to the outside world
+EXPOSE 80
 
 # Command to run the executable
 CMD ["./main"]

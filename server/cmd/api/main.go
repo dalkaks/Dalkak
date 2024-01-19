@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"dalkak/config"
+	"dalkak/domain/user"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,17 +13,17 @@ import (
 
 var Mode string
 
-const port = 8080
+const port = 80
 
-type application struct {
+type Application struct {
 	Origin   string
 	dbClient *dynamodb.Client
 }
 
 func main() {
-	var app application
+	var app Application
 
-  // Load config
+	// Load config
 	ctx := context.TODO()
 	appConfig, err := config.LoadConfig[config.AppConfig](ctx, Mode, "AppConfig")
 	if err != nil {
@@ -31,16 +32,20 @@ func main() {
 
 	app.Origin = appConfig.Origin
 
-  // Connect to database
+	// Connect to database
 	dbClient, err := app.connectToDB(ctx)
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
 	}
-  app.dbClient = dbClient
+	app.dbClient = dbClient
+
+	// Create instance
+	userService := user.NewUserService()
 
 	log.Printf("Starting server on port %d", port)
 
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), app.routes())
+	router := app.NewRouter(userService)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	if err != nil {
 		log.Fatal(err)
 	}

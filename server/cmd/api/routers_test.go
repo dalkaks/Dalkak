@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dalkak/domain/user"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,10 @@ func Test_app_routes_healthCheck(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	router := app.routes()
+
+  mockUserService := user.NewUserService()
+
+	router := app.NewRouter(mockUserService)
 	router.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
