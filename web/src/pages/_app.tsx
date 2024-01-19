@@ -1,6 +1,7 @@
 import '@/styles/globals.css';
 import { Inter as FontSans } from 'next/font/google';
 import type { AppProps } from 'next/app';
+import Head from 'next/head';
 
 export const fontSans = FontSans({
 	subsets: ['latin'],
@@ -9,8 +10,16 @@ export const fontSans = FontSans({
 
 export default function App({ Component, pageProps }: AppProps) {
 	return (
-		<div style={{ fontFamily: fontSans.variable }}>
-			<Component {...pageProps} />;
-		</div>
+		<>
+			<Head>
+				<meta
+					name="viewport"
+					content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+				/>
+			</Head>
+			<div style={{ fontFamily: fontSans.variable }}>
+				<Component {...pageProps} />;
+			</div>
+		</>
 	);
 }
