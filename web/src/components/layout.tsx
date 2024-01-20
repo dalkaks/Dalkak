@@ -1,12 +1,18 @@
+import Header from './common/header'
+import { Separator } from './ui/separator'
+
 interface LayoutProps {
-	children: React.ReactNode;
+  children: React.ReactNode
 }
 
 export default function Layout({ children }: LayoutProps) {
-	return (
-		<>
-			{/* <Navbar /> */}
-			<main>{children}</main>
-		</>
-	);
+  return (
+    <>
+      <Header />
+      <Separator />
+
+      {/* <Navbar /> */}
+      <main>{children}</main>
+    </>
+  )
 }
