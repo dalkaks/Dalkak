@@ -10,7 +10,7 @@ import Link from 'next/link'
 
 export default function Header() {
   return (
-    <NavigationMenu className="w-full">
+    <NavigationMenu className="h-16">
       <NavigationMenuList>
         <NavigationMenuItem>
           <Link href="/" legacyBehavior passHref>
@@ -18,11 +18,11 @@ export default function Header() {
               <Image
                 src="/favicon.ico"
                 alt="Image"
-                width={20}
-                height={20}
+                width={25}
+                height={25}
                 className="rounded-md object-cover"
               />
-              <h1 className="ml-1 text-2xl font-extrabold tracking-tight lg:text-4xl">
+              <h1 className="ml-2 text-2xl font-extrabold tracking-tight">
                 dalkak
               </h1>
             </NavigationMenuLink>
