@@ -1,5 +1,12 @@
 import { useSDK } from '@metamask/sdk-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
+function Welcome() {
+  const { t } = useTranslation()
+
+  return <div>{t('dashboard')}</div>
+}
 
 export default function UserInfo() {
   const [account, setAccount] = useState<string>()
@@ -30,6 +37,7 @@ export default function UserInfo() {
           </>
         </div>
       )}
+      <Welcome />
     </div>
   )
 }
