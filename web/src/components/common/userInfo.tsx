@@ -11,8 +11,8 @@ export default function UserInfo() {
   const { sdk, connected, connecting, provider, chainId } = useSDK()
 
   const connect = async () => {
-    toast.error(t('error-metamask-browser'), { duration: 750 })
     if (window.navigator.userAgent.includes('SamsungBrowser')) {
+      toast.error(t('error-metamask-browser'), { duration: 750 })
       return
     }
 
