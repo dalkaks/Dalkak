@@ -27,19 +27,19 @@ export default function UserInfo() {
   return (
     <div>
       {!connected && !connecting && (
-        <Button className="pl-1 mr-1" onClick={connect}>
+        <Button className="pl-1" onClick={connect}>
           <DotFilledIcon className="mx-1 h-4 w-4 text-red-500" />
           Connect
         </Button>
       )}
       {connecting && (
-        <Button className="pl-1 mr-1" disabled>
+        <Button className="pl-1" disabled>
           <ReloadIcon className="mx-1 h-4 w-4 animate-spin" />
           Connect
         </Button>
       )}
       {connected && (
-        <Button className="pl-1 mr-1">
+        <Button className="pl-1">
           <DotFilledIcon className="mx-1 h-4 w-4 text-green-500" />
           {account?.slice(0, 4)}
           ...{account?.slice(-4)}
