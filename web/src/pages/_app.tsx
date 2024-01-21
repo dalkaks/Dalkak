@@ -7,6 +7,7 @@ import Layout from '@/components/layout'
 import { MetaMaskProvider } from '@metamask/sdk-react'
 import { useEffect, useState } from 'react'
 import '../locales/i18n'
+import { Toaster } from '@/components/ui/sonner'
 
 export default function App({ Component, pageProps }: AppProps) {
   const [dappUrl, setDappUrl] = useState('')
@@ -39,6 +40,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </Layout>
         </MetaMaskProvider>
       </div>
+      <Toaster richColors closeButton expand={false} position="top-center" />
     </>
   )
 }

@@ -1,40 +1,49 @@
 import { useSDK } from '@metamask/sdk-react'
 import { useState } from 'react'
-import { ReloadIcon } from '@radix-ui/react-icons'
+import { DotFilledIcon, ReloadIcon } from '@radix-ui/react-icons'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/button'
-
-// import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 export default function UserInfo() {
+  const { t } = useTranslation()
   const [account, setAccount] = useState<string>()
   const { sdk, connected, connecting, provider, chainId } = useSDK()
 
   const connect = async () => {
+    toast.error(t('error-metamask-browser'), { duration: 750 })
+    if (window.navigator.userAgent.includes('SamsungBrowser')) {
+      return
+    }
+
     try {
       const accounts: any = await sdk?.connect()
       setAccount(accounts?.[0])
     } catch (err) {
-      console.warn(`failed to connect..`, err)
+      toast.error(t('error-metamask-connect'), { duration: 750 })
     }
   }
 
   return (
     <div>
-      {!connected && !connecting && <Button onClick={connect}>Connect</Button>}
+      {!connected && !connecting && (
+        <Button className="pl-1 mr-1" onClick={connect}>
+          <DotFilledIcon className="mx-1 h-4 w-4 text-red-500" />
+          Connect
+        </Button>
+      )}
       {connecting && (
-        <Button disabled>
-          <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+        <Button className="pl-1 mr-1" disabled>
+          <ReloadIcon className="mx-1 h-4 w-4 animate-spin" />
           Connect
         </Button>
       )}
       {connected && (
-        <div>
-          <>
-            {chainId}
-            <p />
-            {/* {account} */}
-          </>
-        </div>
+        <Button className="pl-1 mr-1">
+          <DotFilledIcon className="mx-1 h-4 w-4 text-green-500" />
+          {account?.slice(0, 4)}
+          ...{account?.slice(-4)}
+        </Button>
       )}
     </div>
   )

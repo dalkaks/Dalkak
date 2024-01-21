@@ -1,3 +1,6 @@
 {
-  "dashboard": "대시보드"
+  "dashboard": "대시보드",
+
+  "error-metamask-connect": "MetaMask 연결 실패",
+  "error-metamask-browser": "Chrome 브라우저를 이용해주세요."
 }
