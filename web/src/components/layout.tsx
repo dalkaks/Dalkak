@@ -7,12 +7,12 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <>
+    <div className="flex-container">
       <Header />
       <Separator />
 
       {/* <Navbar /> */}
-      <main>{children}</main>
-    </>
+      <main className="bg-secondary flex-main">{children}</main>
+    </div>
   )
 }

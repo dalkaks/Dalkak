@@ -74,4 +74,15 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .flex-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* 뷰포트 높이의 100% */
+  }
+  
+  .flex-main {
+    flex-grow: 1; /* 남은 공간을 모두 차지함 */
+    background-color: var(--secondary-color); /* 배경색, CSS 변수 또는 구체적인 값 */
+  }
 }
