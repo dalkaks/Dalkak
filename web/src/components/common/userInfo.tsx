@@ -1,12 +1,9 @@
 import { useSDK } from '@metamask/sdk-react'
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { ReloadIcon } from '@radix-ui/react-icons'
+import { Button } from '../ui/button'
 
-function Welcome() {
-  const { t } = useTranslation()
-
-  return <div>{t('dashboard')}</div>
-}
+// import { useTranslation } from 'react-i18next'
 
 export default function UserInfo() {
   const [account, setAccount] = useState<string>()
@@ -23,21 +20,22 @@ export default function UserInfo() {
 
   return (
     <div>
-      {!connected && !connecting && (
-        <button style={{ padding: 10, margin: 10 }} onClick={connect}>
+      {!connected && !connecting && <Button onClick={connect}>Connect</Button>}
+      {connecting && (
+        <Button disabled>
+          <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
           Connect
-        </button>
+        </Button>
       )}
       {connected && (
         <div>
           <>
-            {chainId && `Connected chain: ${chainId}`}
-            <p></p>
-            {account && `Connected account: ${account}`}
+            {chainId}
+            <p />
+            {/* {account} */}
           </>
         </div>
       )}
-      <Welcome />
     </div>
   )
 }
