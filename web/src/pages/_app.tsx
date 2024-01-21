@@ -4,7 +4,7 @@ import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import Layout from '@/components/layout'
-import { MetaMaskUIProvider } from '@metamask/sdk-react-ui'
+import { MetaMaskProvider } from '@metamask/sdk-react'
 import { useEffect, useState } from 'react'
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -23,10 +23,11 @@ export default function App({ Component, pageProps }: AppProps) {
         />
       </Head>
       <div>
-        <MetaMaskUIProvider
+        <MetaMaskProvider
+          debug={false}
           sdkOptions={{
             dappMetadata: {
-              name: 'dalkak dapp',
+              name: 'Example React Dapp',
               url: dappUrl,
             },
             // Other options
@@ -35,7 +36,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <Layout>
             <Component {...pageProps} />
           </Layout>
-        </MetaMaskUIProvider>
+        </MetaMaskProvider>
       </div>
     </>
   )

@@ -20,7 +20,7 @@ const config = {
         xl: '2rem', // 'xl' 화면 크기에서 더 큰 패딩
       },
       screens: {
-        sm: '480px',
+        sm: '640px',
         md: '768px',
         lg: '976px',
         xl: '1440px',
