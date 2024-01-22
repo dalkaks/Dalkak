@@ -1,14 +1,33 @@
 import { useSDK } from '@metamask/sdk-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DotFilledIcon, ReloadIcon } from '@radix-ui/react-icons'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/button'
 import { toast } from 'sonner'
+import detectEthereumProvider from '@metamask/detect-provider'
 
 export default function UserInfo() {
   const { t } = useTranslation()
+
   const [account, setAccount] = useState<string>()
   const { sdk, connected, connecting, provider, chainId } = useSDK()
+
+  useEffect(() => {
+    const getProvider = async () => {
+      const provider = await detectEthereumProvider({
+        mustBeMetaMask: true,
+        silent: true,
+      }) as any
+      if (provider) {
+        const accounts = await provider.request({ method: 'eth_requestAccounts' })
+        if (accounts.length > 0) {
+          setAccount(accounts[0])
+        }
+      }
+    }
+
+    getProvider()
+  }, [])
 
   const connect = async () => {
     if (window.navigator.userAgent.includes('SamsungBrowser')) {
