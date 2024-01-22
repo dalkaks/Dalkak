@@ -1,47 +1,22 @@
 import { useSDK } from '@metamask/sdk-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useRecoilState } from 'recoil'
+import { accountState } from '@/state/accountState'
 import { DotFilledIcon, ReloadIcon } from '@radix-ui/react-icons'
-import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/button'
-import { toast } from 'sonner'
-import detectEthereumProvider from '@metamask/detect-provider'
+import { useGetProvider } from '@/hook/account/useGetProvider'
+import { useConnectWallet } from '@/hook/account/useConnectWallet'
 
 export default function UserInfo() {
-  const { t } = useTranslation()
+  const [account, setAccount] = useRecoilState(accountState)
+  const { connected, connecting, provider, chainId } = useSDK()
 
-  const [account, setAccount] = useState<string>()
-  const { sdk, connected, connecting, provider, chainId } = useSDK()
+  const getProvider = useGetProvider()
+  const connect = useConnectWallet()
 
   useEffect(() => {
-    const getProvider = async () => {
-      const provider = await detectEthereumProvider({
-        mustBeMetaMask: true,
-        silent: true,
-      }) as any
-      if (provider) {
-        const accounts = await provider.request({ method: 'eth_requestAccounts' })
-        if (accounts.length > 0) {
-          setAccount(accounts[0])
-        }
-      }
-    }
-
     getProvider()
   }, [])
-
-  const connect = async () => {
-    if (window.navigator.userAgent.includes('SamsungBrowser')) {
-      toast.error(t('error-metamask-browser'), { duration: 750 })
-      return
-    }
-
-    try {
-      const accounts: any = await sdk?.connect()
-      setAccount(accounts?.[0])
-    } catch (err) {
-      toast.error(t('error-metamask-connect'), { duration: 750 })
-    }
-  }
 
   return (
     <div>

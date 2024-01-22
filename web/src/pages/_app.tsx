@@ -8,6 +8,7 @@ import { MetaMaskProvider } from '@metamask/sdk-react'
 import { useEffect, useState } from 'react'
 import '../locales/i18n'
 import { Toaster } from '@/components/ui/sonner'
+import { RecoilRoot } from 'recoil'
 
 export default function App({ Component, pageProps }: AppProps) {
   const [dappUrl, setDappUrl] = useState('')
@@ -25,20 +26,22 @@ export default function App({ Component, pageProps }: AppProps) {
         />
       </Head>
       <div>
-        <MetaMaskProvider
-          debug={false}
-          sdkOptions={{
-            dappMetadata: {
-              name: 'Example React Dapp',
-              url: dappUrl,
-            },
-            // Other options
-          }}
-        >
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </MetaMaskProvider>
+        <RecoilRoot>
+          <MetaMaskProvider
+            debug={false}
+            sdkOptions={{
+              dappMetadata: {
+                name: 'Example React Dapp',
+                url: dappUrl,
+              },
+              // Other options
+            }}
+          >
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
+          </MetaMaskProvider>
+        </RecoilRoot>
       </div>
       <Toaster richColors closeButton expand={false} position="top-center" />
     </>
