@@ -1,0 +1,6 @@
+{
+  "dashboard": "Dashboard",
+
+  "error-metamask-connect": "MetaMask connection failed",
+  "error-metamask-browser": "Please use the Chrome browser."
+}
