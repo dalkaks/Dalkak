@@ -19,9 +19,9 @@ export const useConnectWallet = () => {
       const signResult: any = await sdk?.connectAndSign({
         msg: t('connect-wallet'),
       })
-      // if (window.ethereum?.selectedAddress) {
-      //   setAccount(window.ethereum?.selectedAddress)
-      // }
+      if (window.ethereum?.selectedAddress) {
+        setAccount(window.ethereum?.selectedAddress)
+      }
       // setAccount(accounts?.[0])
     } catch (err) {
       toast.error(t('error-metamask-connect'), { duration: 750 })
