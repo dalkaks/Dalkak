@@ -2,50 +2,26 @@ package main
 
 import (
 	"context"
-	"dalkak/config"
 	"dalkak/domain/user"
-	"fmt"
+	"dalkak/internal/app"
 	"log"
-	"net/http"
-
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
 var Mode string
 
 const port = 80
 
-type Application struct {
-	Origin   string
-	dbClient *dynamodb.Client
-}
-
 func main() {
-	var app Application
-
-	// Load config
 	ctx := context.TODO()
-	appConfig, err := config.LoadConfig[config.AppConfig](ctx, Mode, "AppConfig")
+
+	app, err := app.NewApplication(ctx, Mode)
 	if err != nil {
-		log.Fatalf("Error loading config: %v", err)
+		log.Fatalf("Error initializing application: %v", err)
 	}
 
-	app.Origin = appConfig.Origin
-
-	// Connect to database
-	dbClient, err := app.connectToDB(ctx)
-	if err != nil {
-		log.Fatalf("Error connecting to database: %v", err)
-	}
-	app.dbClient = dbClient
-
-	// Create instance
 	userService := user.NewUserService()
 
-	log.Printf("Starting server on port %d", port)
-
-	router := app.NewRouter(userService)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), router)
+	err = app.StartServer(port, &userService)
 	if err != nil {
 		log.Fatal(err)
 	}
