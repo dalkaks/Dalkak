@@ -4,6 +4,7 @@ import (
 	"context"
 	"dalkak/domain/user"
 	"dalkak/internal/app"
+	"dalkak/internal/interfaces"
 	"log"
 )
 
@@ -14,14 +15,16 @@ const port = 80
 func main() {
 	ctx := context.TODO()
 
-	app, err := app.NewApplication(ctx, Mode)
+	appInstance, err := app.NewApplication(ctx, Mode)
 	if err != nil {
 		log.Fatalf("Error initializing application: %v", err)
 	}
 
-	userService := user.NewUserService()
+  var db interfaces.Database = appInstance.Database
 
-	err = app.StartServer(port, &userService)
+	userService := user.NewUserService(db)
+
+	err = appInstance.StartServer(port, userService)
 	if err != nil {
 		log.Fatal(err)
 	}
