@@ -2,13 +2,14 @@ package app
 
 import (
 	"dalkak/domain/user"
+	"dalkak/pkg/interfaces"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func (app *Application) NewRouter(userService user.UserService) *chi.Mux {
+func (app *APP) NewRouter(userService interfaces.UserService) *chi.Mux {
 	router := chi.NewRouter()
 
 	userHandler := user.NewUserHandler(userService)

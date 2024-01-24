@@ -4,7 +4,7 @@ import (
 	"context"
 	"dalkak/domain/user"
 	"dalkak/internal/app"
-	"dalkak/internal/interfaces"
+	"dalkak/pkg/interfaces"
 	"log"
 )
 
@@ -20,7 +20,7 @@ func main() {
 		log.Fatalf("Error initializing application: %v", err)
 	}
 
-  var db interfaces.Database = appInstance.Database
+	var db interfaces.Database = appInstance.Database
 
 	userService := user.NewUserService(db)
 

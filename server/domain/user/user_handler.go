@@ -1,16 +1,17 @@
 package user
 
 import (
+	"dalkak/pkg/interfaces"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type UserHandler struct {
-	userService UserService
+	userService interfaces.UserService
 }
 
-func NewUserHandler(userService UserService) *UserHandler {
+func NewUserHandler(userService interfaces.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 

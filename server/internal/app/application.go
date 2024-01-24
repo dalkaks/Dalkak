@@ -3,19 +3,19 @@ package app
 import (
 	"context"
 	"dalkak/config"
-	"dalkak/domain/user"
+	"dalkak/pkg/interfaces"
 	"fmt"
 	"log"
 	"net/http"
 )
 
-type Application struct {
+type APP struct {
 	Origin   string
 	Database *DB
 }
 
-func NewApplication(ctx context.Context, mode string) (*Application, error) {
-	var app Application
+func NewApplication(ctx context.Context, mode string) (*APP, error) {
+	var app APP
 
 	// Load config
 	appConfig, err := config.LoadConfig[config.AppConfig](ctx, mode, "AppConfig")
@@ -34,7 +34,7 @@ func NewApplication(ctx context.Context, mode string) (*Application, error) {
 	return &app, nil
 }
 
-func (app *Application) StartServer(port int, userService user.UserService) error {
+func (app *APP) StartServer(port int, userService interfaces.UserService) error {
 	log.Printf("Starting server on port %d", port)
 
 	router := app.NewRouter(userService)
