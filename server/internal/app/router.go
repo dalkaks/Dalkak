@@ -12,7 +12,7 @@ import (
 func (app *APP) NewRouter(userService interfaces.UserService) *chi.Mux {
 	router := chi.NewRouter()
 
-	userHandler := user.NewUserHandler(userService)
+	userHandler := user.NewUserHandler(userService, app.verifyMetaMaskSignature)
 
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Logger)
