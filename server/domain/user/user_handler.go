@@ -3,6 +3,8 @@ package user
 import (
 	"dalkak/pkg/interfaces"
 	"net/http"
+  "encoding/json"
+  "dalkak/pkg/models"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -29,10 +31,15 @@ func (handler *UserHandler) Routes() chi.Router {
 }
 
 func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request) {
-	walletAddress := r.FormValue("walletAddress")
-	signature := r.FormValue("signature")
+  var req models.UserAuthAndSignUpRequest
 
-	response, err := handler.userService.AuthAndSignUp(walletAddress, signature)
+  err := json.NewDecoder(r.Body).Decode(&req)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusBadRequest)
+    return
+  }
+
+	response, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
