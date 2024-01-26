@@ -1,7 +1,10 @@
 package app
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 func (app *APP) enableCORS(next http.Handler) http.Handler {
@@ -14,6 +17,35 @@ func (app *APP) enableCORS(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *APP) processData(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req interface{}
+		contentType := r.Header.Get("Content-Type")
+
+		switch {
+		case strings.Contains(contentType, "application/json"):
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+		case strings.Contains(contentType, "application/x-www-form-urlencoded"),
+			strings.Contains(contentType, "multipart/form-data"):
+			if err := r.ParseForm(); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+		default:
+			http.Error(w, "Unsupported content type", http.StatusUnsupportedMediaType)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "request", req)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

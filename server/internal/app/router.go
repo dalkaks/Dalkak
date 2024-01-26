@@ -17,6 +17,7 @@ func (app *APP) NewRouter(userService interfaces.UserService) *chi.Mux {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Logger)
 	router.Use(app.enableCORS)
+  router.Use(app.processData)
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
