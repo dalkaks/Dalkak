@@ -3,8 +3,9 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"mime"
 	"net/http"
-	"strings"
 )
 
 func (app *APP) enableCORS(next http.Handler) http.Handler {
@@ -23,21 +24,28 @@ func (app *APP) enableCORS(next http.Handler) http.Handler {
 func (app *APP) processData(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var reqMap map[string]interface{}
-		contentType := r.Header.Get("Content-Type")
 
-		switch {
-		case strings.Contains(contentType, "application/json"):
+		contentType := r.Header.Get("Content-Type")
+		mediaType, _, err := mime.ParseMediaType(contentType)
+		if err != nil {
+			http.Error(w, "Invalid content type", http.StatusBadRequest)
+			return
+		}
+
+		switch mediaType {
+		case "application/json":
 			reqMap = make(map[string]interface{})
 			if err := json.NewDecoder(r.Body).Decode(&reqMap); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				errMsg := fmt.Sprintf("JSON decoding error: %v", err)
+				http.Error(w, errMsg, http.StatusBadRequest)
 				return
 			}
 
-		case strings.Contains(contentType, "application/x-www-form-urlencoded"),
-			strings.Contains(contentType, "multipart/form-data"):
+		case "application/x-www-form-urlencoded", "multipart/form-data":
 			const maxMemory = 32 << 20 // 32MB
 			if err := r.ParseMultipartForm(maxMemory); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				errMsg := fmt.Sprintf("Form parsing error: %v", err)
+				http.Error(w, errMsg, http.StatusBadRequest)
 				return
 			}
 			reqMap = make(map[string]interface{})
