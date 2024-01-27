@@ -22,21 +22,29 @@ func (app *APP) enableCORS(next http.Handler) http.Handler {
 
 func (app *APP) processData(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req interface{}
+		var reqMap map[string]interface{}
 		contentType := r.Header.Get("Content-Type")
 
 		switch {
 		case strings.Contains(contentType, "application/json"):
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			reqMap = make(map[string]interface{})
+			if err := json.NewDecoder(r.Body).Decode(&reqMap); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
 		case strings.Contains(contentType, "application/x-www-form-urlencoded"),
 			strings.Contains(contentType, "multipart/form-data"):
-			if err := r.ParseForm(); err != nil {
+			const maxMemory = 32 << 20 // 32MB
+			if err := r.ParseMultipartForm(maxMemory); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
+			}
+			reqMap = make(map[string]interface{})
+			for key, values := range r.Form {
+				if len(values) > 0 {
+					reqMap[key] = values[0]
+				}
 			}
 
 		default:
@@ -44,7 +52,7 @@ func (app *APP) processData(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "request", req)
+		ctx := context.WithValue(r.Context(), "request", reqMap)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

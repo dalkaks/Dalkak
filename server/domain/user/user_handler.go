@@ -3,6 +3,7 @@ package user
 import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/models"
+	"dalkak/pkg/utils/reflectutils"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -36,9 +37,11 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	req := models.UserAuthAndSignUpRequest{
-		WalletAddress: reqMap["walletAddress"].(string),
-		Signature:     reqMap["signature"].(string),
+	var req models.UserAuthAndSignUpRequest
+	err := reflectutils.MapToStruct(reqMap, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	response, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
