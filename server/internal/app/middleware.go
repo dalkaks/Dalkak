@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func (app *APP) enableCORS(next http.Handler) http.Handler {
@@ -67,13 +70,40 @@ func (app *APP) processData(next http.Handler) http.Handler {
 
 func (app *APP) verifyMetaMaskSignature(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 사인 데이터 추출 및 검증 로직
+		msg := "안전하게 지갑 연결"
 
-		// 사인 데이터가 유효하다면, 다음 핸들러로 요청을 전달
-		if true /* isValidSignature(signature) */ {
+		signature := common.FromHex(r.Context().Value("request").(map[string]interface{})["Signature"].(string))
+		reqWalletAddr := common.HexToAddress(r.Context().Value("request").(map[string]interface{})["WalletAddress"].(string))
+
+		if signature[64] != 27 && signature[64] != 28 {
+			http.Error(w, "Invalid MetaMask signature: incorrect recovery id", http.StatusUnauthorized)
+			return
+		}
+		signature[64] -= 27
+
+		recoveredAddr, err := recoverAddressFromSignature(signature, []byte(msg))
+		if err != nil {
+			http.Error(w, "Invalid MetaMask signature: "+err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		if recoveredAddr.Hex() == reqWalletAddr.Hex() {
 			next.ServeHTTP(w, r)
 		} else {
-			http.Error(w, "Invalid MetaMask signature", http.StatusUnauthorized)
+			http.Error(w, "Invalid MetaMask signature: address mismatch", http.StatusUnauthorized)
 		}
 	})
+}
+
+func signHash(data []byte) []byte {
+	prefix := fmt.Sprintf("\x19Ethereum Signed Message:\n%d", len(data))
+	return crypto.Keccak256([]byte(prefix), data)
+}
+
+func recoverAddressFromSignature(signature []byte, data []byte) (common.Address, error) {
+	publicKey, err := crypto.SigToPub(signHash(data), signature)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return crypto.PubkeyToAddress(*publicKey), nil
 }
