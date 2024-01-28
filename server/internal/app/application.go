@@ -4,17 +4,16 @@ import (
 	"context"
 	"dalkak/config"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/utils/kmsutils"
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
 type APP struct {
-	Origin    string
-	Database  *DB
-	KmsClient *kms.Client
+	Origin   string
+	Database *DB
+	KmsSet   *kmsutils.KmsSet
 }
 
 func NewApplication(ctx context.Context, mode string) (*APP, error) {
@@ -28,11 +27,11 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 	app.Origin = appConfig.Origin
 
 	// Load kms client
-	kmsClient, err := config.GetKMSClient(ctx)
+	kmsSet, err := kmsutils.GetKMSClient(ctx, appConfig.KmsKeyId)
 	if err != nil {
 		return nil, err
 	}
-	app.KmsClient = kmsClient
+	app.KmsSet = kmsSet
 
 	// Connect to database
 	db, err := NewDB(ctx, mode)

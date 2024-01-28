@@ -2,21 +2,20 @@ package user
 
 import (
 	"dalkak/pkg/interfaces"
-
-	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"dalkak/pkg/utils/kmsutils"
 )
 
 type UserServiceImpl struct {
-	db  interfaces.UserRepository
-	kms *kms.Client
+	db     interfaces.UserRepository
+	kmsSet *kmsutils.KmsSet
 }
 
-func NewUserService(db interfaces.Database, kms *kms.Client) interfaces.UserService {
+func NewUserService(db interfaces.Database, kmsSet *kmsutils.KmsSet) interfaces.UserService {
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
-		db:  userRepo,
-		kms: kms,
+		db:     userRepo,
+		kmsSet: kmsSet,
 	}
 }
 

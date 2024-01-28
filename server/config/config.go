@@ -6,12 +6,12 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
 type AppConfig struct {
 	Origin string `json:"origin"`
+  KmsKeyId string `json:"kmsKeyId"`
 }
 
 func LoadConfig[T any](ctx context.Context, mod string, parameterName string) (*T, error) {
@@ -38,10 +38,3 @@ func LoadConfig[T any](ctx context.Context, mod string, parameterName string) (*
 	return &config, nil
 }
 
-func GetKMSClient(ctx context.Context) (*kms.Client, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return kms.NewFromConfig(cfg), nil
-}
