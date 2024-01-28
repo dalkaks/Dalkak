@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/utils/timeutils"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -49,7 +50,7 @@ func (repo *UserRepositoryImpl) FindOrCreateUser(walletAddress string) (string, 
 
 	newUser := UserTable{
 		WalletAddress: walletAddress,
-		Timestamp:     0,
+		Timestamp:     timeutils.GetTimestamp(),
 	}
 
 	av, err := attributevalue.MarshalMap(newUser)
