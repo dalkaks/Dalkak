@@ -3,10 +3,12 @@ module dalkak
 go 1.21.5
 
 require (
+	github.com/aws/aws-sdk-go v1.50.5
 	github.com/aws/aws-sdk-go-v2 v1.24.1
 	github.com/aws/aws-sdk-go-v2/config v1.26.3
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.16
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.27.0
+	github.com/aws/aws-sdk-go-v2/service/kms v1.27.9
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.44.7
 	github.com/ethereum/go-ethereum v1.13.11
 	github.com/go-chi/chi/v5 v5.0.11

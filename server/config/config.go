@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
@@ -35,4 +36,12 @@ func LoadConfig[T any](ctx context.Context, mod string, parameterName string) (*
 	}
 
 	return &config, nil
+}
+
+func GetKMSClient(ctx context.Context) (*kms.Client, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return kms.NewFromConfig(cfg), nil
 }

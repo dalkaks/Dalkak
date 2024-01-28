@@ -22,7 +22,7 @@ func main() {
 
 	var db interfaces.Database = appInstance.Database
 
-	userService := user.NewUserService(db)
+	userService := user.NewUserService(db, appInstance.KmsClient)
 
 	err = appInstance.StartServer(port, userService)
 	if err != nil {
