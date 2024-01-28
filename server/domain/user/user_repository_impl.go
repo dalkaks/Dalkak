@@ -26,13 +26,13 @@ func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
 }
 
 func (repo *UserRepositoryImpl) FindOrCreateUser(walletAddress string) (string, error) {
-	table := repo.prefix + "user"
+	table := repo.prefix + UserTableName
 	User := UserTable{WalletAddress: walletAddress}
 
 	response, err := repo.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(table),
 		Key: map[string]types.AttributeValue{
-			"WalletAddress": &types.AttributeValueMemberS{Value: User.WalletAddress},
+			WalletAddressKey: &types.AttributeValueMemberS{Value: User.WalletAddress},
 		},
 	})
 	if err != nil {
