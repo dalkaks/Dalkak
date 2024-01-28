@@ -31,18 +31,12 @@ func (handler *UserHandler) Routes() chi.Router {
 }
 
 func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request) {
-	reqMap, ok := r.Context().Value("request").(map[string]interface{})
-	if !ok {
-		http.Error(w, "invalid request", http.StatusBadRequest)
-		return
-	}
-
-	var req payloads.UserAuthAndSignUpRequest
-	err := reflectutils.MapToStruct(reqMap, &req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+  var req payloads.UserAuthAndSignUpRequest
+  err := reflectutils.GetRequestData(r, &req)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusBadRequest)
+    return
+  }
 
 	response, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
 	if err != nil {
