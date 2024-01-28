@@ -2,7 +2,7 @@ package user
 
 import (
 	"dalkak/pkg/interfaces"
-	"dalkak/pkg/models"
+	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/reflectutils"
 	"net/http"
 
@@ -37,7 +37,7 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var req models.UserAuthAndSignUpRequest
+	var req payloads.UserAuthAndSignUpRequest
 	err := reflectutils.MapToStruct(reqMap, &req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

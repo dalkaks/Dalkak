@@ -1,19 +1,69 @@
 package user
 
 import (
+	"context"
 	"dalkak/pkg/interfaces"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type UserRepositoryImpl struct {
-	db interfaces.Database
+	client *dynamodb.Client
+	prefix string
 }
 
 func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
+	client := db.GetClient()
+	prefix := db.GetPrefix()
+
 	return &UserRepositoryImpl{
-		db: db,
+		client: client,
+		prefix: prefix,
 	}
 }
 
-func (db *UserRepositoryImpl) FindOrCreateUser(walletAddress string) (string, error) {
-	return "", nil
+func (repo *UserRepositoryImpl) FindOrCreateUser(walletAddress string) (string, error) {
+	table := repo.prefix + "user"
+	User := UserTable{WalletAddress: walletAddress}
+
+	response, err := repo.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		TableName: aws.String(table),
+		Key: map[string]types.AttributeValue{
+			"WalletAddress": &types.AttributeValueMemberS{Value: User.WalletAddress},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if response.Item != nil {
+		err = attributevalue.UnmarshalMap(response.Item, &User)
+		if err != nil {
+			return "", err
+		}
+		return User.WalletAddress, nil
+	}
+
+	newUser := UserTable{
+		WalletAddress: walletAddress,
+		Timestamp:     0,
+	}
+
+	av, err := attributevalue.MarshalMap(newUser)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = repo.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+		TableName: aws.String(table),
+		Item:      av,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return newUser.WalletAddress, nil
 }
