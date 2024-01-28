@@ -11,6 +11,7 @@ import (
 
 type AppConfig struct {
 	Origin string `json:"origin"`
+  Domain string `json:"domain"`
   KmsKeyId string `json:"kmsKeyId"`
 }
 

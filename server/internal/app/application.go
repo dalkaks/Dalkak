@@ -12,6 +12,7 @@ import (
 
 type APP struct {
 	Origin   string
+	Domain   string
 	Database *DB
 	KmsSet   *kmsutils.KmsSet
 }
@@ -25,6 +26,7 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 		return nil, err
 	}
 	app.Origin = appConfig.Origin
+  app.Domain = appConfig.Domain
 
 	// Load kms client
 	kmsSet, err := kmsutils.GetKMSClient(ctx, appConfig.KmsKeyId)

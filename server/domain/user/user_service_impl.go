@@ -6,14 +6,16 @@ import (
 )
 
 type UserServiceImpl struct {
+	domain string
 	db     interfaces.UserRepository
 	kmsSet *kmsutils.KmsSet
 }
 
-func NewUserService(db interfaces.Database, kmsSet *kmsutils.KmsSet) interfaces.UserService {
+func NewUserService(domain string, db interfaces.Database, kmsSet *kmsutils.KmsSet) interfaces.UserService {
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
+		domain: domain,
 		db:     userRepo,
 		kmsSet: kmsSet,
 	}
