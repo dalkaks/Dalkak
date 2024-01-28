@@ -26,28 +26,8 @@ func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
 	}
 }
 
-func (repo *UserRepositoryImpl) FindOrCreateUser(walletAddress string) (string, error) {
+func (repo *UserRepositoryImpl) CreateUser(walletAddress string) (string, error) {
 	table := repo.prefix + UserTableName
-	userToFind := UserTable{WalletAddress: walletAddress}
-
-	response, err := repo.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
-		TableName: aws.String(table),
-		Key: map[string]types.AttributeValue{
-			WalletAddressKey: &types.AttributeValueMemberS{Value: userToFind.WalletAddress},
-		},
-	})
-	if err != nil {
-		return "", err
-	}
-
-	if response.Item != nil {
-		err = attributevalue.UnmarshalMap(response.Item, &userToFind)
-		if err != nil {
-			return "", err
-		}
-		return userToFind.WalletAddress, nil
-	}
-
 	newUser := UserTable{
 		WalletAddress: walletAddress,
 		Timestamp:     timeutils.GetTimestamp(),
@@ -67,4 +47,28 @@ func (repo *UserRepositoryImpl) FindOrCreateUser(walletAddress string) (string, 
 	}
 
 	return newUser.WalletAddress, nil
+}
+
+func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*interfaces.UserDto, error) {
+	table := repo.prefix + UserTableName
+	userToFind := UserTable{WalletAddress: walletAddress}
+
+	response, err := repo.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		TableName: aws.String(table),
+		Key: map[string]types.AttributeValue{
+			WalletAddressKey: &types.AttributeValueMemberS{Value: userToFind.WalletAddress},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Item != nil {
+		err = attributevalue.UnmarshalMap(response.Item, &userToFind)
+		if err != nil {
+			return nil, err
+		}
+		return ConvertUserTableToUserDto(&userToFind), nil
+	}
+	return nil, nil
 }

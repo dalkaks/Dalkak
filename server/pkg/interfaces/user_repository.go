@@ -1,5 +1,6 @@
 package interfaces
 
 type UserRepository interface {
-	FindOrCreateUser(walletAddress string) (string, error)
+	FindUser(walletAddress string) (*UserDto, error)
+	CreateUser(walletAddress string) (string, error)
 }
