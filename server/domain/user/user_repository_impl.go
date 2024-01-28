@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/utils/timeutils"
 
@@ -49,7 +50,7 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) (string, error)
 	return newUser.WalletAddress, nil
 }
 
-func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*interfaces.UserDto, error) {
+func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, error) {
 	table := repo.prefix + UserTableName
 	userToFind := UserTable{WalletAddress: walletAddress}
 

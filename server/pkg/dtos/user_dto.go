@@ -1,4 +1,4 @@
-package interfaces
+package dtos
 
 type UserDto struct {
 	WalletAddress string
