@@ -25,7 +25,7 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 	app.Origin = appConfig.Origin
 
 	// Connect to database
-	db, err := NewDB(ctx)
+	db, err := NewDB(ctx, mode)
 	if err != nil {
 		return nil, err
 	}

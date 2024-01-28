@@ -15,5 +15,11 @@ func NewUserService(db interfaces.Database) interfaces.UserService {
 
 func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (string, error) {
 	log.Printf("Wallet Address: %s, Signature: %s", walletAddress, signature)
+	result, err := service.db.FindOrCreateUser(walletAddress)
+	if err != nil {
+		return "", err
+	}
+	log.Printf("Result: %s", result)
+
 	return "Authentication and Sign-Up Successful", nil
 }

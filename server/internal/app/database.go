@@ -10,16 +10,23 @@ import (
 
 type DB struct {
 	client *dynamodb.Client
+	prefix string
 }
 
 var _ interfaces.Database = (*DB)(nil)
 
-func NewDB(ctx context.Context) (*DB, error) {
+func NewDB(ctx context.Context, mode string) (*DB, error) {
 	cfg, err := awsConfig.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	dbClient := dynamodb.NewFromConfig(cfg)
-	return &DB{client: dbClient}, nil
+	prefix := "dalkak_" + mode + "_"
+
+	return &DB{client: dbClient, prefix: prefix}, nil
+}
+
+func (db *DB) FindOrCreateUser(walletAddress string) (string, error) {
+	return "", nil
 }
