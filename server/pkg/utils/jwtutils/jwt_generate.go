@@ -2,6 +2,7 @@ package jwtutils
 
 import (
 	"context"
+	"dalkak/pkg/utils/kmsutils"
 	"encoding/base64"
 
 	"github.com/aws/aws-sdk-go-v2/service/kms"
@@ -9,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateToken(claims jwt.Claims, kmsClient *kms.Client, keyID string) (string, error) {
+func createToken(claims jwt.Claims, kmsSet *kmsutils.KmsSet) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 
 	signedPart, err := token.SigningString()
@@ -18,13 +19,13 @@ func GenerateToken(claims jwt.Claims, kmsClient *kms.Client, keyID string) (stri
 	}
 
 	signInput := &kms.SignInput{
-		KeyId:            &keyID,
+		KeyId:            &kmsSet.KeyId,
 		MessageType:      types.MessageTypeRaw,
 		Message:          []byte(signedPart),
 		SigningAlgorithm: types.SigningAlgorithmSpecEcdsaSha256,
 	}
 
-	signOutput, err := kmsClient.Sign(context.TODO(), signInput)
+	signOutput, err := kmsSet.Client.Sign(context.TODO(), signInput)
 	if err != nil {
 		return "", err
 	}
