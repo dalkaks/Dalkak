@@ -1,5 +1,3 @@
 package interfaces
 
-type Database interface {
-	FindOrCreateUser(walletAddress string) (string, error)
-}
+type Database interface {}

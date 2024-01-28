@@ -6,11 +6,15 @@ import (
 )
 
 type UserServiceImpl struct {
-	db interfaces.Database
+	db interfaces.UserRepository
 }
 
 func NewUserService(db interfaces.Database) interfaces.UserService {
-	return &UserServiceImpl{db: db}
+	userRepo := NewUserRepository(db)
+
+	return &UserServiceImpl{
+		db: userRepo,
+	}
 }
 
 func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (string, error) {

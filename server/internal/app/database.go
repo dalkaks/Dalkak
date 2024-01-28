@@ -26,7 +26,3 @@ func NewDB(ctx context.Context, mode string) (*DB, error) {
 
 	return &DB{client: dbClient, prefix: prefix}, nil
 }
-
-func (db *DB) FindOrCreateUser(walletAddress string) (string, error) {
-	return "", nil
-}
