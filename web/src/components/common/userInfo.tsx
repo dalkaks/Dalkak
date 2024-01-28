@@ -15,8 +15,10 @@ export default function UserInfo() {
   const connect = useConnectWallet()
 
   useEffect(() => {
-    getProvider()
-  }, [])
+    if (!account && connected) {
+      getProvider()
+    }
+  }, [connected])
 
   return (
     <div>

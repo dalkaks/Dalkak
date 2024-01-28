@@ -1,6 +1,8 @@
 {
   "dashboard": "대시보드",
 
+  "connect-wallet": "안전하게 지갑 연결",
+
   "error-metamask-connect": "MetaMask 연결 실패",
   "error-metamask-browser": "Chrome 브라우저를 이용해주세요."
 }
