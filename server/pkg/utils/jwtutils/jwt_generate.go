@@ -2,8 +2,8 @@ package jwtutils
 
 import (
 	"context"
+	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/kmsutils"
-	"dalkak/pkg/utils/timeutils"
 	"encoding/base64"
 
 	"github.com/aws/aws-sdk-go-v2/service/kms"
@@ -12,26 +12,24 @@ import (
 	"github.com/google/uuid"
 )
 
-const accessTokenTTL = 30 * 60
-const refreshTokenTTL = 14 * 24 * 60 * 60
+const AccessTokenTTL = 30 * 60
+const RefreshTokenTTL = 14 * 24 * 60 * 60
 
-func GenerateAccessToken(domain string, kmsSet *kmsutils.KmsSet, walletAddress string) (string, error) {
-	nowTime := timeutils.GetTimestamp()
+func GenerateAccessToken(domain string, kmsSet *kmsutils.KmsSet, tokenDto *dtos.GenerateTokenDto) (string, error) {
 	return createToken(jwt.MapClaims{
-		"sub": walletAddress,
-		"iat": nowTime,
-		"exp": nowTime + accessTokenTTL,
+		"sub": tokenDto.WalletAddress,
+		"iat": tokenDto.NowTime,
+		"exp": tokenDto.NowTime + AccessTokenTTL,
 		"iss": domain,
 	}, kmsSet)
 }
 
-func GenerateRefreshToken(domain string, kmsSet *kmsutils.KmsSet, walletAddress string) (string, error) {
+func GenerateRefreshToken(domain string, kmsSet *kmsutils.KmsSet, tokenDto *dtos.GenerateTokenDto) (string, error) {
 	tokenId := uuid.NewString()
-	nowTime := timeutils.GetTimestamp()
 	return createToken(jwt.MapClaims{
-		"sub": walletAddress,
+		"sub": tokenDto.WalletAddress,
 		"tid": tokenId,
-		"exp": nowTime + refreshTokenTTL,
+		"exp": tokenDto.NowTime + RefreshTokenTTL,
 	}, kmsSet)
 }
 

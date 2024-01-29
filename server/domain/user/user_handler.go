@@ -3,9 +3,11 @@ package user
 import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
+	"dalkak/pkg/utils/jwtutils"
 	"dalkak/pkg/utils/reflectutils"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -39,12 +41,30 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	authTokens, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
+	authTokens, tokenTime, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	tokenExpires := time.Unix(tokenTime, 0)
+	refreshTokenDuration := time.Duration(jwtutils.RefreshTokenTTL) * time.Second
+	expires := tokenExpires.Add(refreshTokenDuration)
+
+	http.SetCookie(w, &http.Cookie{
+		// Name:     "__Host-refresh_token",
+		Name:     "refresh_token",
+		Path:     "/",
+		Value:    authTokens.RefreshToken,
+		Expires:  expires,
+		MaxAge:   jwtutils.RefreshTokenTTL,
+		SameSite: http.SameSiteStrictMode,
+		Domain:   "localhost",
+		HttpOnly: true,
+		Secure:   false,
+	})
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(authTokens)
+	json.NewEncoder(w).Encode(authTokens.AccessToken)
+
 }

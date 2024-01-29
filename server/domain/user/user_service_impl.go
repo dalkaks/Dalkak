@@ -5,6 +5,7 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/utils/jwtutils"
 	"dalkak/pkg/utils/kmsutils"
+	"dalkak/pkg/utils/timeutils"
 )
 
 type UserServiceImpl struct {
@@ -23,30 +24,35 @@ func NewUserService(domain string, db interfaces.Database, kmsSet *kmsutils.KmsS
 	}
 }
 
-func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (*dtos.AuthTokens, error) {
+func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (*dtos.AuthTokens, int64, error) {
 	user, err := service.db.FindUser(walletAddress)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if user == nil {
 		_, err := service.db.CreateUser(walletAddress)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
 
-	accessToken, err := jwtutils.GenerateAccessToken(service.domain, service.kmsSet, walletAddress)
-	if err != nil {
-		return nil, err
+	nowTime := timeutils.GetTimestamp()
+	generateTokenDto := dtos.GenerateTokenDto{
+		WalletAddress: walletAddress,
+		NowTime:       nowTime,
 	}
-	refreshToken, err := jwtutils.GenerateRefreshToken(service.domain, service.kmsSet, walletAddress)
+	accessToken, err := jwtutils.GenerateAccessToken(service.domain, service.kmsSet, &generateTokenDto)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	refreshToken, err := jwtutils.GenerateRefreshToken(service.domain, service.kmsSet, &generateTokenDto)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return &dtos.AuthTokens{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-	}, nil
+	}, nowTime, nil
 }
