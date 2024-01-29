@@ -25,6 +25,14 @@ func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *
 	}
 }
 
+func (service *UserServiceImpl) GetMode() string {
+  return service.mode
+}
+
+func (service *UserServiceImpl) GetDomain() string {
+  return service.domain
+}
+
 func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (*dtos.AuthTokens, int64, error) {
 	user, err := service.db.FindUser(walletAddress)
 	if err != nil {

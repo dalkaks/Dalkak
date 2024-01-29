@@ -3,11 +3,10 @@ package user
 import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
-	"dalkak/pkg/utils/securityutils"
+	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/reflectutils"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -47,23 +46,9 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	tokenExpires := time.Unix(tokenTime, 0)
-	refreshTokenDuration := time.Duration(securityutils.RefreshTokenTTL) * time.Second
-	expires := tokenExpires.Add(refreshTokenDuration)
-
-	http.SetCookie(w, &http.Cookie{
-		// Name:     "__Host-refresh_token",
-		Name:     "refresh_token",
-		Path:     "/",
-		Value:    authTokens.RefreshToken,
-		Expires:  expires,
-		MaxAge:   securityutils.RefreshTokenTTL,
-		SameSite: http.SameSiteStrictMode,
-		Domain:   "localhost",
-		HttpOnly: true,
-		Secure:   false,
-	})
-
+  mode := handler.userService.GetMode()
+  domain := handler.userService.GetDomain()
+	httputils.SetRefreshToken(w, mode, domain, authTokens.RefreshToken, tokenTime)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(authTokens.AccessToken)
 
