@@ -1,7 +1,9 @@
 package user
 
 import (
+	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/utils/jwtutils"
 	"dalkak/pkg/utils/kmsutils"
 )
 
@@ -21,18 +23,30 @@ func NewUserService(domain string, db interfaces.Database, kmsSet *kmsutils.KmsS
 	}
 }
 
-func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (string, error) {
+func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (*dtos.AuthTokens, error) {
 	user, err := service.db.FindUser(walletAddress)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if user == nil {
 		_, err := service.db.CreateUser(walletAddress)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
-	return walletAddress, nil
+	accessToken, err := jwtutils.GenerateAccessToken(service.domain, service.kmsSet, walletAddress)
+	if err != nil {
+		return nil, err
+	}
+	refreshToken, err := jwtutils.GenerateRefreshToken(service.domain, service.kmsSet, walletAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dtos.AuthTokens{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/reflectutils"
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -31,18 +32,19 @@ func (handler *UserHandler) Routes() chi.Router {
 }
 
 func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request) {
-  var req payloads.UserAuthAndSignUpRequest
-  err := reflectutils.GetRequestData(r, &req)
-  if err != nil {
-    http.Error(w, err.Error(), http.StatusBadRequest)
-    return
-  }
+	var req payloads.UserAuthAndSignUpRequest
+	err := reflectutils.GetRequestData(r, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	response, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
+	authTokens, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Write([]byte(response))
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(authTokens)
 }
