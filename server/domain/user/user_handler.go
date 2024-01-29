@@ -5,7 +5,6 @@ import (
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/reflectutils"
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -46,10 +45,8 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-  mode := handler.userService.GetMode()
-  domain := handler.userService.GetDomain()
-	httputils.SetRefreshToken(w, mode, domain, authTokens.RefreshToken, tokenTime)
+	mode := handler.userService.GetMode()
+	domain := handler.userService.GetDomain()
+	httputils.SetCookieTokenPair(w, mode, authTokens, tokenTime, domain)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(authTokens.AccessToken)
-
 }
