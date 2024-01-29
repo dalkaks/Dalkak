@@ -3,7 +3,7 @@ package user
 import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
-	"dalkak/pkg/utils/jwtutils"
+	"dalkak/pkg/utils/securityutils"
 	"dalkak/pkg/utils/reflectutils"
 	"encoding/json"
 	"net/http"
@@ -48,7 +48,7 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 	}
 
 	tokenExpires := time.Unix(tokenTime, 0)
-	refreshTokenDuration := time.Duration(jwtutils.RefreshTokenTTL) * time.Second
+	refreshTokenDuration := time.Duration(securityutils.RefreshTokenTTL) * time.Second
 	expires := tokenExpires.Add(refreshTokenDuration)
 
 	http.SetCookie(w, &http.Cookie{
@@ -57,7 +57,7 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 		Path:     "/",
 		Value:    authTokens.RefreshToken,
 		Expires:  expires,
-		MaxAge:   jwtutils.RefreshTokenTTL,
+		MaxAge:   securityutils.RefreshTokenTTL,
 		SameSite: http.SameSiteStrictMode,
 		Domain:   "localhost",
 		HttpOnly: true,

@@ -1,4 +1,4 @@
-package kmsutils
+package securityutils
 
 import (
 	"context"

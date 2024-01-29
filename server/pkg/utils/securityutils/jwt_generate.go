@@ -1,9 +1,8 @@
-package jwtutils
+package securityutils
 
 import (
 	"context"
 	"dalkak/pkg/dtos"
-	"dalkak/pkg/utils/kmsutils"
 	"encoding/base64"
 
 	"github.com/aws/aws-sdk-go-v2/service/kms"
@@ -15,7 +14,7 @@ import (
 const AccessTokenTTL = 30 * 60
 const RefreshTokenTTL = 14 * 24 * 60 * 60
 
-func GenerateAccessToken(domain string, kmsSet *kmsutils.KmsSet, tokenDto *dtos.GenerateTokenDto) (string, error) {
+func GenerateAccessToken(domain string, kmsSet *KmsSet, tokenDto *dtos.GenerateTokenDto) (string, error) {
 	return createToken(jwt.MapClaims{
 		"sub": tokenDto.WalletAddress,
 		"iat": tokenDto.NowTime,
@@ -24,7 +23,7 @@ func GenerateAccessToken(domain string, kmsSet *kmsutils.KmsSet, tokenDto *dtos.
 	}, kmsSet)
 }
 
-func GenerateRefreshToken(domain string, kmsSet *kmsutils.KmsSet, tokenDto *dtos.GenerateTokenDto) (string, error) {
+func GenerateRefreshToken(domain string, kmsSet *KmsSet, tokenDto *dtos.GenerateTokenDto) (string, error) {
 	tokenId := uuid.NewString()
 	return createToken(jwt.MapClaims{
 		"sub": tokenDto.WalletAddress,
@@ -33,7 +32,7 @@ func GenerateRefreshToken(domain string, kmsSet *kmsutils.KmsSet, tokenDto *dtos
 	}, kmsSet)
 }
 
-func createToken(claims jwt.Claims, kmsSet *kmsutils.KmsSet) (string, error) {
+func createToken(claims jwt.Claims, kmsSet *KmsSet) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 
 	signedPart, err := token.SigningString()
