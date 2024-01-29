@@ -9,15 +9,17 @@ import (
 )
 
 type UserServiceImpl struct {
+	mode   string
 	domain string
 	db     interfaces.UserRepository
 	kmsSet *kmsutils.KmsSet
 }
 
-func NewUserService(domain string, db interfaces.Database, kmsSet *kmsutils.KmsSet) interfaces.UserService {
+func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *kmsutils.KmsSet) interfaces.UserService {
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
+    mode:   mode,
 		domain: domain,
 		db:     userRepo,
 		kmsSet: kmsSet,
