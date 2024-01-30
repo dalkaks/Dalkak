@@ -13,7 +13,7 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 
 	parsedDomain, err := ParseDomain(domain)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+    ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 

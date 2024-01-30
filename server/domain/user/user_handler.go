@@ -35,24 +35,24 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 	var req payloads.UserAuthAndSignUpRequest
 	err := reflectutils.GetRequestData(r, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httputils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
 	authTokens, tokenTime, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	mode := handler.userService.GetMode()
 	domain := handler.userService.GetDomain()
-  httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
 
-  result := &payloads.UserAuthAndSignUpResponse{
-    AccessToken: authTokens.AccessToken,
-  }
-  if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-  }
+	result := &payloads.UserAuthAndSignUpResponse{
+		AccessToken: authTokens.AccessToken,
+	}
+	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+	}
 }
