@@ -3,6 +3,7 @@ package user
 import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
+	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/reflectutils"
 	"net/http"
 
@@ -31,24 +32,27 @@ func (handler *UserHandler) Routes() chi.Router {
 }
 
 func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request) {
-	reqMap, ok := r.Context().Value("request").(map[string]interface{})
-	if !ok {
-		http.Error(w, "invalid request", http.StatusBadRequest)
-		return
-	}
-
 	var req payloads.UserAuthAndSignUpRequest
-	err := reflectutils.MapToStruct(reqMap, &req)
+	err := reflectutils.GetRequestData(r, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httputils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	response, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
+	authTokens, tokenTime, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.Write([]byte(response))
+	mode := handler.userService.GetMode()
+	domain := handler.userService.GetDomain()
+	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+
+	result := &payloads.UserAuthAndSignUpResponse{
+		AccessToken: authTokens.AccessToken,
+	}
+	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+	}
 }

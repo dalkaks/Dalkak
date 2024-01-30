@@ -3,6 +3,7 @@ import { accountState } from '../../state/accountState'
 import { useSDK } from '@metamask/sdk-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { authenticateUserWithSignature } from '@/api/auth'
 
 export const useConnectWallet = () => {
   const { sdk } = useSDK()
@@ -19,10 +20,14 @@ export const useConnectWallet = () => {
       const signResult: any = await sdk?.connectAndSign({
         msg: t('connect-wallet'),
       })
-      if (window.ethereum?.selectedAddress) {
-        setAccount(window.ethereum?.selectedAddress)
+      const address = window.ethereum?.selectedAddress
+      if (!address) {
+        toast.error(t('error-metamask-connect'), { duration: 750 })
+        return
       }
-      // setAccount(accounts?.[0])
+
+      await authenticateUserWithSignature(address, signResult)
+      setAccount(address)
     } catch (err) {
       toast.error(t('error-metamask-connect'), { duration: 750 })
     }

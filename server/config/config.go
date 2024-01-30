@@ -11,6 +11,8 @@ import (
 
 type AppConfig struct {
 	Origin string `json:"origin"`
+  Domain string `json:"domain"`
+  KmsKeyId string `json:"kmsKeyId"`
 }
 
 func LoadConfig[T any](ctx context.Context, mod string, parameterName string) (*T, error) {
@@ -36,3 +38,4 @@ func LoadConfig[T any](ctx context.Context, mod string, parameterName string) (*
 
 	return &config, nil
 }
+

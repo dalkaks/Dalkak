@@ -2,7 +2,8 @@ package app
 
 import (
 	"context"
-	"encoding/json"
+	"dalkak/pkg/utils/httputils"
+	"errors"
 	"fmt"
 	"mime"
 	"net/http"
@@ -14,8 +15,8 @@ import (
 func (app *APP) enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", app.Origin)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		if r.Method == "OPTIONS" {
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, X-CSRF-Token, Authorization, x-client-id")
 			return
@@ -29,26 +30,28 @@ func (app *APP) processData(next http.Handler) http.Handler {
 		var reqMap map[string]interface{}
 
 		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			next.ServeHTTP(w, r)
+      return
+		}
+
 		mediaType, _, err := mime.ParseMediaType(contentType)
 		if err != nil {
-			http.Error(w, "Invalid content type", http.StatusBadRequest)
+			httputils.ErrorJSON(w, err, http.StatusBadRequest)
 			return
 		}
 
 		switch mediaType {
 		case "application/json":
-			reqMap = make(map[string]interface{})
-			if err := json.NewDecoder(r.Body).Decode(&reqMap); err != nil {
-				errMsg := fmt.Sprintf("JSON decoding error: %v", err)
-				http.Error(w, errMsg, http.StatusBadRequest)
+			if err := httputils.ReadJSON(w, r, &reqMap); err != nil {
+				httputils.ErrorJSON(w, errors.New("JSON decoding error"), http.StatusBadRequest)
 				return
 			}
 
 		case "application/x-www-form-urlencoded", "multipart/form-data":
 			const maxMemory = 32 << 20 // 32MB
 			if err := r.ParseMultipartForm(maxMemory); err != nil {
-				errMsg := fmt.Sprintf("Form parsing error: %v", err)
-				http.Error(w, errMsg, http.StatusBadRequest)
+				httputils.ErrorJSON(w, errors.New("Form parsing error"), http.StatusBadRequest)
 				return
 			}
 			reqMap = make(map[string]interface{})
@@ -59,7 +62,7 @@ func (app *APP) processData(next http.Handler) http.Handler {
 			}
 
 		default:
-			http.Error(w, "Unsupported content type", http.StatusUnsupportedMediaType)
+			httputils.ErrorJSON(w, errors.New("Unsupported content type"), http.StatusUnsupportedMediaType)
 			return
 		}
 
@@ -76,21 +79,22 @@ func (app *APP) verifyMetaMaskSignature(next http.Handler) http.Handler {
 		reqWalletAddr := common.HexToAddress(r.Context().Value("request").(map[string]interface{})["WalletAddress"].(string))
 
 		if signature[64] != 27 && signature[64] != 28 {
-			http.Error(w, "Invalid MetaMask signature: incorrect recovery id", http.StatusUnauthorized)
+			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: incorrect recovery id"), http.StatusUnauthorized)
 			return
 		}
 		signature[64] -= 27
 
 		recoveredAddr, err := recoverAddressFromSignature(signature, []byte(msg))
 		if err != nil {
-			http.Error(w, "Invalid MetaMask signature: "+err.Error(), http.StatusUnauthorized)
+			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 
 		if recoveredAddr.Hex() == reqWalletAddr.Hex() {
 			next.ServeHTTP(w, r)
 		} else {
-			http.Error(w, "Invalid MetaMask signature: address mismatch", http.StatusUnauthorized)
+			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: address mismatch"), http.StatusUnauthorized)
+			return
 		}
 	})
 }

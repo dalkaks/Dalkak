@@ -1,24 +1,15 @@
 import { useSDK } from '@metamask/sdk-react'
-import { useEffect } from 'react'
 import { useRecoilState } from 'recoil'
 import { accountState } from '@/state/accountState'
 import { DotFilledIcon, ReloadIcon } from '@radix-ui/react-icons'
 import { Button } from '../ui/button'
-import { useGetProvider } from '@/hook/account/useGetProvider'
 import { useConnectWallet } from '@/hook/account/useConnectWallet'
 
 export default function UserInfo() {
   const [account, setAccount] = useRecoilState(accountState)
   const { connected, connecting, provider, chainId } = useSDK()
 
-  const getProvider = useGetProvider()
   const connect = useConnectWallet()
-
-  useEffect(() => {
-    if (!account && connected) {
-      getProvider()
-    }
-  }, [connected])
 
   return (
     <div>

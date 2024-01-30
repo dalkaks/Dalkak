@@ -1,5 +1,9 @@
 package interfaces
 
+import "dalkak/pkg/dtos"
+
 type UserService interface {
-	AuthAndSignUp(walletAddress string, signature string) (string, error)
+  GetMode() string
+  GetDomain() string
+	AuthAndSignUp(walletAddress string, signature string) (*dtos.AuthTokens, int64, error)
 }

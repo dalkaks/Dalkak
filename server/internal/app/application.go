@@ -4,6 +4,7 @@ import (
 	"context"
 	"dalkak/config"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/utils/securityutils"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,7 +12,9 @@ import (
 
 type APP struct {
 	Origin   string
+	Domain   string
 	Database *DB
+	KmsSet   *securityutils.KmsSet
 }
 
 func NewApplication(ctx context.Context, mode string) (*APP, error) {
@@ -23,6 +26,14 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 		return nil, err
 	}
 	app.Origin = appConfig.Origin
+  app.Domain = appConfig.Domain
+
+	// Load kms client
+	kmsSet, err := securityutils.GetKMSClient(ctx, appConfig.KmsKeyId)
+	if err != nil {
+		return nil, err
+	}
+	app.KmsSet = kmsSet
 
 	// Connect to database
 	db, err := NewDB(ctx, mode)
