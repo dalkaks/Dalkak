@@ -3,6 +3,7 @@ import { accountState } from '../../state/accountState'
 import { useSDK } from '@metamask/sdk-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { authenticateUserWithSignature } from '@/api/auth'
 
 export const useConnectWallet = () => {
   const { sdk } = useSDK()
@@ -25,22 +26,8 @@ export const useConnectWallet = () => {
         return
       }
 
+      await authenticateUserWithSignature(address, signResult)
       setAccount(address)
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      const response = await fetch(`${apiUrl}/user/auth`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          WalletAddress: address,
-          Signature: signResult,
-        }),
-      })
-      if (response.status !== 200) {
-        toast.error(t('error-metamask-connect'), { duration: 750 })
-        return
-      }
     } catch (err) {
       toast.error(t('error-metamask-connect'), { duration: 750 })
     }
