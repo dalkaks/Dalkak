@@ -30,23 +30,28 @@ func (app *APP) processData(next http.Handler) http.Handler {
 		var reqMap map[string]interface{}
 
 		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			next.ServeHTTP(w, r)
+      return
+		}
+
 		mediaType, _, err := mime.ParseMediaType(contentType)
 		if err != nil {
-      httputils.ErrorJSON(w, err, http.StatusBadRequest)
+			httputils.ErrorJSON(w, err, http.StatusBadRequest)
 			return
 		}
 
 		switch mediaType {
 		case "application/json":
 			if err := httputils.ReadJSON(w, r, &reqMap); err != nil {
-        httputils.ErrorJSON(w, errors.New("JSON decoding error"), http.StatusBadRequest)
+				httputils.ErrorJSON(w, errors.New("JSON decoding error"), http.StatusBadRequest)
 				return
 			}
 
 		case "application/x-www-form-urlencoded", "multipart/form-data":
 			const maxMemory = 32 << 20 // 32MB
 			if err := r.ParseMultipartForm(maxMemory); err != nil {
-        httputils.ErrorJSON(w, errors.New("Form parsing error"), http.StatusBadRequest)
+				httputils.ErrorJSON(w, errors.New("Form parsing error"), http.StatusBadRequest)
 				return
 			}
 			reqMap = make(map[string]interface{})
@@ -57,7 +62,7 @@ func (app *APP) processData(next http.Handler) http.Handler {
 			}
 
 		default:
-      httputils.ErrorJSON(w, errors.New("Unsupported content type"), http.StatusUnsupportedMediaType)
+			httputils.ErrorJSON(w, errors.New("Unsupported content type"), http.StatusUnsupportedMediaType)
 			return
 		}
 
@@ -74,22 +79,22 @@ func (app *APP) verifyMetaMaskSignature(next http.Handler) http.Handler {
 		reqWalletAddr := common.HexToAddress(r.Context().Value("request").(map[string]interface{})["WalletAddress"].(string))
 
 		if signature[64] != 27 && signature[64] != 28 {
-      httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: incorrect recovery id"), http.StatusUnauthorized)
+			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: incorrect recovery id"), http.StatusUnauthorized)
 			return
 		}
 		signature[64] -= 27
 
 		recoveredAddr, err := recoverAddressFromSignature(signature, []byte(msg))
 		if err != nil {
-      httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: "+err.Error()), http.StatusUnauthorized)
+			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 
 		if recoveredAddr.Hex() == reqWalletAddr.Hex() {
 			next.ServeHTTP(w, r)
 		} else {
-      httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: address mismatch"), http.StatusUnauthorized)
-      return
+			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: address mismatch"), http.StatusUnauthorized)
+			return
 		}
 	})
 }
