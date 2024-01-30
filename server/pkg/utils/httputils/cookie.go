@@ -24,7 +24,7 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 		Value:    refreshToken,
 		Expires:  refreshTokenexpires,
 		MaxAge:   securityutils.RefreshTokenTTL,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 		Domain:   parsedDomain,
 		HttpOnly: true,
 		Secure:   isSecure,
