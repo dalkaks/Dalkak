@@ -19,10 +19,28 @@ export const useConnectWallet = () => {
       const signResult: any = await sdk?.connectAndSign({
         msg: t('connect-wallet'),
       })
-      if (window.ethereum?.selectedAddress) {
-        setAccount(window.ethereum?.selectedAddress)
+      const address = window.ethereum?.selectedAddress
+      if (!address) {
+        toast.error(t('error-metamask-connect'), { duration: 750 })
+        return
       }
-      // setAccount(accounts?.[0])
+
+      setAccount(address)
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
+      const response = await fetch(`${apiUrl}/user/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          WalletAddress: address,
+          Signature: signResult,
+        }),
+      })
+      if (response.status !== 200) {
+        toast.error(t('error-metamask-connect'), { duration: 750 })
+        return
+      }
     } catch (err) {
       toast.error(t('error-metamask-connect'), { duration: 750 })
     }
