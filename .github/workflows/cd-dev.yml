@@ -12,9 +12,8 @@ env:
   AWS_DEV_ECS_TASK: dalkak-dev-task
   CONTAINER_NAME: main
   AWS_S3_DEV_BUCKET: dev.dalkak.com
-  SERVER_URL: https://dev-api.dalkak.com
-  CLIENT_URL: https://dev.dalkak.com
-
+  NEXT_PUBLIC_API_URL: https://dev-api.dalkak.com
+  NEXT_PUBLIC_CLIENT_URL: https://dev.dalkak.com
 jobs:
   deploy-test-server:
     if: startsWith(github.ref, 'refs/tags/test-v')
@@ -128,8 +127,8 @@ jobs:
 
           cat << EOF > .env
           SKIP_PREFLIGHT_CHECK=true
-          SERVER_URL = "${{ env.SERVER_URL }}"
-          CLIENT_URL = "${{ env.CLIENT_URL }}"
+          NEXT_PUBLIC_API_URL = "${{ env.SERVER_URL }}"
+          NEXT_PUBLIC_CLIENT_URL = "${{ env.CLIENT_URL }}"
           MODE = "development"
           EOF
 
