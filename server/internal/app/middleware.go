@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"encoding/json"
+	"dalkak/pkg/utils/httputils"
 	"fmt"
 	"mime"
 	"net/http"
@@ -14,7 +14,7 @@ import (
 func (app *APP) enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", app.Origin)
-    w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		if r.Method == "OPTIONS" {
 			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, X-CSRF-Token, Authorization, x-client-id")
@@ -37,8 +37,7 @@ func (app *APP) processData(next http.Handler) http.Handler {
 
 		switch mediaType {
 		case "application/json":
-			reqMap = make(map[string]interface{})
-			if err := json.NewDecoder(r.Body).Decode(&reqMap); err != nil {
+			if err := httputils.ReadJSON(w, r, &reqMap); err != nil {
 				errMsg := fmt.Sprintf("JSON decoding error: %v", err)
 				http.Error(w, errMsg, http.StatusBadRequest)
 				return
