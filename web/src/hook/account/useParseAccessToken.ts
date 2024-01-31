@@ -1,18 +1,21 @@
-import { accountState } from "@/state/accountState"
-import { useRecoilState } from "recoil"
+import { accountState } from '@/state/accountState'
+import { useRecoilState } from 'recoil'
 
 export const useParseAccessToken = () => {
   const [account, setAccount] = useRecoilState(accountState)
-  const accessToken = localStorage.getItem('accessToken')
 
   const parse = () => {
-    if (accessToken) {
-      const parsedAddress = parseAccessToken(accessToken)
-      if (account && account != parsedAddress) {
-        localStorage.removeItem('accessToken')
-        setAccount(null)
-      } else {
-        setAccount(parsedAddress)
+    if (typeof window !== 'undefined') {
+      const accessToken = localStorage.getItem('accessToken')
+
+      if (accessToken) {
+        const parsedAddress = parseAccessToken(accessToken)
+        if (account && account != parsedAddress) {
+          localStorage.removeItem('accessToken')
+          setAccount(null)
+        } else {
+          setAccount(parsedAddress)
+        }
       }
     }
   }
