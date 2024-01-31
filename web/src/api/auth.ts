@@ -20,3 +20,17 @@ export async function authenticateUserWithSignature(
     throw err
   }
 }
+
+export async function reissueAccessToken() {
+  try {
+    const response = await fetch(`${apiUrl}/user/reissue`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    }).then((res) => res.json())
+
+    localStorage.setItem('accessToken', response.data.accessToken)
+  } catch (err) {
+    throw err
+  }
+}
