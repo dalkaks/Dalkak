@@ -4,12 +4,18 @@ import { accountState } from '@/state/accountState'
 import { DotFilledIcon, ReloadIcon } from '@radix-ui/react-icons'
 import { Button } from '../ui/button'
 import { useConnectWallet } from '@/hook/account/useConnectWallet'
+import { useEffect } from 'react'
+import { useParseAccessToken } from '@/hook/account/useParseAccessToken'
 
 export default function UserInfo() {
   const [account, setAccount] = useRecoilState(accountState)
   const { connected, connecting, provider, chainId } = useSDK()
-
   const connect = useConnectWallet()
+  const parseToken = useParseAccessToken()
+
+  useEffect(() => {
+    parseToken()
+  }, [parseToken])
 
   return (
     <div>
