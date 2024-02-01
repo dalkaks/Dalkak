@@ -8,8 +8,9 @@ import (
 )
 
 type KmsSet struct {
-	Client *kms.Client
-	KeyId  string
+	Client    *kms.Client
+	KeyId     string
+	PublicKey []byte
 }
 
 func GetKMSClient(ctx context.Context, keyId string) (*KmsSet, error) {
@@ -17,8 +18,17 @@ func GetKMSClient(ctx context.Context, keyId string) (*KmsSet, error) {
 	if err != nil {
 		return nil, err
 	}
+	client := kms.NewFromConfig(cfg)
+	publicKey, err := client.GetPublicKey(ctx, &kms.GetPublicKeyInput{
+		KeyId: &keyId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &KmsSet{
-		Client: kms.NewFromConfig(cfg),
-		KeyId:  keyId,
+		Client:    client,
+		KeyId:     keyId,
+		PublicKey: publicKey.PublicKey,
 	}, nil
 }
