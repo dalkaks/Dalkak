@@ -3,10 +3,12 @@ package app
 import (
 	"context"
 	"dalkak/pkg/utils/httputils"
+	"dalkak/pkg/utils/securityutils"
 	"errors"
 	"fmt"
 	"mime"
 	"net/http"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -25,6 +27,32 @@ func (app *APP) enableCORS(next http.Handler) http.Handler {
 	})
 }
 
+func (app *APP) getTokenFromHeader(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		headerParts := strings.Split(authHeader, " ")
+		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+			httputils.ErrorJSON(w, errors.New("invalid auth header"), http.StatusBadRequest)
+			return
+		}
+
+		token := headerParts[1]
+		sub, err := securityutils.ParseTokenWithPublicKey(token, app.KmsSet.PublicKey)
+		if err != nil {
+			httputils.ErrorJSON(w, err, http.StatusUnauthorized)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "sub", sub)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 func (app *APP) processData(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var reqMap map[string]interface{}
@@ -32,7 +60,7 @@ func (app *APP) processData(next http.Handler) http.Handler {
 		contentType := r.Header.Get("Content-Type")
 		if contentType == "" {
 			next.ServeHTTP(w, r)
-      return
+			return
 		}
 
 		mediaType, _, err := mime.ParseMediaType(contentType)

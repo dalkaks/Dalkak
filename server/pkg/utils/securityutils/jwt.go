@@ -4,6 +4,7 @@ import (
 	"context"
 	"dalkak/pkg/dtos"
 	"encoding/base64"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
@@ -55,4 +56,31 @@ func createToken(claims jwt.Claims, kmsSet *KmsSet) (string, error) {
 
 	signedToken := signedPart + "." + signature
 	return signedToken, nil
+}
+
+func ParseTokenWithPublicKey(tokenString string, publicKey []byte) (string, error) {
+	key, err := jwt.ParseECPublicKeyFromPEM(publicKey)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return key, nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		sub, ok := claims["sub"].(string)
+		if !ok {
+			return "", fmt.Errorf("sub claim is missing or not a string")
+		}
+		return sub, nil
+	} else {
+		return "", fmt.Errorf("invalid token")
+	}
 }
