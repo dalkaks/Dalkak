@@ -2,6 +2,10 @@ package securityutils
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
@@ -10,7 +14,7 @@ import (
 type KmsSet struct {
 	Client    *kms.Client
 	KeyId     string
-	PublicKey []byte
+	PublicKey *ecdsa.PublicKey
 }
 
 func GetKMSClient(ctx context.Context, keyId string) (*KmsSet, error) {
@@ -26,9 +30,22 @@ func GetKMSClient(ctx context.Context, keyId string) (*KmsSet, error) {
 		return nil, err
 	}
 
+	pemEncodedPublicKey := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: publicKey.PublicKey,
+	})
+	block, _ := pem.Decode(pemEncodedPublicKey)
+	if block == nil || block.Type != "PUBLIC KEY" {
+		return nil, errors.New("failed to decode public key")
+	}
+	pubEdcsaKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
 	return &KmsSet{
 		Client:    client,
 		KeyId:     keyId,
-		PublicKey: publicKey.PublicKey,
+		PublicKey: pubEdcsaKey.(*ecdsa.PublicKey),
 	}, nil
 }

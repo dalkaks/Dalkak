@@ -42,7 +42,7 @@ func (app *APP) getTokenFromHeader(next http.Handler) http.Handler {
 		}
 
 		token := headerParts[1]
-		sub, err := securityutils.ParseTokenWithPublicKey(token, app.KmsSet.PublicKey)
+		sub, err := securityutils.ParseTokenWithPublicKey(token, app.KmsSet)
 		if err != nil {
 			httputils.ErrorJSON(w, err, http.StatusUnauthorized)
 			return
