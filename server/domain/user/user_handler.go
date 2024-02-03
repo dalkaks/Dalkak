@@ -63,14 +63,15 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Request) {
 	refreshToken := httputils.GetCookieRefresh(r)
 	if refreshToken == "" {
-    httputils.ErrorJSON(w, errors.New("refresh token not found"), http.StatusBadRequest)
-    return
-  }
+		httputils.ErrorJSON(w, errors.New("refresh token not found"), http.StatusBadRequest)
+		return
+	}
 
 	authTokens, tokenTime, err := handler.userService.ReissueRefresh(refreshToken)
 	if err != nil {
-	  httputils.ErrorJSON(w, err, http.StatusInternalServerError)
-	  return
+		httputils.DeleteCookieRefresh(w)
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
 	}
 
 	mode := handler.userService.GetMode()
@@ -78,9 +79,10 @@ func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Reques
 	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
 
 	result := &payloads.UserAccessTokenResponse{
-	  AccessToken: authTokens.AccessToken,
+		AccessToken: authTokens.AccessToken,
 	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-	  httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		httputils.DeleteCookieRefresh(w)
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
 	}
 }

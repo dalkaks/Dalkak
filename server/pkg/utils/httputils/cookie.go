@@ -38,3 +38,11 @@ func GetCookieRefresh(r *http.Request) string {
 	}
 	return cookie.Value
 }
+
+func DeleteCookieRefresh(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   "refresh_token",
+		Path:   "/",
+		MaxAge: -1,
+	})
+}
