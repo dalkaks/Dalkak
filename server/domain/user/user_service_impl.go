@@ -18,7 +18,7 @@ func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
-    mode:   mode,
+		mode:   mode,
 		domain: domain,
 		db:     userRepo,
 		kmsSet: kmsSet,
@@ -26,11 +26,11 @@ func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *
 }
 
 func (service *UserServiceImpl) GetMode() string {
-  return service.mode
+	return service.mode
 }
 
 func (service *UserServiceImpl) GetDomain() string {
-  return service.domain
+	return service.domain
 }
 
 func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (*dtos.AuthTokens, int64, error) {
@@ -63,5 +63,31 @@ func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature st
 	return &dtos.AuthTokens{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+	}, nowTime, nil
+}
+
+func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthTokens, int64, error) {
+	walletAddress, err := securityutils.ParseTokenWithPublicKey(refreshToken, service.kmsSet)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	nowTime := timeutils.GetTimestamp()
+	generateTokenDto := dtos.GenerateTokenDto{
+		WalletAddress: walletAddress,
+		NowTime:       nowTime,
+	}
+	accessToken, err := securityutils.GenerateAccessToken(service.domain, service.kmsSet, &generateTokenDto)
+	if err != nil {
+		return nil, 0, err
+	}
+	newRefreshToken, err := securityutils.GenerateRefreshToken(service.domain, service.kmsSet, &generateTokenDto)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return &dtos.AuthTokens{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
 	}, nowTime, nil
 }

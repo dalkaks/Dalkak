@@ -5,6 +5,6 @@ type UserAuthAndSignUpRequest struct {
 	Signature     string
 }
 
-type UserAuthAndSignUpResponse struct {
+type UserAccessTokenResponse struct {
 	AccessToken string `json:"accessToken"`
 }
