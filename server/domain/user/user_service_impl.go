@@ -4,7 +4,6 @@ import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/utils/securityutils"
-	"dalkak/pkg/utils/timeutils"
 )
 
 type UserServiceImpl struct {
@@ -46,24 +45,15 @@ func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature st
 		}
 	}
 
-	nowTime := timeutils.GetTimestamp()
 	generateTokenDto := dtos.GenerateTokenDto{
 		WalletAddress: walletAddress,
-		NowTime:       nowTime,
 	}
-	accessToken, err := securityutils.GenerateAccessToken(service.domain, service.kmsSet, &generateTokenDto)
-	if err != nil {
-		return nil, 0, err
-	}
-	refreshToken, err := securityutils.GenerateRefreshToken(service.domain, service.kmsSet, &generateTokenDto)
+	authTokens, nowTime, err := securityutils.GenerateAuthTokens(service.domain, service.kmsSet, &generateTokenDto)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return &dtos.AuthTokens{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nowTime, nil
+	return authTokens, nowTime, nil
 }
 
 func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthTokens, int64, error) {
@@ -72,22 +62,13 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 		return nil, 0, err
 	}
 
-	nowTime := timeutils.GetTimestamp()
 	generateTokenDto := dtos.GenerateTokenDto{
 		WalletAddress: walletAddress,
-		NowTime:       nowTime,
 	}
-	accessToken, err := securityutils.GenerateAccessToken(service.domain, service.kmsSet, &generateTokenDto)
-	if err != nil {
-		return nil, 0, err
-	}
-	newRefreshToken, err := securityutils.GenerateRefreshToken(service.domain, service.kmsSet, &generateTokenDto)
+	authTokens, nowTime, err := securityutils.GenerateAuthTokens(service.domain, service.kmsSet, &generateTokenDto)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return &dtos.AuthTokens{
-		AccessToken:  accessToken,
-		RefreshToken: newRefreshToken,
-	}, nowTime, nil
+	return authTokens, nowTime, nil
 }

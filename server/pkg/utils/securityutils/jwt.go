@@ -21,21 +21,39 @@ import (
 const AccessTokenTTL = 30 * 60
 const RefreshTokenTTL = 14 * 24 * 60 * 60
 
-func GenerateAccessToken(domain string, kmsSet *KmsSet, tokenDto *dtos.GenerateTokenDto) (string, error) {
+func GenerateAuthTokens(domain string, kmsSet *KmsSet, tokenDto *dtos.GenerateTokenDto) (*dtos.AuthTokens, int64, error) {
+	nowTime := timeutils.GetTimestamp()
+	accessToken, err := generateAccessToken(domain, kmsSet, nowTime, tokenDto)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	refreshToken, err := generateRefreshToken(domain, kmsSet, nowTime, tokenDto)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return &dtos.AuthTokens{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nowTime, nil
+}
+
+func generateAccessToken(domain string, kmsSet *KmsSet, nowTime int64, tokenDto *dtos.GenerateTokenDto) (string, error) {
 	return createToken(jwt.MapClaims{
 		"sub": tokenDto.WalletAddress,
-		"iat": tokenDto.NowTime,
-		"exp": tokenDto.NowTime + AccessTokenTTL,
+		"iat": nowTime,
+		"exp": nowTime + AccessTokenTTL,
 		"iss": domain,
 	}, kmsSet)
 }
 
-func GenerateRefreshToken(domain string, kmsSet *KmsSet, tokenDto *dtos.GenerateTokenDto) (string, error) {
+func generateRefreshToken(domain string, kmsSet *KmsSet, nowTime int64, tokenDto *dtos.GenerateTokenDto) (string, error) {
 	tokenId := uuid.NewString()
 	return createToken(jwt.MapClaims{
 		"sub": tokenDto.WalletAddress,
 		"tid": tokenId,
-		"exp": tokenDto.NowTime + RefreshTokenTTL,
+		"exp": nowTime + RefreshTokenTTL,
 	}, kmsSet)
 }
 
