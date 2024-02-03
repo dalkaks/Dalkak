@@ -45,9 +45,9 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 	return &app, nil
 }
 
-func (app *APP) StartServer(port int, userService interfaces.UserService) error {
+func (app *APP) StartServer(port int, userService interfaces.UserService, boardService interfaces.BoardService) error {
 	log.Printf("Starting server on port %d", port)
 
-	router := app.NewRouter(userService)
+	router := app.NewRouter(userService, boardService)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 }
