@@ -31,6 +31,8 @@ func (handler *UserHandler) Routes() chi.Router {
 
 	router.Post("/refresh", handler.reissueRefresh)
 
+	router.Post("/logout", handler.logout)
+
 	return router
 }
 
@@ -85,4 +87,9 @@ func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Reques
 		httputils.DeleteCookieRefresh(w)
 		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
 	}
+}
+
+func (handler *UserHandler) logout(w http.ResponseWriter, r *http.Request) {
+	httputils.DeleteCookieRefresh(w)
+	httputils.WriteJSON(w, http.StatusOK, nil)
 }
