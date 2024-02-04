@@ -35,7 +35,13 @@ func (handler *BoardHandler) uploadImage(w http.ResponseWriter, r *http.Request)
 		httputils.ErrorJSON(w, err, http.StatusUnauthorized)
 	}
 
+  content, err := httputils.GetUploadImageRequest(r)
+  if err != nil {
+    httputils.ErrorJSON(w, err, http.StatusBadRequest)
+  }
+
 	// 이미지 업로드
+  // handler.boardService.UploadImage(content, userInfo)
 
 	// 이미지 업로드 결과 반환
 	httputils.WriteJSON(w, http.StatusOK, userInfo)
