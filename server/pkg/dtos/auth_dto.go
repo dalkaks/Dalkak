@@ -7,5 +7,4 @@ type AuthTokens struct {
 
 type GenerateTokenDto struct {
 	WalletAddress string `json:"walletAddress"`
-	NowTime       int64  `json:"nowTime"`
 }

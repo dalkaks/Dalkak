@@ -13,7 +13,7 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 
 	parsedDomain, err := ParseDomain(domain)
 	if err != nil {
-    ErrorJSON(w, err, http.StatusInternalServerError)
+		ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -28,5 +28,21 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 		Domain:   parsedDomain,
 		HttpOnly: true,
 		Secure:   isSecure,
+	})
+}
+
+func GetCookieRefresh(r *http.Request) string {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
+}
+
+func DeleteCookieRefresh(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   "refresh_token",
+		Path:   "/",
+		MaxAge: -1,
 	})
 }

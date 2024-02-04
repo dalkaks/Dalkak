@@ -5,6 +5,7 @@ import (
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/reflectutils"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -28,6 +29,10 @@ func (handler *UserHandler) Routes() chi.Router {
 
 	router.With(handler.verifyMetaMaskSignature).Post("/auth", handler.authAndSignUp)
 
+	router.Post("/refresh", handler.reissueRefresh)
+
+	router.Post("/logout", handler.logout)
+
 	return router
 }
 
@@ -49,10 +54,42 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 	domain := handler.userService.GetDomain()
 	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
 
-	result := &payloads.UserAuthAndSignUpResponse{
+	result := &payloads.UserAccessTokenResponse{
 		AccessToken: authTokens.AccessToken,
 	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
 		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
 	}
+}
+
+func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Request) {
+	refreshToken := httputils.GetCookieRefresh(r)
+	if refreshToken == "" {
+		httputils.ErrorJSON(w, errors.New("refresh token not found"), http.StatusBadRequest)
+		return
+	}
+
+	authTokens, tokenTime, err := handler.userService.ReissueRefresh(refreshToken)
+	if err != nil {
+		httputils.DeleteCookieRefresh(w)
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	mode := handler.userService.GetMode()
+	domain := handler.userService.GetDomain()
+	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+
+	result := &payloads.UserAccessTokenResponse{
+		AccessToken: authTokens.AccessToken,
+	}
+	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
+		httputils.DeleteCookieRefresh(w)
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+	}
+}
+
+func (handler *UserHandler) logout(w http.ResponseWriter, r *http.Request) {
+	httputils.DeleteCookieRefresh(w)
+	httputils.WriteJSON(w, http.StatusOK, nil)
 }
