@@ -1,47 +1,60 @@
 package reflectutils
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"reflect"
+	"time"
 )
 
-func MapToStruct(data map[string]interface{}, result interface{}) error {
+func MapToStruct[T any](data map[string]interface{}) (*T, error) {
+	var result T
+	t := reflect.TypeOf(result)
+
+	if t.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("MapToStruct only supports structs")
+	}
+
+	ptr := reflect.New(t)
 	for key, value := range data {
-		err := setField(result, key, value)
-		if err != nil {
-			return err
+		field := ptr.Elem().FieldByName(key)
+		if field.IsValid() && field.CanSet() {
+			val := reflect.ValueOf(value)
+			if val.Type().AssignableTo(field.Type()) {
+				field.Set(val)
+			} else {
+				convertedValue, err := tryConvertType(val, field.Type())
+				if err != nil {
+					return nil, fmt.Errorf("error converting types for field %s: %v", key, err)
+				}
+				field.Set(convertedValue)
+			}
 		}
 	}
-	return nil
+
+	return ptr.Interface().(*T), nil
 }
 
-func setField(obj interface{}, name string, value interface{}) error {
-	structValue := reflect.ValueOf(obj).Elem()
-	structType := structValue.Type()
-
-	var field reflect.Value
-
-  for i := 0; i < structValue.NumField(); i++ {
-    structField := structType.Field(i)
-    if structField.Name == name {
-        field = structValue.Field(i)
-        break
-    }
-  }
-
-	if !field.IsValid() {
-		return fmt.Errorf("No such field: %s in obj", name)
-	}
-	if !field.CanSet() {
-		return fmt.Errorf("Cannot set %s field value", name)
+// suport time type is RFC3339
+func tryConvertType(value reflect.Value, targetType reflect.Type) (reflect.Value, error) {
+	if value.CanConvert(targetType) {
+		return value.Convert(targetType), nil
 	}
 
-  fieldType := field.Type()
-  val := reflect.ValueOf(value)
-	if fieldType != val.Type() {
-		return fmt.Errorf("Provided value type didn't match obj field type")
+	if value.Kind() == reflect.Float64 && targetType.Kind() == reflect.Int {
+		convertedValue := int(value.Float())
+		return reflect.ValueOf(convertedValue), nil
 	}
 
-	field.Set(val)
-	return nil
+	if value.Kind() == reflect.String && targetType == reflect.TypeOf(time.Time{}) {
+		str := value.String()
+		parsedTime, err := time.Parse(time.RFC3339, str)
+		if err == nil {
+			return reflect.ValueOf(parsedTime), nil
+		}
+	}
+
+	log.Printf("cannot convert %v to %v", value.Type(), targetType)
+	return reflect.Value{}, errors.New("cannot convert types")
 }

@@ -35,18 +35,18 @@ func ParseDomain(u string) (string, error) {
 	return host, nil
 }
 
-func GetRequestData(r *http.Request, target interface{}) error {
+func GetRequestData[T any](r *http.Request) (*T, error) {
 	reqMap, ok := r.Context().Value("request").(map[string]interface{})
 	if !ok {
-		return errors.New("invalid request")
+		return nil, errors.New("invalid request")
 	}
 
-	err := reflectutils.MapToStruct(reqMap, target)
+	result, err := reflectutils.MapToStruct[T](reqMap)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return result, nil
 }
 
 func GetUserInfoData(r *http.Request) (*dtos.UserInfo, error) {
@@ -65,13 +65,13 @@ func GetUploadImageRequest(r *http.Request) (*dtos.ImageData, error) {
 	}
 	defer file.Close()
 
-  extension := filepath.Ext(strings.ToLower(fileHeader.Filename))
-  if len(extension) > 1 {
-    extension = extension[1:]
-  }
-  if !config.AllowedImageExtensions[extension] {
-    return nil, errors.New("invalid image extension")
-  }
+	extension := filepath.Ext(strings.ToLower(fileHeader.Filename))
+	if len(extension) > 1 {
+		extension = extension[1:]
+	}
+	if !config.AllowedImageExtensions[extension] {
+		return nil, errors.New("invalid image extension")
+	}
 
 	imageData, err := io.ReadAll(file)
 	if err != nil {
