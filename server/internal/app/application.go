@@ -14,6 +14,7 @@ type APP struct {
 	Origin   string
 	Domain   string
 	Database *DB
+	Storage  *Storage
 	KmsSet   *securityutils.KmsSet
 }
 
@@ -26,21 +27,25 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 		return nil, err
 	}
 	app.Origin = appConfig.Origin
-  app.Domain = appConfig.Domain
+	app.Domain = appConfig.Domain
 
-	// Load kms client
 	kmsSet, err := securityutils.GetKMSClient(ctx, appConfig.KmsKeyId)
 	if err != nil {
 		return nil, err
 	}
 	app.KmsSet = kmsSet
 
-	// Connect to database
 	db, err := NewDB(ctx, mode)
 	if err != nil {
 		return nil, err
 	}
 	app.Database = db
+
+	storage, err := NewStorage(ctx, mode)
+	if err != nil {
+		return nil, err
+	}
+	app.Storage = storage
 
 	return &app, nil
 }
