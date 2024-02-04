@@ -1,6 +1,10 @@
 package board
 
-import "dalkak/pkg/interfaces"
+import (
+	"dalkak/pkg/dtos"
+	"dalkak/pkg/interfaces"
+	"dalkak/pkg/payloads"
+)
 
 type BoardServiceImpl struct {
 	mode    string
@@ -18,4 +22,20 @@ func NewBoardService(mode string, domain string, db interfaces.Database, storage
 		db:      boardRepo,
 		storage: storage,
 	}
+}
+
+func (service *BoardServiceImpl) UploadImage(media *dtos.ImageData, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error) {
+	// uuid 생성
+
+  // 이미지 업로드
+
+  // 데이터베이스 저장
+
+  // 실패 시 이미지 삭제
+
+	// 이미지 업로드 결과 반환
+	return &payloads.BoardUploadMediaResponse{
+		Id: "1",
+    Url: "link",
+	}, nil
 }

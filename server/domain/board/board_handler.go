@@ -29,20 +29,20 @@ func (handler *BoardHandler) Routes() chi.Router {
 }
 
 func (handler *BoardHandler) uploadImage(w http.ResponseWriter, r *http.Request) {
-	// 권한 체크
 	userInfo, err := httputils.GetUserInfoData(r)
 	if err != nil {
 		httputils.ErrorJSON(w, err, http.StatusUnauthorized)
 	}
 
-  content, err := httputils.GetUploadImageRequest(r)
+  media, err := httputils.GetUploadImageRequest(r)
   if err != nil {
     httputils.ErrorJSON(w, err, http.StatusBadRequest)
   }
 
-	// 이미지 업로드
-  // handler.boardService.UploadImage(content, userInfo)
+  result, err := handler.boardService.UploadImage(media, userInfo)
+  if err != nil {
+    httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+  }
 
-	// 이미지 업로드 결과 반환
-	httputils.WriteJSON(w, http.StatusOK, userInfo)
+	httputils.WriteJSON(w, http.StatusOK, result)
 }
