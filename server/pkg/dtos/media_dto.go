@@ -1,11 +1,17 @@
 package dtos
 
-type Image struct {
-	Extension string  `json:"extension"`
-	URL       *string `json:"url,omitempty"`
+type MediaMeta struct {
+	ID        string `json:"id"`
+	Extension string `json:"extension"`
+	URL       string `json:"url"`
 }
 
-type ImageData struct {
-	Meta Image
+type MediaDto struct {
+	Meta MediaMeta
 	Data []byte
+}
+
+type ImageDto struct {
+	MediaMeta MediaMeta
+	Data      []byte
 }

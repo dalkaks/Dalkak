@@ -58,7 +58,7 @@ func GetUserInfoData(r *http.Request) (*dtos.UserInfo, error) {
 	return userInfo, nil
 }
 
-func GetUploadImageRequest(r *http.Request) (*dtos.ImageData, error) {
+func GetUploadImageRequest(r *http.Request) (*dtos.MediaDto, error) {
 	file, fileHeader, err := r.FormFile("image")
 	if err != nil {
 		return nil, err
@@ -78,9 +78,8 @@ func GetUploadImageRequest(r *http.Request) (*dtos.ImageData, error) {
 		return nil, err
 	}
 
-	return &dtos.ImageData{
-		Meta: dtos.Image{
-			URL:       nil,
+	return &dtos.MediaDto{
+		Meta: dtos.MediaMeta{
 			Extension: extension,
 		},
 		Data: imageData,

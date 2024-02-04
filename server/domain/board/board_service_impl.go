@@ -24,10 +24,12 @@ func NewBoardService(mode string, domain string, db interfaces.Database, storage
 	}
 }
 
-func (service *BoardServiceImpl) UploadImage(media *dtos.ImageData, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error) {
-	// uuid 생성
-
+func (service *BoardServiceImpl) UploadImage(media *dtos.MediaDto, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error) {
   // 이미지 업로드
+  newMedia, err := service.storage.Upload(media)
+  if err != nil {
+    return nil, err
+  }
 
   // 데이터베이스 저장
 

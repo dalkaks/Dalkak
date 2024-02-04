@@ -6,5 +6,5 @@ import (
 )
 
 type BoardService interface {
-	UploadImage(media *dtos.ImageData, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error)
+	UploadImage(media *dtos.MediaDto, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error)
 }
