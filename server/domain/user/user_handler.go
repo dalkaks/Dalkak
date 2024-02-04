@@ -4,7 +4,6 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/httputils"
-	"dalkak/pkg/utils/reflectutils"
 	"errors"
 	"net/http"
 
@@ -38,7 +37,7 @@ func (handler *UserHandler) Routes() chi.Router {
 
 func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request) {
 	var req payloads.UserAuthAndSignUpRequest
-	err := reflectutils.GetRequestData(r, &req)
+	err := httputils.GetRequestData(r, &req)
 	if err != nil {
 		httputils.ErrorJSON(w, err, http.StatusBadRequest)
 		return

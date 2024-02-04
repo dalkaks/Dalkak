@@ -1,6 +1,9 @@
 package httputils
 
 import (
+	"dalkak/pkg/utils/reflectutils"
+	"errors"
+	"net/http"
 	"net/url"
 	"strings"
 )
@@ -18,7 +21,7 @@ func ParseDomain(u string) (string, error) {
 		return "localhost", nil
 	}
 
-	host = strings.Split(host, ":")[0] 
+	host = strings.Split(host, ":")[0]
 
 	parts := strings.Split(host, ".")
 	if len(parts) >= 2 {
@@ -26,4 +29,18 @@ func ParseDomain(u string) (string, error) {
 	}
 
 	return host, nil
+}
+
+func GetRequestData(r *http.Request, target interface{}) error {
+	reqMap, ok := r.Context().Value("request").(map[string]interface{})
+	if !ok {
+		return errors.New("invalid request")
+	}
+
+	err := reflectutils.MapToStruct(reqMap, target)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
