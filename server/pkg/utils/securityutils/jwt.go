@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"dalkak/pkg/dtos"
+	"dalkak/pkg/utils/generateutils"
 	"dalkak/pkg/utils/timeutils"
 	"encoding/asn1"
 	"encoding/base64"
@@ -15,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
 const AccessTokenTTL = 30 * 60
@@ -49,7 +49,7 @@ func generateAccessToken(domain string, kmsSet *KmsSet, nowTime int64, tokenDto 
 }
 
 func generateRefreshToken(domain string, kmsSet *KmsSet, nowTime int64, tokenDto *dtos.GenerateTokenDto) (string, error) {
-	tokenId := uuid.NewString()
+	tokenId := generateutils.GenerateUUID()
 	return createToken(jwt.MapClaims{
 		"sub": tokenDto.WalletAddress,
 		"tid": tokenId,
