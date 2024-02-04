@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/reflectutils"
 	"errors"
 	"net/http"
@@ -43,4 +44,13 @@ func GetRequestData(r *http.Request, target interface{}) error {
 	}
 
 	return nil
+}
+
+func GetUserInfoData(r *http.Request) (*dtos.UserInfo, error) {
+	userInfo, ok := r.Context().Value("user").(*dtos.UserInfo)
+	if !ok {
+		return nil, errors.New("invalid user info")
+	}
+
+	return userInfo, nil
 }

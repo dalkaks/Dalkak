@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/securityutils"
 	"errors"
@@ -48,7 +49,9 @@ func (app *APP) getTokenFromHeader(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "sub", sub)
+		userInfo := dtos.UserInfo{WalletAddress: sub}
+
+		ctx := context.WithValue(r.Context(), "user", userInfo)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
