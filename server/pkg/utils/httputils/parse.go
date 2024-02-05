@@ -5,7 +5,6 @@ import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/reflectutils"
 	"errors"
-	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -50,12 +49,12 @@ func GetRequestData[T any](r *http.Request) (*T, error) {
 }
 
 func GetUserInfoData(r *http.Request) (*dtos.UserInfo, error) {
-	userInfo, ok := r.Context().Value("user").(*dtos.UserInfo)
+	userInfo, ok := r.Context().Value("user").(dtos.UserInfo)
 	if !ok {
 		return nil, errors.New("invalid user info")
 	}
 
-	return userInfo, nil
+	return &userInfo, nil
 }
 
 func GetUploadImageRequest(r *http.Request) (*dtos.MediaDto, error) {
@@ -73,15 +72,13 @@ func GetUploadImageRequest(r *http.Request) (*dtos.MediaDto, error) {
 		return nil, errors.New("invalid image extension")
 	}
 
-	imageData, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
+	contentType := fileHeader.Header.Get("Content-Type")
 
 	return &dtos.MediaDto{
 		Meta: dtos.MediaMeta{
-			Extension: extension,
+			Extension:   extension,
+			ContentType: contentType,
 		},
-		Data: imageData,
+		File: file,
 	}, nil
 }
