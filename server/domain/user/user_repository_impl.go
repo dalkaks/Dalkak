@@ -29,7 +29,7 @@ func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
 
 func (repo *UserRepositoryImpl) CreateUser(walletAddress string) (string, error) {
 	table := repo.prefix + UserTableName
-	newUser := UserTable{
+	newUser := &UserTable{
 		WalletAddress: walletAddress,
 		Timestamp:     timeutils.GetTimestamp(),
 	}
@@ -52,7 +52,7 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) (string, error)
 
 func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, error) {
 	table := repo.prefix + UserTableName
-	userToFind := UserTable{WalletAddress: walletAddress}
+	userToFind := &UserTable{WalletAddress: walletAddress}
 
 	response, err := repo.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(table),
@@ -69,7 +69,7 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 		if err != nil {
 			return nil, err
 		}
-		return ConvertUserTableToUserDto(&userToFind), nil
+		return ConvertUserTableToUserDto(userToFind), nil
 	}
 	return nil, nil
 }
