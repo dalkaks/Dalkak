@@ -11,11 +11,12 @@ import (
 )
 
 type APP struct {
-	Origin   string
-	Domain   string
-	Database *DB
-	Storage  *Storage
-	KmsSet   *securityutils.KmsSet
+	Origin     string
+	Domain     string
+	StaticLink string
+	Database   *DB
+	Storage    *Storage
+	KmsSet     *securityutils.KmsSet
 }
 
 func NewApplication(ctx context.Context, mode string) (*APP, error) {
@@ -28,6 +29,7 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 	}
 	app.Origin = appConfig.Origin
 	app.Domain = appConfig.Domain
+	app.StaticLink = appConfig.StaticLink
 
 	kmsSet, err := securityutils.GetKMSClient(ctx, appConfig.KmsKeyId)
 	if err != nil {
@@ -41,7 +43,7 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 	}
 	app.Database = db
 
-	storage, err := NewStorage(ctx, mode)
+	storage, err := NewStorage(ctx, mode, app.StaticLink)
 	if err != nil {
 		return nil, err
 	}

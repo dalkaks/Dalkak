@@ -16,13 +16,14 @@ import (
 )
 
 type Storage struct {
-	client *s3.Client
-	bucket string
+	client     *s3.Client
+	bucket     string
+	staticLink string
 }
 
 var _ interfaces.Storage = (*Storage)(nil)
 
-func NewStorage(ctx context.Context, mode string) (*Storage, error) {
+func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, error) {
 	cfg, err := awsConfig.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -36,7 +37,7 @@ func NewStorage(ctx context.Context, mode string) (*Storage, error) {
 		bucket = "dalkak-dev"
 	}
 
-	return &Storage{client: storageClient, bucket: bucket}, nil
+	return &Storage{client: storageClient, bucket: bucket, staticLink: staticLink}, nil
 }
 
 func (storage *Storage) Upload(media *dtos.MediaDto, path string) (*dtos.MediaMeta, error) {
@@ -78,7 +79,6 @@ func (storage *Storage) Upload(media *dtos.MediaDto, path string) (*dtos.MediaMe
 		ID:          uuid,
 		Extension:   media.Meta.Extension,
 		ContentType: media.Meta.ContentType,
-		// todo
-		URL: "https://" + storage.bucket + ".s3.ap-northeast-2.amazonaws.com/" + key,
+		URL: storage.staticLink + key,
 	}, nil
 }
