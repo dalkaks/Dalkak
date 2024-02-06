@@ -27,13 +27,18 @@ func NewBoardService(mode string, domain string, db interfaces.Database, storage
 }
 
 func (service *BoardServiceImpl) UploadImage(media *dtos.MediaDto, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error) {
-	// 이미지 업로드
+	// todo 이미지 id 중복
 	createdMedia, err := service.storage.Upload(media, boardStoragePath)
 	if err != nil {
 		return nil, err
 	}
 
 	// 데이터베이스 저장
+  boardImageDto := createdMedia.ToBoardImageDto(nil)
+  err = service.db.CreateBoardImage(boardImageDto, userInfo.WalletAddress)
+  if err != nil {
+    return nil, err
+  }
 
 	// 실패 시 이미지 삭제
 
