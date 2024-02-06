@@ -27,7 +27,7 @@ func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
 	}
 }
 
-func (repo *UserRepositoryImpl) CreateUser(walletAddress string) (string, error) {
+func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
 	table := repo.prefix + UserTableName
 	newUser := &UserTable{
 		WalletAddress: walletAddress,
@@ -36,7 +36,7 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) (string, error)
 
 	av, err := attributevalue.MarshalMap(newUser)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	_, err = repo.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
@@ -44,10 +44,9 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) (string, error)
 		Item:      av,
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
-
-	return newUser.WalletAddress, nil
+	return nil
 }
 
 func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, error) {

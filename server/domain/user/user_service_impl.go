@@ -39,7 +39,7 @@ func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature st
 	}
 
 	if user == nil {
-		_, err := service.db.CreateUser(walletAddress)
+		err := service.db.CreateUser(walletAddress)
 		if err != nil {
 			return nil, 0, err
 		}
