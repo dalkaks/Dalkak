@@ -5,7 +5,7 @@ import "io"
 type MediaMeta struct {
 	ID          string `json:"id"`
 	Extension   string `json:"extension"`
-	ContentType string `json:"content_type"`
+	ContentType string `json:"contentType"`
 	URL         string `json:"url"`
 }
 
