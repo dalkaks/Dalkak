@@ -1,22 +1,34 @@
 # Dalkak
 
-# 기능
-## 1. 유저
-- 회원가입(메타마스크)
-- 로그인
-- 로그아웃
+# 서버
 
-## 2. 게시판
-- 공지사항
-- 민팅 게시판(+신고)
-- 고객센터
+## 사전 설치
 
-## 3. 블록체인
-- 컨트랙트 배포
-- IPFS 업로드
-- 민팅 생성
-- 민팅 조회
+- gnu
+- go 1.21.x
+- aws-cli
 
-## 4. 결제
-- 결제
-- 결제 조회
+## aws-cli 설정
+
+ - 명령어 aws configure --profile dalkak
+ - region: ap-northeast-2
+ - output: json
+
+## 서버 실행
+
+ - make -C server run-local
+ (또는 server 폴더에서 make run-local)
+
+
+# 클라이언트
+
+# 배포
+
+## develop 배포
+ - 현재 커밋의 경우
+ - 명령어 git tag test-v0.0.0
+ - 명령어 git push origin test-v0.0.0
+ (덮어쓰기 시 -f 옵션 추가)
+ - 이후 슬랙으로 결과 전송
+ - ecs 정지를 위해 명령어 ./script/stop-dev-server.sh
+ 

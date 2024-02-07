@@ -31,7 +31,7 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 	app.Domain = appConfig.Domain
 	app.StaticLink = appConfig.StaticLink
 
-	kmsSet, err := securityutils.GetKMSClient(ctx, appConfig.KmsKeyId)
+	kmsSet, err := securityutils.GetKMSClient(ctx, mode, appConfig.KmsKeyId)
 	if err != nil {
 		return nil, err
 	}

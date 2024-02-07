@@ -4,6 +4,7 @@ import (
 	"context"
 	"dalkak/pkg/interfaces"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
@@ -16,7 +17,15 @@ type DB struct {
 var _ interfaces.Database = (*DB)(nil)
 
 func NewDB(ctx context.Context, mode string) (*DB, error) {
-	cfg, err := awsConfig.LoadDefaultConfig(ctx)
+  var cfg aws.Config
+	var err error
+
+	if mode == "LOCAL" {
+		cfg, err = awsConfig.LoadDefaultConfig(ctx, awsConfig.WithSharedConfigProfile("dalkak"))
+	} else {
+		cfg, err = awsConfig.LoadDefaultConfig(ctx)
+	}
+
 	if err != nil {
 		return nil, err
 	}

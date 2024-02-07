@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
@@ -17,8 +18,16 @@ type KmsSet struct {
 	PublicKey *ecdsa.PublicKey
 }
 
-func GetKMSClient(ctx context.Context, keyId string) (*KmsSet, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
+func GetKMSClient(ctx context.Context, mode string, keyId string) (*KmsSet, error) {
+  var cfg aws.Config
+	var err error
+
+	if mode == "LOCAL" {
+		cfg, err = config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile("dalkak"))
+	} else {
+		cfg, err = config.LoadDefaultConfig(ctx)
+	}
+
 	if err != nil {
 		return nil, err
 	}
