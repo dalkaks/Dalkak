@@ -16,15 +16,23 @@ type AppConfig struct {
 	KmsKeyId   string `json:"kmsKeyId"`
 }
 
-func LoadConfig[T any](ctx context.Context, mod string, parameterName string) (*T, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
+func LoadConfig[T any](ctx context.Context, mode string, parameterName string) (*T, error) {
+	var cfg aws.Config
+	var err error
+
+	if mode == "LOCAL" {
+		cfg, err = config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile("dalkak"))
+	} else {
+		cfg, err = config.LoadDefaultConfig(ctx)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	ssmClient := ssm.NewFromConfig(cfg)
 	param, err := ssmClient.GetParameter(ctx, &ssm.GetParameterInput{
-		Name:           aws.String(mod + "-" + parameterName),
+		Name:           aws.String(mode + "-" + parameterName),
 		WithDecryption: aws.Bool(true),
 	})
 	if err != nil {

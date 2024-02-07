@@ -24,7 +24,15 @@ type Storage struct {
 var _ interfaces.Storage = (*Storage)(nil)
 
 func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, error) {
-	cfg, err := awsConfig.LoadDefaultConfig(ctx)
+	var cfg aws.Config
+	var err error
+
+	if mode == "LOCAL" {
+		cfg, err = awsConfig.LoadDefaultConfig(ctx, awsConfig.WithSharedConfigProfile("dalkak"))
+	} else {
+		cfg, err = awsConfig.LoadDefaultConfig(ctx)
+	}
+
 	if err != nil {
 		return nil, err
 	}
