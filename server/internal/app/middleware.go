@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"dalkak/config"
+	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/securityutils"
 	"errors"
@@ -48,7 +50,9 @@ func (app *APP) getTokenFromHeader(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "sub", sub)
+		userInfo := dtos.UserInfo{WalletAddress: sub}
+
+		ctx := context.WithValue(r.Context(), "user", userInfo)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -77,8 +81,7 @@ func (app *APP) processData(next http.Handler) http.Handler {
 			}
 
 		case "application/x-www-form-urlencoded", "multipart/form-data":
-			const maxMemory = 32 << 20 // 32MB
-			if err := r.ParseMultipartForm(maxMemory); err != nil {
+			if err := r.ParseMultipartForm(config.MaxUploadSize); err != nil {
 				httputils.ErrorJSON(w, errors.New("Form parsing error"), http.StatusBadRequest)
 				return
 			}

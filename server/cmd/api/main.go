@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"dalkak/domain/board"
 	"dalkak/domain/user"
 	"dalkak/internal/app"
 	"dalkak/pkg/interfaces"
@@ -21,10 +22,12 @@ func main() {
 	}
 
 	var db interfaces.Database = appInstance.Database
+  var storage interfaces.Storage = appInstance.Storage
 
 	userService := user.NewUserService(Mode, appInstance.Domain, db, appInstance.KmsSet)
+	boardService := board.NewBoardService(Mode, appInstance.Domain, db, storage)
 
-	err = appInstance.StartServer(port, userService)
+	err = appInstance.StartServer(port, userService, boardService)
 	if err != nil {
 		log.Fatal(err)
 	}

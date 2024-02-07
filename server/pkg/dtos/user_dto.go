@@ -1,6 +1,6 @@
 package dtos
 
 type UserDto struct {
-	WalletAddress string
-	Timestamp     int64
+	WalletAddress string `json:"walletAddress"`
+	Timestamp     int64  `json:"timestamp"`
 }

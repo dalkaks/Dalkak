@@ -11,10 +11,12 @@ import (
 )
 
 type APP struct {
-	Origin   string
-	Domain   string
-	Database *DB
-	KmsSet   *securityutils.KmsSet
+	Origin     string
+	Domain     string
+	StaticLink string
+	Database   *DB
+	Storage    *Storage
+	KmsSet     *securityutils.KmsSet
 }
 
 func NewApplication(ctx context.Context, mode string) (*APP, error) {
@@ -26,28 +28,33 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 		return nil, err
 	}
 	app.Origin = appConfig.Origin
-  app.Domain = appConfig.Domain
+	app.Domain = appConfig.Domain
+	app.StaticLink = appConfig.StaticLink
 
-	// Load kms client
 	kmsSet, err := securityutils.GetKMSClient(ctx, appConfig.KmsKeyId)
 	if err != nil {
 		return nil, err
 	}
 	app.KmsSet = kmsSet
 
-	// Connect to database
 	db, err := NewDB(ctx, mode)
 	if err != nil {
 		return nil, err
 	}
 	app.Database = db
 
+	storage, err := NewStorage(ctx, mode, app.StaticLink)
+	if err != nil {
+		return nil, err
+	}
+	app.Storage = storage
+
 	return &app, nil
 }
 
-func (app *APP) StartServer(port int, userService interfaces.UserService) error {
+func (app *APP) StartServer(port int, userService interfaces.UserService, boardService interfaces.BoardService) error {
 	log.Printf("Starting server on port %d", port)
 
-	router := app.NewRouter(userService)
+	router := app.NewRouter(userService, boardService)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 }
