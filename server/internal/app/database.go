@@ -11,13 +11,13 @@ import (
 
 type DB struct {
 	client *dynamodb.Client
-	prefix string
+	table  string
 }
 
 var _ interfaces.Database = (*DB)(nil)
 
 func NewDB(ctx context.Context, mode string) (*DB, error) {
-  var cfg aws.Config
+	var cfg aws.Config
 	var err error
 
 	if mode == "LOCAL" {
@@ -31,20 +31,20 @@ func NewDB(ctx context.Context, mode string) (*DB, error) {
 	}
 
 	dbClient := dynamodb.NewFromConfig(cfg)
-	var prefix string
+	var table string
 	if mode == "PROD" {
-		prefix = "dalkak_prod_"
+		table = "dalkak_prod"
 	} else {
-		prefix = "dalkak_dev_"
+		table = "dalkak_dev"
 	}
 
-	return &DB{client: dbClient, prefix: prefix}, nil
+	return &DB{client: dbClient, table: table}, nil
 }
 
 func (db *DB) GetClient() *dynamodb.Client {
 	return db.client
 }
 
-func (db *DB) GetPrefix() string {
-	return db.prefix
+func (db *DB) GetTable() string {
+	return db.table
 }

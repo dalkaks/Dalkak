@@ -33,8 +33,8 @@ func (service *BoardServiceImpl) UploadImage(media *dtos.MediaDto, userInfo *dto
 		return nil, err
 	}
 
-	// 데이터베이스 저장
-  boardImageDto := createdMedia.ToBoardImageDto(nil)
+	// 데이터베이스 저장 dtos.MediaMeta -> dtos.BoardImageDto
+  boardImageDto := createdMedia.ToBoardImageDto()
   err = service.db.CreateBoardImage(boardImageDto, userInfo.WalletAddress)
   if err != nil {
     return nil, err

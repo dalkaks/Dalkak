@@ -14,10 +14,9 @@ type MediaDto struct {
 	File io.Reader
 }
 
-func (m *MediaMeta) ToBoardImageDto(boardId *string) *BoardImageDto {
+func (m *MediaMeta) ToBoardImageDto() *BoardImageDto {
 	return &BoardImageDto{
 		Id:          m.ID,
-		BoardId:     boardId,
 		Extension:   m.Extension,
 		ContentType: m.ContentType,
 		Url:         m.URL,

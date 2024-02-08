@@ -13,29 +13,29 @@ import (
 
 type BoardRepositoryImpl struct {
 	client *dynamodb.Client
-	prefix string
+	table  string
 }
 
 func NewBoardRepository(db interfaces.Database) *BoardRepositoryImpl {
 	client := db.GetClient()
-	prefix := db.GetPrefix()
+	table := db.GetTable()
 
 	return &BoardRepositoryImpl{
 		client: client,
-		prefix: prefix,
+		table:  table,
 	}
 }
 
-func (repo *BoardRepositoryImpl) CreateBoardImage(dto *dtos.BoardImageDto, userId string) error {
-	table := repo.prefix + BoardImageTableName
-	newBoardImage := &BoardImageTable{
+func (repo *BoardRepositoryImpl) CreateBoardImage(dto *dtos.BoardImageDto, boardId string) error {
+	newBoardImage := &BoardImageData{
+		Pk:          GenerateBoardDataPk(boardId),
+		Sk:          BoardImageDataType + `#` + dto.Id,
+		EntityType:  BoardImageDataType,
+		Timestamp:   timeutils.GetTimestamp(),
 		Id:          dto.Id,
-		BoardId:     dto.BoardId,
 		Extension:   dto.Extension,
 		ContentType: dto.ContentType,
 		Url:         dto.Url,
-		UserId:      userId,
-		Timestamp:   timeutils.GetTimestamp(),
 	}
 
 	av, err := attributevalue.MarshalMap(newBoardImage)
@@ -43,8 +43,8 @@ func (repo *BoardRepositoryImpl) CreateBoardImage(dto *dtos.BoardImageDto, userI
 		return err
 	}
 
-	_, err = repo.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
-		TableName: aws.String(table),
+	_, err = repo.client.PutItem(context.Background(), &dynamodb.PutItemInput{
+		TableName: aws.String(repo.table),
 		Item:      av,
 	})
 	if err != nil {
