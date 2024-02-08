@@ -2,6 +2,7 @@ package board
 
 import (
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/httputils"
 	"net/http"
 
@@ -32,14 +33,23 @@ func (handler *BoardHandler) createPresignedURL(w http.ResponseWriter, r *http.R
 	userInfo, err := httputils.GetUserInfoData(r)
 	if err != nil {
 		httputils.ErrorJSON(w, err, http.StatusUnauthorized)
-    return
+		return
 	}
 
-  // result, err := handler.boardService.UploadImage(media, userInfo)
-  // if err != nil {
-  //   httputils.ErrorJSON(w, err, http.StatusInternalServerError)
-  //   return
-  // }
+	req, err := httputils.GetRequestData[payloads.BoardUploadMediaRequest](r)
+	if err != nil {
+		httputils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
 
-	httputils.WriteJSON(w, http.StatusOK, userInfo)
+	result, err := handler.boardService.CreatePresignedURL(req, userInfo)
+	if err != nil {
+		// Todo: error handle
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
+		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+	}
 }

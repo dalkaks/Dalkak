@@ -1,7 +1,10 @@
 package board
 
 import (
+	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/payloads"
+	"errors"
 )
 
 type BoardServiceImpl struct {
@@ -24,25 +27,24 @@ func NewBoardService(mode string, domain string, db interfaces.Database, storage
 	}
 }
 
-// func (service *BoardServiceImpl) UploadImage(media *dtos.MediaDto, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error) {
-// 	// todo 이미지 id 중복
-// 	createdMedia, err := service.storage.Upload(media, boardStoragePath)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (service *BoardServiceImpl) CreatePresignedURL(dto *payloads.BoardUploadMediaRequest, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error) {
+	// req 검증
+	if dto.IsValid() == false {
+		return nil, errors.New("invalid request")
+	}
 
-// 	// 데이터베이스 저장 dtos.MediaMeta -> dtos.BoardImageDto
-//   boardImageDto := createdMedia.ToBoardImageDto()
-//   err = service.db.CreateBoardImage(boardImageDto, userInfo.WalletAddress)
-//   if err != nil {
-//     return nil, err
-//   }
+	// s3 presigned url 생성
+	mediaType, err := dtos.ToMediaType(dto.MediaType)
+	if err != nil {
+		return nil, err
+	}
+	mediaMeta, err := service.storage.CreatePresignedURL(mediaType, dto.Ext)
+	if err != nil {
+		return nil, err
+	}
 
-// 	// 실패 시 이미지 삭제
-
-// 	// 이미지 업로드 결과 반환
-// 	return &payloads.BoardUploadMediaResponse{
-// 		Id:  createdMedia.ID,
-// 		Url: createdMedia.URL,
-// 	}, nil
-// }
+	return &payloads.BoardUploadMediaResponse{
+		Id:  mediaMeta.ID,
+		Url: mediaMeta.URL,
+	}, nil
+}

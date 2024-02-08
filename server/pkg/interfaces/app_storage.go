@@ -3,5 +3,5 @@ package interfaces
 import "dalkak/pkg/dtos"
 
 type Storage interface {
-  Upload(media *dtos.MediaDto, path string) (*dtos.MediaMeta, error)
+	CreatePresignedURL(mediaType dtos.MediaType, ext string) (*dtos.MediaMeta, error)
 }
