@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"dalkak/config"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/securityutils"
@@ -80,17 +79,17 @@ func (app *APP) processData(next http.Handler) http.Handler {
 				return
 			}
 
-		case "application/x-www-form-urlencoded", "multipart/form-data":
-			if err := r.ParseMultipartForm(config.MaxUploadSize); err != nil {
-				httputils.ErrorJSON(w, errors.New("Form parsing error"), http.StatusBadRequest)
-				return
-			}
-			reqMap = make(map[string]interface{})
-			for key, values := range r.Form {
-				if len(values) > 0 {
-					reqMap[key] = values[0]
-				}
-			}
+		// case "application/x-www-form-urlencoded", "multipart/form-data":
+		// 	if err := r.ParseMultipartForm(config.MaxUploadSize); err != nil {
+		// 		httputils.ErrorJSON(w, errors.New("Form parsing error"), http.StatusBadRequest)
+		// 		return
+		// 	}
+		// 	reqMap = make(map[string]interface{})
+		// 	for key, values := range r.Form {
+		// 		if len(values) > 0 {
+		// 			reqMap[key] = values[0]
+		// 		}
+		// 	}
 
 		default:
 			httputils.ErrorJSON(w, errors.New("Unsupported content type"), http.StatusUnsupportedMediaType)
