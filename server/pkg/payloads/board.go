@@ -1,5 +1,10 @@
 package payloads
 
+import (
+	"dalkak/config"
+	"strings"
+)
+
 type BoardUploadMediaRequest struct {
 	MediaType string `json:"mediaType"`
 	Ext       string `json:"ext"`
@@ -7,11 +12,14 @@ type BoardUploadMediaRequest struct {
 
 func (req *BoardUploadMediaRequest) IsValid() bool {
 	switch req.MediaType {
-	case "image", "video":
-		return true
-	default:
-		return false
+	case "image":
+		ext := strings.ToLower(req.Ext)
+		if _, ok := config.AllowedImageExtensions[ext]; ok {
+			return true
+		}
+		// Todo: video
 	}
+	return false
 }
 
 type BoardUploadMediaResponse struct {
