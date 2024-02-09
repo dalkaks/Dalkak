@@ -3,9 +3,9 @@ package app
 import (
 	"bytes"
 	"context"
+	appsecurity "dalkak/internal/security"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/httputils"
-	"dalkak/pkg/utils/securityutils"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,7 +46,7 @@ func (app *APP) getTokenFromHeader(next http.Handler) http.Handler {
 		}
 
 		token := headerParts[1]
-		sub, err := securityutils.ParseTokenWithPublicKey(token, app.KmsSet)
+		sub, err := appsecurity.ParseTokenWithPublicKey(token, app.KmsSet)
 		if err != nil {
 			httputils.ErrorJSON(w, err, http.StatusUnauthorized)
 			return

@@ -10,3 +10,6 @@ var AllowedImageExtensions = map[string]bool{
 	"bmp":  true,
 	"webp": true,
 }
+
+const AccessTokenTTL = 30 * 60
+const RefreshTokenTTL = 14 * 24 * 60 * 60

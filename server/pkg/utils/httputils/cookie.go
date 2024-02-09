@@ -1,14 +1,14 @@
 package httputils
 
 import (
-	"dalkak/pkg/utils/securityutils"
+	"dalkak/config"
 	"net/http"
 	"time"
 )
 
 func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, tokenTime int64, domain string) {
 	tokenExpires := time.Unix(tokenTime, 0)
-	refreshTokenDuration := time.Duration(securityutils.RefreshTokenTTL) * time.Second
+	refreshTokenDuration := time.Duration(config.RefreshTokenTTL) * time.Second
 	refreshTokenexpires := tokenExpires.Add(refreshTokenDuration)
 
 	parsedDomain, err := ParseDomain(domain)
@@ -23,7 +23,7 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 		Path:     "/",
 		Value:    refreshToken,
 		Expires:  refreshTokenexpires,
-		MaxAge:   securityutils.RefreshTokenTTL,
+		MaxAge:   config.RefreshTokenTTL,
 		SameSite: http.SameSiteLaxMode,
 		Domain:   parsedDomain,
 		HttpOnly: true,

@@ -1,9 +1,10 @@
-package securityutils
+package appsecurity
 
 import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/sha256"
+	"dalkak/config"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/generateutils"
 	"dalkak/pkg/utils/timeutils"
@@ -17,9 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/golang-jwt/jwt/v5"
 )
-
-const AccessTokenTTL = 30 * 60
-const RefreshTokenTTL = 14 * 24 * 60 * 60
 
 func GenerateAuthTokens(domain string, kmsSet *KmsSet, tokenDto *dtos.GenerateTokenDto) (*dtos.AuthTokens, int64, error) {
 	nowTime := timeutils.GetTimestamp()
@@ -43,7 +41,7 @@ func generateAccessToken(domain string, kmsSet *KmsSet, nowTime int64, tokenDto 
 	return createToken(jwt.MapClaims{
 		"sub": tokenDto.WalletAddress,
 		"iat": nowTime,
-		"exp": nowTime + AccessTokenTTL,
+		"exp": nowTime + config.AccessTokenTTL,
 		"iss": domain,
 	}, kmsSet)
 }
@@ -53,7 +51,7 @@ func generateRefreshToken(domain string, kmsSet *KmsSet, nowTime int64, tokenDto
 	return createToken(jwt.MapClaims{
 		"sub": tokenDto.WalletAddress,
 		"tid": tokenId,
-		"exp": nowTime + RefreshTokenTTL,
+		"exp": nowTime + config.RefreshTokenTTL,
 	}, kmsSet)
 }
 
