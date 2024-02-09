@@ -36,7 +36,8 @@ func (handler *UserHandler) Routes() chi.Router {
 }
 
 func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request) {
-	req, err := httputils.GetRequestData[payloads.UserAuthAndSignUpRequest](r)
+	var req payloads.UserAuthAndSignUpRequest
+	err := httputils.ReadJSON(w, r, &req)
 	if err != nil {
 		httputils.ErrorJSON(w, err, http.StatusBadRequest)
 		return

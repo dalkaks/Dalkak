@@ -1,6 +1,6 @@
 package config
 
-const MaxUploadSize = 32 << 20 // 32 MB
+// const MaxUploadSize = 32 << 20 // 32 MB
 
 var AllowedImageExtensions = map[string]bool{
 	"jpg":  true,
