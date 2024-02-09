@@ -2,7 +2,6 @@ package httputils
 
 import (
 	"dalkak/pkg/dtos"
-	"dalkak/pkg/utils/reflectutils"
 	"errors"
 	"net/http"
 	"net/url"
@@ -30,20 +29,6 @@ func ParseDomain(u string) (string, error) {
 	}
 
 	return host, nil
-}
-
-func GetRequestData[T any](r *http.Request) (*T, error) {
-	reqMap, ok := r.Context().Value("request").(map[string]interface{})
-	if !ok {
-		return nil, errors.New("invalid request")
-	}
-
-	result, err := reflectutils.MapToStruct[T](reqMap)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func GetUserInfoData(r *http.Request) (*dtos.UserInfo, error) {

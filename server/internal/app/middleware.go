@@ -1,12 +1,15 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/securityutils"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"mime"
 	"net/http"
 	"strings"
@@ -58,8 +61,6 @@ func (app *APP) getTokenFromHeader(next http.Handler) http.Handler {
 
 func (app *APP) processData(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var reqMap map[string]interface{}
-
 		contentType := r.Header.Get("Content-Type")
 		if contentType == "" {
 			next.ServeHTTP(w, r)
@@ -74,39 +75,49 @@ func (app *APP) processData(next http.Handler) http.Handler {
 
 		switch mediaType {
 		case "application/json":
-			if err := httputils.ReadJSON(w, r, &reqMap); err != nil {
-				httputils.ErrorJSON(w, errors.New("JSON decoding error"), http.StatusBadRequest)
-				return
-			}
-
-		// case "application/x-www-form-urlencoded", "multipart/form-data":
-		// 	if err := r.ParseMultipartForm(config.MaxUploadSize); err != nil {
-		// 		httputils.ErrorJSON(w, errors.New("Form parsing error"), http.StatusBadRequest)
-		// 		return
-		// 	}
-		// 	reqMap = make(map[string]interface{})
-		// 	for key, values := range r.Form {
-		// 		if len(values) > 0 {
-		// 			reqMap[key] = values[0]
-		// 		}
-		// 	}
+			next.ServeHTTP(w, r)
 
 		default:
 			httputils.ErrorJSON(w, errors.New("Unsupported content type"), http.StatusUnsupportedMediaType)
 			return
 		}
-
-		ctx := context.WithValue(r.Context(), "request", reqMap)
-		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
 func (app *APP) verifyMetaMaskSignature(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 요청 본문을 버퍼에 읽어 저장
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		// 요청 본문을 다시 설정하여 후속 처리에서도 사용할 수 있도록 함
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		// 버퍼에서 읽은 본문 데이터를 사용하여 필요한 작업 수행
+		var requestData map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &requestData); err != nil {
+			httputils.ErrorJSON(w, err, http.StatusBadRequest)
+			return
+		}
+
 		msg := "안전하게 지갑 연결"
 
-		signature := common.FromHex(r.Context().Value("request").(map[string]interface{})["Signature"].(string))
-		reqWalletAddr := common.HexToAddress(r.Context().Value("request").(map[string]interface{})["WalletAddress"].(string))
+		signatureStr, ok := requestData["signature"].(string)
+		if !ok {
+			httputils.ErrorJSON(w, errors.New("signature is missing or not a string"), http.StatusBadRequest)
+			return
+		}
+		signature := common.FromHex(signatureStr)
+
+		walletAddressStr, ok := requestData["walletAddress"].(string)
+		if !ok {
+			httputils.ErrorJSON(w, errors.New("walletAddress is missing or not a string"), http.StatusBadRequest)
+			return
+		}
+		reqWalletAddr := common.HexToAddress(walletAddressStr)
 
 		if signature[64] != 27 && signature[64] != 28 {
 			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: incorrect recovery id"), http.StatusUnauthorized)

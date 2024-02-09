@@ -36,13 +36,14 @@ func (handler *BoardHandler) createPresignedURL(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	req, err := httputils.GetRequestData[payloads.BoardUploadMediaRequest](r)
+	var req payloads.BoardUploadMediaRequest
+	err = httputils.ReadJSON(w, r, &req)
 	if err != nil {
 		httputils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	result, err := handler.boardService.CreatePresignedURL(req, userInfo)
+	result, err := handler.boardService.CreatePresignedURL(&req, userInfo)
 	if err != nil {
 		// Todo: error handle
 		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
