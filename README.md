@@ -4,9 +4,11 @@
 
 ## 사전 설치
 
-- gnu make (gmake)
-- go 1.21.x
-- aws-cli
+- gnu make 설치
+- [Windows](https://jstar0525.tistory.com/264)
+- [go 1.21.x](https://go.dev/dl/)
+- [aws-cli](https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/getting-started-install.html)
+
 
 ## aws-cli 설정
 
