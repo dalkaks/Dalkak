@@ -7,7 +7,7 @@ import (
 	"dalkak/pkg/utils/generateutils"
 	"errors"
 	"fmt"
-	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -48,45 +48,50 @@ func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, 
 	return &Storage{client: storageClient, bucket: bucket, staticLink: staticLink}, nil
 }
 
-func (storage *Storage) Upload(media *dtos.MediaDto, path string) (*dtos.MediaMeta, error) {
-	contentTypeParts := strings.Split(media.Meta.ContentType, "/")
-	contentTypePath := ""
-	if len(contentTypeParts) > 0 {
-		contentTypePath = contentTypeParts[0]
+func (storage *Storage) CreatePresignedURL(mediaType dtos.MediaType, ext string) (*dtos.MediaMeta, error) {
+	expires := 30 * time.Minute
+	presigner := s3.NewPresignClient(storage.client, func(o *s3.PresignOptions) {
+		o.Expires = expires
+	})
+	contentType := fmt.Sprintf("%s/%s", mediaType, ext)
+	id, err := storage.generateMediaId(mediaType)
+	if err != nil {
+		return nil, err
 	}
 
-	uuid := generateutils.GenerateUUID()
-	key := fmt.Sprintf("%s/%s/%s.%s", path, contentTypePath, uuid, media.Meta.Extension)
+	key := fmt.Sprintf("temp/%s/%s.%s", mediaType, id, ext)
 
-	_, err := storage.client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+	presignedURL, err := presigner.PresignPutObject(context.Background(), &s3.PutObjectInput{
+		Bucket:      aws.String(storage.bucket),
+		Key:         aws.String(key),
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &dtos.MediaMeta{
+		ID:          id,
+		Extension:   ext,
+		ContentType: contentType,
+		URL:         presignedURL.URL,
+	}, nil
+}
+
+func (storage *Storage) generateMediaId(mediaType dtos.MediaType) (string, error) {
+	uuid := generateutils.GenerateUUID()
+	key := fmt.Sprintf("temp/%s/%s", mediaType.String(), uuid)
+
+	_, err := storage.client.HeadObject(context.Background(), &s3.HeadObjectInput{
 		Bucket: aws.String(storage.bucket),
 		Key:    aws.String(key),
 	})
 
-	if err != nil {
-		var noSuchKeyErr *types.NoSuchKey
-		var notFoundErr *types.NotFound
-		if errors.As(err, &noSuchKeyErr) || errors.As(err, &notFoundErr) {
-			_, err := storage.client.PutObject(context.TODO(), &s3.PutObjectInput{
-				Bucket:      aws.String(storage.bucket),
-				Key:         aws.String(key),
-				Body:        media.File,
-				ContentType: aws.String(media.Meta.ContentType),
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
-	} else {
-		return nil, errors.New("file already exists")
+	var noSuchKeyErr *types.NoSuchKey
+	var notFoundErr *types.NotFound
+	if err != nil && (errors.As(err, &noSuchKeyErr) || errors.As(err, &notFoundErr)) {
+		return uuid, nil
 	}
-
-	return &dtos.MediaMeta{
-		ID:          uuid,
-		Extension:   media.Meta.Extension,
-		ContentType: media.Meta.ContentType,
-		URL: storage.staticLink + key,
-	}, nil
+	// Todo: error handling(중복 또는 에러)
+	return "", errors.New("failed to generate media id")
 }

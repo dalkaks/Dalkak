@@ -14,22 +14,24 @@ import (
 
 type UserRepositoryImpl struct {
 	client *dynamodb.Client
-	prefix string
+	table  string
 }
 
 func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
 	client := db.GetClient()
-	prefix := db.GetPrefix()
+	table := db.GetTable()
 
 	return &UserRepositoryImpl{
 		client: client,
-		prefix: prefix,
+		table:  table,
 	}
 }
 
 func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
-	table := repo.prefix + UserTableName
-	newUser := &UserTable{
+	newUser := &UserData{
+		Pk:            GenerateUserDataPk(walletAddress),
+		Sk:            GenerateUserDataPk(walletAddress),
+		EntityType:    UserDataType,
 		WalletAddress: walletAddress,
 		Timestamp:     timeutils.GetTimestamp(),
 	}
@@ -39,8 +41,8 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
 		return err
 	}
 
-	_, err = repo.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
-		TableName: aws.String(table),
+	_, err = repo.client.PutItem(context.Background(), &dynamodb.PutItemInput{
+		TableName: aws.String(repo.table),
 		Item:      av,
 	})
 	if err != nil {
@@ -50,25 +52,28 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
 }
 
 func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, error) {
-	table := repo.prefix + UserTableName
-	userToFind := &UserTable{WalletAddress: walletAddress}
+	var userToFind UserData
+	key := map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: GenerateUserDataPk(walletAddress)},
+		"Sk": &types.AttributeValueMemberS{Value: GenerateUserDataPk(walletAddress)},
+	}
 
-	response, err := repo.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
-		TableName: aws.String(table),
-		Key: map[string]types.AttributeValue{
-			WalletAddressKey: &types.AttributeValueMemberS{Value: userToFind.WalletAddress},
-		},
-	})
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String(repo.table),
+		Key:       key,
+	}
+
+	result, err := repo.client.GetItem(context.Background(), input)
 	if err != nil {
 		return nil, err
 	}
 
-	if response.Item != nil {
-		err = attributevalue.UnmarshalMap(response.Item, &userToFind)
+	if result.Item != nil {
+		err = attributevalue.UnmarshalMap(result.Item, &userToFind)
 		if err != nil {
 			return nil, err
 		}
-		return ConvertUserTableToUserDto(userToFind), nil
+		return userToFind.ToUserDto(), nil
 	}
 	return nil, nil
 }

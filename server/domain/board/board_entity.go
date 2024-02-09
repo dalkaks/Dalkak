@@ -1,13 +1,30 @@
 package board
 
-type BoardImageTable struct {
+import "dalkak/pkg/dtos"
+
+type BoardImageData struct {
+	Pk         string
+	Sk         string
+	EntityType string
+	Timestamp  int64
+
 	Id          string
-	BoardId     *string
 	Extension   string
 	ContentType string
 	Url         string
-	UserId      string
-	Timestamp   int64
 }
 
-const BoardImageTableName = "board_image"
+const BoardImageDataType = "BoardImage"
+
+func GenerateBoardDataPk(boardId string) string {
+	return BoardImageDataType + `#` + boardId
+}
+
+func (b *BoardImageData) ToBoardImageDto() *dtos.BoardImageDto {
+	return &dtos.BoardImageDto{
+		Id:          b.Id,
+		Extension:   b.Extension,
+		ContentType: b.ContentType,
+		Url:         b.Url,
+	}
+}

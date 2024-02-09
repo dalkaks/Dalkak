@@ -6,5 +6,5 @@ import (
 )
 
 type BoardService interface {
-	UploadImage(media *dtos.MediaDto, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error)
+	CreatePresignedURL(req *payloads.BoardUploadMediaRequest, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error)
 }
