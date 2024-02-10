@@ -50,7 +50,12 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 
 	mode := handler.userService.GetMode()
 	domain := handler.userService.GetDomain()
-	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	err = httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	if err != nil {
+		httputils.DeleteCookieRefresh(w)
+		httputils.HandleAppError(w, err)
+		return
+	}
 
 	result := &payloads.UserAccessTokenResponse{
 		AccessToken: authTokens.AccessToken,
@@ -78,7 +83,12 @@ func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Reques
 
 	mode := handler.userService.GetMode()
 	domain := handler.userService.GetDomain()
-	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	err = httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	if err != nil {
+		httputils.DeleteCookieRefresh(w)
+		httputils.HandleAppError(w, err)
+		return
+	}
 
 	result := &payloads.UserAccessTokenResponse{
 		AccessToken: authTokens.AccessToken,

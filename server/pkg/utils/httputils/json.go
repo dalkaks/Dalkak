@@ -1,6 +1,7 @@
 package httputils
 
 import (
+	"dalkak/pkg/dtos"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -60,7 +61,7 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	// make sure only one JSON value in payload
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
-		return &AppError{
+		return &dtos.AppError{
 			Code:    http.StatusBadRequest,
 			Message: "request body must only contain a single JSON object",
 		}
