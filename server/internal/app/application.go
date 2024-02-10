@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"dalkak/config"
+	appsecurity "dalkak/internal/security"
 	"dalkak/pkg/interfaces"
-	"dalkak/pkg/utils/securityutils"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +16,7 @@ type APP struct {
 	StaticLink string
 	Database   *DB
 	Storage    *Storage
-	KmsSet     *securityutils.KmsSet
+	KmsSet     *appsecurity.KmsSet
 }
 
 func NewApplication(ctx context.Context, mode string) (*APP, error) {
@@ -31,7 +31,7 @@ func NewApplication(ctx context.Context, mode string) (*APP, error) {
 	app.Domain = appConfig.Domain
 	app.StaticLink = appConfig.StaticLink
 
-	kmsSet, err := securityutils.GetKMSClient(ctx, mode, appConfig.KmsKeyId)
+	kmsSet, err := appsecurity.GetKMSClient(ctx, mode, appConfig.KmsKeyId)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/utils/timeutils"
+	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -38,7 +39,10 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
 
 	av, err := attributevalue.MarshalMap(newUser)
 	if err != nil {
-		return err
+		return &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to marshal user data to map",
+		}
 	}
 
 	_, err = repo.client.PutItem(context.Background(), &dynamodb.PutItemInput{
@@ -46,7 +50,10 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
 		Item:      av,
 	})
 	if err != nil {
-		return err
+		return &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to put user data",
+		}
 	}
 	return nil
 }
@@ -65,13 +72,19 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 
 	result, err := repo.client.GetItem(context.Background(), input)
 	if err != nil {
-		return nil, err
+		return nil, &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get user data",
+		}
 	}
 
 	if result.Item != nil {
 		err = attributevalue.UnmarshalMap(result.Item, &userToFind)
 		if err != nil {
-			return nil, err
+			return nil, &dtos.AppError{
+				Code:    http.StatusInternalServerError,
+				Message: "Failed to unmarshal user data",
+			}
 		}
 		return userToFind.ToUserDto(), nil
 	}

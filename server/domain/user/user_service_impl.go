@@ -1,19 +1,19 @@
 package user
 
 import (
+	appsecurity "dalkak/internal/security"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
-	"dalkak/pkg/utils/securityutils"
 )
 
 type UserServiceImpl struct {
 	mode   string
 	domain string
 	db     interfaces.UserRepository
-	kmsSet *securityutils.KmsSet
+	kmsSet *appsecurity.KmsSet
 }
 
-func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *securityutils.KmsSet) interfaces.UserService {
+func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *appsecurity.KmsSet) interfaces.UserService {
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
@@ -48,7 +48,7 @@ func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature st
 	generateTokenDto := dtos.GenerateTokenDto{
 		WalletAddress: walletAddress,
 	}
-	authTokens, nowTime, err := securityutils.GenerateAuthTokens(service.domain, service.kmsSet, &generateTokenDto)
+	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.kmsSet, &generateTokenDto)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -57,7 +57,7 @@ func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature st
 }
 
 func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthTokens, int64, error) {
-	walletAddress, err := securityutils.ParseTokenWithPublicKey(refreshToken, service.kmsSet)
+	walletAddress, err := appsecurity.ParseTokenWithPublicKey(refreshToken, service.kmsSet)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -65,7 +65,7 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	generateTokenDto := dtos.GenerateTokenDto{
 		WalletAddress: walletAddress,
 	}
-	authTokens, nowTime, err := securityutils.GenerateAuthTokens(service.domain, service.kmsSet, &generateTokenDto)
+	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.kmsSet, &generateTokenDto)
 	if err != nil {
 		return nil, 0, err
 	}

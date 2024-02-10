@@ -2,7 +2,6 @@ package httputils
 
 import (
 	"dalkak/pkg/dtos"
-	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,7 +11,10 @@ import (
 func ParseDomain(u string) (string, error) {
 	parsedUrl, err := url.Parse(u)
 	if err != nil {
-		return "", err
+		return "", &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "failed to parse url",
+		}
 	}
 
 	host := parsedUrl.Hostname()
@@ -34,7 +36,10 @@ func ParseDomain(u string) (string, error) {
 func GetUserInfoData(r *http.Request) (*dtos.UserInfo, error) {
 	userInfo, ok := r.Context().Value("user").(dtos.UserInfo)
 	if !ok {
-		return nil, errors.New("invalid user info")
+		return nil, &dtos.AppError{
+			Code:    http.StatusUnauthorized,
+			Message: "user info not found",
+		}
 	}
 
 	return &userInfo, nil

@@ -4,7 +4,6 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/httputils"
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -39,56 +38,67 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 	var req payloads.UserAuthAndSignUpRequest
 	err := httputils.ReadJSON(w, r, &req)
 	if err != nil {
-		httputils.ErrorJSON(w, err, http.StatusBadRequest)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
 	authTokens, tokenTime, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
 	if err != nil {
-		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
 	mode := handler.userService.GetMode()
 	domain := handler.userService.GetDomain()
-	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	err = httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	if err != nil {
+		handleAppErrorAndDeleteCookieRefresh(w, err)
+		return
+	}
 
 	result := &payloads.UserAccessTokenResponse{
 		AccessToken: authTokens.AccessToken,
 	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 	}
 }
 
 func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Request) {
-	refreshToken := httputils.GetCookieRefresh(r)
-	if refreshToken == "" {
-		httputils.ErrorJSON(w, errors.New("refresh token not found"), http.StatusBadRequest)
+	refreshToken, err := httputils.GetCookieRefresh(r)
+	if err != nil {
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
 	authTokens, tokenTime, err := handler.userService.ReissueRefresh(refreshToken)
 	if err != nil {
-		httputils.DeleteCookieRefresh(w)
-		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
 	mode := handler.userService.GetMode()
 	domain := handler.userService.GetDomain()
-	httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	err = httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
+	if err != nil {
+		handleAppErrorAndDeleteCookieRefresh(w, err)
+		return
+	}
 
 	result := &payloads.UserAccessTokenResponse{
 		AccessToken: authTokens.AccessToken,
 	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-		httputils.DeleteCookieRefresh(w)
-		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 	}
 }
 
 func (handler *UserHandler) logout(w http.ResponseWriter, r *http.Request) {
 	httputils.DeleteCookieRefresh(w)
-	httputils.WriteJSON(w, http.StatusOK, nil)
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
+}
+
+func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
+	httputils.DeleteCookieRefresh(w)
+	httputils.HandleAppError(w, err)
 }
