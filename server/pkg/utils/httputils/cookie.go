@@ -14,10 +14,7 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 
 	parsedDomain, err := ParseDomain(domain)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "failed to parse domain",
-		}
+		return err
 	}
 
 	isSecure := mode != "LOCAL"

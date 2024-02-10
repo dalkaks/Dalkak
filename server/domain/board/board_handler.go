@@ -20,10 +20,6 @@ func NewBoardHandler(boardService interfaces.BoardService) *BoardHandler {
 func (handler *BoardHandler) Routes() chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
-	})
-
 	router.Post("/image/presigned", handler.createPresignedURL)
 
 	return router
