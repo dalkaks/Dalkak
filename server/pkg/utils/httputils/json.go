@@ -55,7 +55,10 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	// attempt to decode the data
 	err := dec.Decode(data)
 	if err != nil {
-		return err
+		return &dtos.AppError{
+			Code:    http.StatusBadRequest,
+			Message: "invalid JSON",
+		}
 	}
 
 	// make sure only one JSON value in payload

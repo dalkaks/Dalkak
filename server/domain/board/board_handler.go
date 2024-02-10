@@ -28,25 +28,22 @@ func (handler *BoardHandler) Routes() chi.Router {
 func (handler *BoardHandler) createPresignedURL(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := httputils.GetUserInfoData(r)
 	if err != nil {
-		httputils.ErrorJSON(w, err, http.StatusUnauthorized)
+		httputils.HandleAppError(w, err)
 		return
 	}
 
 	var req payloads.BoardUploadMediaRequest
 	err = httputils.ReadJSON(w, r, &req)
 	if err != nil {
-		httputils.ErrorJSON(w, err, http.StatusBadRequest)
+		httputils.HandleAppError(w, err)
 		return
 	}
 
 	result, err := handler.boardService.CreatePresignedURL(&req, userInfo)
 	if err != nil {
-		// Todo: error handle
-		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+		httputils.HandleAppError(w, err)
 		return
 	}
 
-	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-		httputils.ErrorJSON(w, err, http.StatusInternalServerError)
-	}
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
 }

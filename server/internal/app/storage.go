@@ -7,6 +7,7 @@ import (
 	"dalkak/pkg/utils/generateutils"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -67,7 +68,10 @@ func (storage *Storage) CreatePresignedURL(mediaType dtos.MediaType, ext string)
 		ContentType: aws.String(contentType),
 	})
 	if err != nil {
-		return nil, err
+		return nil, &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to create presigned url",
+		}
 	}
 
 	return &dtos.MediaMeta{
@@ -93,5 +97,8 @@ func (storage *Storage) generateMediaId(mediaType dtos.MediaType) (string, error
 		return uuid, nil
 	}
 	// Todo: error handling(중복 또는 에러)
-	return "", errors.New("failed to generate media id")
+	return "", &dtos.AppError{
+		Code:    http.StatusInternalServerError,
+		Message: "Failed to generate media id",
+	}
 }

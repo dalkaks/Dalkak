@@ -4,7 +4,7 @@ import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
-	"errors"
+	"net/http"
 )
 
 type BoardServiceImpl struct {
@@ -30,7 +30,10 @@ func NewBoardService(mode string, domain string, db interfaces.Database, storage
 func (service *BoardServiceImpl) CreatePresignedURL(dto *payloads.BoardUploadMediaRequest, userInfo *dtos.UserInfo) (*payloads.BoardUploadMediaResponse, error) {
 	// req 검증
 	if dto.IsValid() == false {
-		return nil, errors.New("invalid request")
+		return nil, &dtos.AppError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request",
+		}
 	}
 
 	// s3 presigned url 생성

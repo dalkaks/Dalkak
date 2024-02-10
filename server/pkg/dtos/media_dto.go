@@ -1,8 +1,8 @@
 package dtos
 
 import (
-	"errors"
 	"io"
+	"net/http"
 )
 
 type MediaMeta struct {
@@ -30,7 +30,10 @@ func ToMediaType(s string) (MediaType, error) {
 	case "video":
 		return Video, nil
 	default:
-		return 0, errors.New("invalid media type")
+		return 0, &AppError{
+			Code:    http.StatusBadRequest,
+			Message: "invalid media type",
+		}
 	}
 }
 
