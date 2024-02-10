@@ -1,7 +1,6 @@
 package dtos
 
 import (
-	"io"
 	"net/http"
 )
 
@@ -35,11 +34,6 @@ func ToMediaType(s string) (MediaType, error) {
 			Message: "invalid media type",
 		}
 	}
-}
-
-type MediaDto struct {
-	Meta MediaMeta
-	File io.Reader
 }
 
 func (m *MediaMeta) ToBoardImageDto() *BoardImageDto {
