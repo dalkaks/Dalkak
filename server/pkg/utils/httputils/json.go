@@ -2,7 +2,6 @@ package httputils
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 )
@@ -21,6 +20,12 @@ func WriteJSON(w http.ResponseWriter, status int, data interface{}, wrapKey ...s
 	wrappedData = map[string]interface{}{key: data}
 
 	return json.NewEncoder(w).Encode(wrappedData)
+}
+
+func WriteJSONAndHandleError(w http.ResponseWriter, status int, data interface{}, errorHandler func(http.ResponseWriter, error), wrapKey ...string) {
+	if err := WriteJSON(w, status, data, wrapKey...); err != nil {
+		errorHandler(w, err)
+	}
 }
 
 func ErrorJSON(w http.ResponseWriter, err error, status ...int) {
@@ -55,7 +60,10 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	// make sure only one JSON value in payload
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
-		return errors.New("body must only contain a single JSON value")
+		return &AppError{
+			Code:    http.StatusBadRequest,
+			Message: "request body must only contain a single JSON object",
+		}
 	}
 
 	return nil

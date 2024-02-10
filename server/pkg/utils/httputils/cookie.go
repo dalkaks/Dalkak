@@ -31,12 +31,12 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 	})
 }
 
-func GetCookieRefresh(r *http.Request) string {
+func GetCookieRefresh(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
-		return ""
+		return "", &AppError{http.StatusUnauthorized, "invalid refresh token"}
 	}
-	return cookie.Value
+	return cookie.Value, nil
 }
 
 func DeleteCookieRefresh(w http.ResponseWriter) {
