@@ -77,7 +77,7 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	return authTokens, nowTime, nil
 }
 
-func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserBoardImagePresignedRequest, userInfo *dtos.UserInfo) (*payloads.UserBoardImagePresignedResponse, error) {
+func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserUploadMediaRequest, userInfo *dtos.UserInfo) (*payloads.UserBoardImagePresignedResponse, error) {
 	if dto.IsValid() == false {
 		return nil, &dtos.AppError{
 			Code:    http.StatusBadRequest,
@@ -85,12 +85,18 @@ func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserBoardImageP
 		}
 	}
 
-	mediaType, err := dtos.ToMediaType(dto.MediaType)
+	uploadMediaDto, err := dto.ToUploadMediaDto()
 	if err != nil {
 		return nil, err
 	}
 
-	mediaMeta, err := service.storage.CreatePresignedURL(mediaType, dto.Ext)
+	// Todo: board storage에 있는지 확인 필요
+	mediaMeta, err := service.storage.CreatePresignedURL(uploadMediaDto)
+	if err != nil {
+		return nil, err
+	}
+	
+	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, dto.Prefix, mediaMeta)
 	if err != nil {
 		return nil, err
 	}

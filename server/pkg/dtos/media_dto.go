@@ -4,6 +4,12 @@ import (
 	"net/http"
 )
 
+type UploadMediaDto struct {
+	MediaType MediaType
+	Ext       string
+	Prefix    string
+}
+
 type MediaMeta struct {
 	ID          string `json:"id"`
 	Extension   string `json:"extension"`

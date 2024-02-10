@@ -49,18 +49,19 @@ func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, 
 	return &Storage{client: storageClient, bucket: bucket, staticLink: staticLink}, nil
 }
 
-func (storage *Storage) CreatePresignedURL(mediaType dtos.MediaType, ext string) (*dtos.MediaMeta, error) {
+func (storage *Storage) CreatePresignedURL(dto *dtos.UploadMediaDto) (*dtos.MediaMeta, error) {
+	mediaType := dto.MediaType.String()
 	expires := 30 * time.Minute
 	presigner := s3.NewPresignClient(storage.client, func(o *s3.PresignOptions) {
 		o.Expires = expires
 	})
-	contentType := fmt.Sprintf("%s/%s", mediaType, ext)
-	id, err := storage.generateMediaId(mediaType)
+	contentType := fmt.Sprintf("%s/%s", mediaType, dto.Ext)
+	id, err := storage.generateMediaId(dto)
 	if err != nil {
 		return nil, err
 	}
 
-	key := fmt.Sprintf("temp/%s/%s.%s", mediaType, id, ext)
+	key := fmt.Sprintf("temp/%s/%s.%s", mediaType, id, dto.Ext)
 
 	presignedURL, err := presigner.PresignPutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(storage.bucket),
@@ -76,15 +77,15 @@ func (storage *Storage) CreatePresignedURL(mediaType dtos.MediaType, ext string)
 
 	return &dtos.MediaMeta{
 		ID:          id,
-		Extension:   ext,
+		Extension:   dto.Ext,
 		ContentType: contentType,
 		URL:         presignedURL.URL,
 	}, nil
 }
 
-func (storage *Storage) generateMediaId(mediaType dtos.MediaType) (string, error) {
+func (storage *Storage) generateMediaId(dto *dtos.UploadMediaDto) (string, error) {
 	uuid := generateutils.GenerateUUID()
-	key := fmt.Sprintf("temp/%s/%s", mediaType.String(), uuid)
+	key := fmt.Sprintf("%s/%s/%s", dto.Prefix, dto.MediaType.String(), uuid)
 
 	_, err := storage.client.HeadObject(context.Background(), &s3.HeadObjectInput{
 		Bucket: aws.String(storage.bucket),
