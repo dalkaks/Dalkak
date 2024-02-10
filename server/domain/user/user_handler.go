@@ -38,13 +38,13 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 	var req payloads.UserAuthAndSignUpRequest
 	err := httputils.ReadJSON(w, r, &req)
 	if err != nil {
-		httputils.HandleAppError(w, err)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
 	authTokens, tokenTime, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
 	if err != nil {
-		httputils.HandleAppError(w, err)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
@@ -52,8 +52,7 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 	domain := handler.userService.GetDomain()
 	err = httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
 	if err != nil {
-		httputils.DeleteCookieRefresh(w)
-		httputils.HandleAppError(w, err)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
@@ -61,23 +60,20 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 		AccessToken: authTokens.AccessToken,
 	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-		httputils.DeleteCookieRefresh(w)
-		httputils.HandleAppError(w, err)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 	}
 }
 
 func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := httputils.GetCookieRefresh(r)
 	if err != nil {
-		httputils.DeleteCookieRefresh(w)
-		httputils.HandleAppError(w, err)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
 	authTokens, tokenTime, err := handler.userService.ReissueRefresh(refreshToken)
 	if err != nil {
-		httputils.DeleteCookieRefresh(w)
-		httputils.HandleAppError(w, err)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
@@ -85,8 +81,7 @@ func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Reques
 	domain := handler.userService.GetDomain()
 	err = httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
 	if err != nil {
-		httputils.DeleteCookieRefresh(w)
-		httputils.HandleAppError(w, err)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
 	}
 
@@ -94,12 +89,16 @@ func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Reques
 		AccessToken: authTokens.AccessToken,
 	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-		httputils.DeleteCookieRefresh(w)
-		httputils.HandleAppError(w, err)
+		handleAppErrorAndDeleteCookieRefresh(w, err)
 	}
 }
 
 func (handler *UserHandler) logout(w http.ResponseWriter, r *http.Request) {
 	httputils.DeleteCookieRefresh(w)
 	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
+}
+
+func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
+	httputils.DeleteCookieRefresh(w)
+	httputils.HandleAppError(w, err)
 }
