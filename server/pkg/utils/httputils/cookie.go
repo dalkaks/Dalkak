@@ -1,20 +1,20 @@
 package httputils
 
 import (
-	"dalkak/pkg/utils/securityutils"
+	"dalkak/config"
+	"dalkak/pkg/dtos"
 	"net/http"
 	"time"
 )
 
-func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, tokenTime int64, domain string) {
+func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, tokenTime int64, domain string) error {
 	tokenExpires := time.Unix(tokenTime, 0)
-	refreshTokenDuration := time.Duration(securityutils.RefreshTokenTTL) * time.Second
+	refreshTokenDuration := time.Duration(config.RefreshTokenTTL) * time.Second
 	refreshTokenexpires := tokenExpires.Add(refreshTokenDuration)
 
 	parsedDomain, err := ParseDomain(domain)
 	if err != nil {
-		ErrorJSON(w, err, http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	isSecure := mode != "LOCAL"
@@ -23,20 +23,24 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 		Path:     "/",
 		Value:    refreshToken,
 		Expires:  refreshTokenexpires,
-		MaxAge:   securityutils.RefreshTokenTTL,
+		MaxAge:   config.RefreshTokenTTL,
 		SameSite: http.SameSiteLaxMode,
 		Domain:   parsedDomain,
 		HttpOnly: true,
 		Secure:   isSecure,
 	})
+	return nil
 }
 
-func GetCookieRefresh(r *http.Request) string {
+func GetCookieRefresh(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
-		return ""
+		return "", &dtos.AppError{
+			Code:    http.StatusUnauthorized,
+			Message: "refresh token not found",
+		}
 	}
-	return cookie.Value
+	return cookie.Value, nil
 }
 
 func DeleteCookieRefresh(w http.ResponseWriter) {
