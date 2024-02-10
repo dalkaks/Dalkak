@@ -97,7 +97,7 @@ func (storage *Storage) generateMediaId(dto *dtos.UploadMediaDto) (string, error
 	if err != nil && (errors.As(err, &noSuchKeyErr) || errors.As(err, &notFoundErr)) {
 		return uuid, nil
 	}
-	// Todo: error handling(중복 또는 에러)
+	// Todo: temp 파일 체크, error handling(중복 또는 에러)
 	return "", &dtos.AppError{
 		Code:    http.StatusInternalServerError,
 		Message: "Failed to generate media id",

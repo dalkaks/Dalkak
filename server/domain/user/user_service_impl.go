@@ -90,12 +90,12 @@ func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserUploadMedia
 		return nil, err
 	}
 
-	// Todo: board storage에 있는지 확인 필요
 	mediaMeta, err := service.storage.CreatePresignedURL(uploadMediaDto)
 	if err != nil {
 		return nil, err
 	}
-	
+
+	// Todo : 기한이 지남에 따라 upload media 삭제
 	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, dto.Prefix, mediaMeta)
 	if err != nil {
 		return nil, err

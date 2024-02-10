@@ -31,7 +31,7 @@ func (handler *UserHandler) Routes() chi.Router {
 
 	router.Post("/logout", handler.logout)
 
-	router.Post("/presigned/image", handler.createPresignedURL)
+	router.Post("/media/presigned", handler.createPresignedURL)
 
 	return router
 }
