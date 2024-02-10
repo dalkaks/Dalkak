@@ -139,7 +139,7 @@ func verifyTokenSignature(tokenString string, kmsSet *KmsSet) error {
 	if err != nil {
 		return &dtos.AppError{
 			Code:    http.StatusUnauthorized,
-			Message: "Failed to decode signature",
+			Message: "Invalid signature: failed to decode signature",
 		}
 	}
 
@@ -151,7 +151,7 @@ func verifyTokenSignature(tokenString string, kmsSet *KmsSet) error {
 	if err != nil {
 		return &dtos.AppError{
 			Code:    http.StatusUnauthorized,
-			Message: "Failed to unmarshal signature",
+			Message: "Invalid signature: failed to unmarshal signature",
 		}
 	}
 
@@ -159,7 +159,7 @@ func verifyTokenSignature(tokenString string, kmsSet *KmsSet) error {
 	if !ok {
 		return &dtos.AppError{
 			Code:    http.StatusUnauthorized,
-			Message: "Failed to verify signature",
+			Message: "Invalid signature: failed to verify signature",
 		}
 	}
 	return nil
