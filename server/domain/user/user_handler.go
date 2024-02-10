@@ -31,6 +31,8 @@ func (handler *UserHandler) Routes() chi.Router {
 
 	router.Post("/logout", handler.logout)
 
+	router.Post("/board/image/presigned", handler.createPresignedURL)
+
 	return router
 }
 
@@ -101,4 +103,27 @@ func (handler *UserHandler) logout(w http.ResponseWriter, r *http.Request) {
 func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
 	httputils.DeleteCookieRefresh(w)
 	httputils.HandleAppError(w, err)
+}
+
+func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Request) {
+	userInfo, err := httputils.GetUserInfoData(r)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	var req payloads.UserBoardImagePresignedRequest
+	err = httputils.ReadJSON(w, r, &req)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	result, err := handler.userService.CreatePresignedURL(&req, userInfo)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
 }
