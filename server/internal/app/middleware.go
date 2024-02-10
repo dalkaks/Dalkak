@@ -41,7 +41,7 @@ func (app *APP) getTokenFromHeader(next http.Handler) http.Handler {
 
 		headerParts := strings.Split(authHeader, " ")
 		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-			httputils.ErrorJSON(w, errors.New("invalid auth header"), http.StatusBadRequest)
+			httputils.ErrorJSON(w, errors.New("invalid auth header"), http.StatusUnauthorized)
 			return
 		}
 
@@ -69,7 +69,7 @@ func (app *APP) processData(next http.Handler) http.Handler {
 
 		mediaType, _, err := mime.ParseMediaType(contentType)
 		if err != nil {
-			httputils.ErrorJSON(w, err, http.StatusBadRequest)
+			httputils.ErrorJSON(w, errors.New("Failed to parse media type"), http.StatusBadRequest)
 			return
 		}
 
@@ -89,7 +89,7 @@ func (app *APP) verifyMetaMaskSignature(next http.Handler) http.Handler {
 		// 요청 본문을 버퍼에 읽어 저장
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
-			httputils.ErrorJSON(w, err, http.StatusInternalServerError)
+			httputils.ErrorJSON(w, errors.New("Failed to read request body"), http.StatusInternalServerError)
 			return
 		}
 
@@ -99,7 +99,7 @@ func (app *APP) verifyMetaMaskSignature(next http.Handler) http.Handler {
 		// 버퍼에서 읽은 본문 데이터를 사용하여 필요한 작업 수행
 		var requestData map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &requestData); err != nil {
-			httputils.ErrorJSON(w, err, http.StatusBadRequest)
+			httputils.ErrorJSON(w, errors.New("Failed to parse request body"), http.StatusBadRequest)
 			return
 		}
 
@@ -127,7 +127,7 @@ func (app *APP) verifyMetaMaskSignature(next http.Handler) http.Handler {
 
 		recoveredAddr, err := recoverAddressFromSignature(signature, []byte(msg))
 		if err != nil {
-			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: "+err.Error()), http.StatusUnauthorized)
+			httputils.ErrorJSON(w, errors.New("Invalid MetaMask signature: failed to recover address"), http.StatusUnauthorized)
 			return
 		}
 
