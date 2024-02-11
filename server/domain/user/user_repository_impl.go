@@ -112,6 +112,7 @@ func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.M
 		Extension:   dto.Extension,
 		ContentType: dto.ContentType,
 		Url:         dto.URL,
+		IsConfirm:   false,
 	}
 
 	av, err := attributevalue.MarshalMap(newUploadMedia)
@@ -139,8 +140,9 @@ func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads
 	Sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType)
 	var mediaToFind UserMediaData
 	key := map[string]types.AttributeValue{
-		"Pk": &types.AttributeValueMemberS{Value: GenerateUserDataPk(userId)},
-		"Sk": &types.AttributeValueMemberS{Value: Sk},
+		"Pk":        &types.AttributeValueMemberS{Value: GenerateUserDataPk(userId)},
+		"Sk":        &types.AttributeValueMemberS{Value: Sk},
+		"IsConfirm": &types.AttributeValueMemberBOOL{Value: true},
 	}
 
 	input := &dynamodb.GetItemInput{

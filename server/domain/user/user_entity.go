@@ -39,6 +39,7 @@ type UserMediaData struct {
 	Extension   string
 	ContentType string
 	Url         string
+	IsConfirm   bool
 }
 
 func GenerateUserBoardImageDataSk(prefix string, mediaType string) string {
