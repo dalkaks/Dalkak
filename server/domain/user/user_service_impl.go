@@ -77,7 +77,7 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	return authTokens, nowTime, nil
 }
 
-func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserUploadMediaRequest, userInfo *dtos.UserInfo) (*payloads.UserBoardImagePresignedResponse, error) {
+func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserUploadMediaRequest, userInfo *dtos.UserInfo) (*payloads.UserUploadMediaResponse, error) {
 	if dto.IsValid() == false {
 		return nil, &dtos.AppError{
 			Code:    http.StatusBadRequest,
@@ -101,7 +101,7 @@ func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserUploadMedia
 		return nil, err
 	}
 
-	return &payloads.UserBoardImagePresignedResponse{
+	return &payloads.UserUploadMediaResponse{
 		Id:  mediaMeta.ID,
 		Url: mediaMeta.URL,
 	}, nil

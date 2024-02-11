@@ -50,7 +50,7 @@ func (req *UserUploadMediaRequest) ToUploadMediaDto() (*dtos.UploadMediaDto, err
 	}, nil
 }
 
-type UserBoardImagePresignedResponse struct {
+type UserUploadMediaResponse struct {
 	Id  string `json:"id"`
 	Url string `json:"url"`
 }
