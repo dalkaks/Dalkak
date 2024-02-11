@@ -36,8 +36,9 @@ type UserUploadMediaRequest struct {
 }
 
 type UserUploadMediaResponse struct {
-	Id  string `json:"id"`
-	Url string `json:"url"`
+	Id           string `json:"id"`
+	Url          string `json:"url"`
+	PresignedUrl string `json:"presignedUrl"`
 }
 
 func (req *UserUploadMediaRequest) IsValid() bool {

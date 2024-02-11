@@ -77,6 +77,35 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	return authTokens, nowTime, nil
 }
 
+func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto *payloads.UserUploadMediaRequest) (*payloads.UserUploadMediaResponse, error) {
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	uploadMediaDto, err := dto.ToUploadMediaDto()
+	if err != nil {
+		return nil, err
+	}
+
+	mediaMeta, presignedUrl, err := service.storage.CreatePresignedURL(uploadMediaDto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Todo : 기한이 지남에 따라 upload media 삭제
+	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, mediaMeta)
+	if err != nil {
+		return nil, err
+	}
+
+	return &payloads.UserUploadMediaResponse{
+		Id:           mediaMeta.ID,
+		Url:          mediaMeta.URL,
+		PresignedUrl: presignedUrl,
+	}, nil
+}
+
 func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserGetMediaRequest) (*payloads.UserGetMediaResponse, error) {
 	err := validateutils.Validate(dto)
 	if err != nil {
@@ -89,36 +118,8 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 	}
 
 	return &payloads.UserGetMediaResponse{
-		Id:  media.ID,
+		Id:          media.ID,
 		ContentType: media.ContentType,
-		Url: media.URL,
-	}, nil
-}
-
-func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto *payloads.UserUploadMediaRequest) (*payloads.UserUploadMediaResponse, error) {
-	err := validateutils.Validate(dto)
-	if err != nil {
-		return nil, err
-	}
-
-	uploadMediaDto, err := dto.ToUploadMediaDto()
-	if err != nil {
-		return nil, err
-	}
-
-	mediaMeta, err := service.storage.CreatePresignedURL(uploadMediaDto)
-	if err != nil {
-		return nil, err
-	}
-
-	// Todo : 기한이 지남에 따라 upload media 삭제
-	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, dto.Prefix, mediaMeta)
-	if err != nil {
-		return nil, err
-	}
-
-	return &payloads.UserUploadMediaResponse{
-		Id:  mediaMeta.ID,
-		Url: mediaMeta.URL,
+		Url:         media.URL,
 	}, nil
 }

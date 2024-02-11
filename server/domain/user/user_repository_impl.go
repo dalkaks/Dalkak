@@ -94,12 +94,12 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 	return nil, nil
 }
 
-func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, prefix string, dto *dtos.MediaMeta) error {
+func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
 	mediaType, err := ConvertContentTypeToMediaType(dto.ContentType)
 	if err != nil {
 		return err
 	}
-	Sk := GenerateUserBoardImageDataSk(prefix, mediaType)
+	Sk := GenerateUserBoardImageDataSk(dto.Prefix, mediaType)
 
 	newUploadMedia := &UserMediaData{
 		Pk:         GenerateUserDataPk(userId),
@@ -108,7 +108,7 @@ func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, prefix stri
 		Timestamp:  timeutils.GetTimestamp(),
 
 		Id:          dto.ID,
-		Prefix:      prefix,
+		Prefix:      dto.Prefix,
 		Extension:   dto.Extension,
 		ContentType: dto.ContentType,
 		Url:         dto.URL,
