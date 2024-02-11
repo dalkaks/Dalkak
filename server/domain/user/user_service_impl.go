@@ -4,16 +4,19 @@ import (
 	appsecurity "dalkak/internal/security"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/payloads"
+	"net/http"
 )
 
 type UserServiceImpl struct {
-	mode   string
-	domain string
-	db     interfaces.UserRepository
-	kmsSet *appsecurity.KmsSet
+	mode    string
+	domain  string
+	db      interfaces.UserRepository
+	kmsSet  *appsecurity.KmsSet
+	storage interfaces.Storage
 }
 
-func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *appsecurity.KmsSet) interfaces.UserService {
+func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *appsecurity.KmsSet, storage interfaces.Storage) interfaces.UserService {
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
@@ -21,6 +24,7 @@ func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *
 		domain: domain,
 		db:     userRepo,
 		kmsSet: kmsSet,
+		storage: storage,
 	}
 }
 
@@ -71,4 +75,34 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	}
 
 	return authTokens, nowTime, nil
+}
+
+func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserUploadMediaRequest, userInfo *dtos.UserInfo) (*payloads.UserBoardImagePresignedResponse, error) {
+	if dto.IsValid() == false {
+		return nil, &dtos.AppError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request",
+		}
+	}
+
+	uploadMediaDto, err := dto.ToUploadMediaDto()
+	if err != nil {
+		return nil, err
+	}
+
+	mediaMeta, err := service.storage.CreatePresignedURL(uploadMediaDto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Todo : 기한이 지남에 따라 upload media 삭제
+	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, dto.Prefix, mediaMeta)
+	if err != nil {
+		return nil, err
+	}
+
+	return &payloads.UserBoardImagePresignedResponse{
+		Id:  mediaMeta.ID,
+		Url: mediaMeta.URL,
+	}, nil
 }

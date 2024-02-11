@@ -90,3 +90,43 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 	}
 	return nil, nil
 }
+
+func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, prefix string, dto *dtos.MediaMeta) error {
+	Sk, err := GenerateUserBoardImageDataSk(prefix, dto.ContentType)
+	if err != nil {
+		return err
+	}
+
+	newUploadMedia := &UserMediaData{
+		Pk:         GenerateUserDataPk(userId),
+		Sk:         Sk,
+		EntityType: Sk,
+		Timestamp:  timeutils.GetTimestamp(),
+
+		Id:          dto.ID,
+		Prefix:      prefix,
+		Extension:   dto.Extension,
+		ContentType: dto.ContentType,
+		Url:         dto.URL,
+	}
+
+	av, err := attributevalue.MarshalMap(newUploadMedia)
+	if err != nil {
+		return &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to marshal user media data to map",
+		}
+	}
+
+	_, err = repo.client.PutItem(context.Background(), &dynamodb.PutItemInput{
+		TableName: aws.String(repo.table),
+		Item:      av,
+	})
+	if err != nil {
+		return &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to put user media data",
+		}
+	}
+	return nil
+}
