@@ -31,9 +31,9 @@ func (handler *UserHandler) Routes() chi.Router {
 
 	router.Post("/logout", handler.logout)
 
-	router.Get("/media", handler.getUserMedia)
-
 	router.Post("/media/presigned", handler.createPresignedURL)
+	
+	router.Get("/media", handler.getUserMedia)
 
 	return router
 }
@@ -107,29 +107,6 @@ func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
 	httputils.HandleAppError(w, err)
 }
 
-func (handler *UserHandler) getUserMedia(w http.ResponseWriter, r *http.Request) {
-	userInfo, err := httputils.GetUserInfoData(r)
-	if err != nil {
-		httputils.HandleAppError(w, err)
-		return
-	}
-
-	var query payloads.UserGetMediaRequest
-	err = httputils.GetQuery(r, &query)
-	if err != nil {
-		httputils.HandleAppError(w, err)
-		return
-	}
-
-	result, err := handler.userService.GetUserMedia(userInfo, &query)
-	if err != nil {
-		httputils.HandleAppError(w, err)
-		return
-	}
-
-	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
-}
-
 func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := httputils.GetUserInfoData(r)
 	if err != nil {
@@ -145,6 +122,29 @@ func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Re
 	}
 
 	result, err := handler.userService.CreatePresignedURL(userInfo, &req)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
+}
+
+func (handler *UserHandler) getUserMedia(w http.ResponseWriter, r *http.Request) {
+	userInfo, err := httputils.GetUserInfoData(r)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	var query payloads.UserGetMediaRequest
+	err = httputils.GetQuery(r, &query)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	result, err := handler.userService.GetUserMedia(userInfo, &query)
 	if err != nil {
 		httputils.HandleAppError(w, err)
 		return
