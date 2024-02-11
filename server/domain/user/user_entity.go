@@ -41,7 +41,11 @@ type UserMediaData struct {
 	Url         string
 }
 
-func GenerateUserBoardImageDataSk(prefix string, contentType string) (string, error) {
+func GenerateUserBoardImageDataSk(prefix string, mediaType string) string {
+	return `Media#` + prefix + `#` + mediaType
+}
+
+func ConvertContentTypeToMediaType(contentType string) (string, error) {
 	parts := strings.Split(contentType, "/")
 	if len(parts) < 2 {
 		return "", &dtos.AppError{
@@ -49,15 +53,15 @@ func GenerateUserBoardImageDataSk(prefix string, contentType string) (string, er
 			Message: "Failed to split content type",
 		}
 	}
-	mediaType := parts[0]
-	return `Media#` + prefix + `#` + mediaType, nil
+	return parts[0], nil
 }
 
-func (b *UserMediaData) ToBoardImageDto() *dtos.BoardImageDto {
-	return &dtos.BoardImageDto{
-		Id:          b.Id,
+func (b *UserMediaData) ToMediaMeta() *dtos.MediaMeta {
+	return &dtos.MediaMeta{
+		ID:          b.Id,
+		Prefix:      b.Prefix,
 		Extension:   b.Extension,
 		ContentType: b.ContentType,
-		Url:         b.Url,
+		URL:         b.Url,
 	}
 }

@@ -19,27 +19,29 @@ type UserGetMediaRequest struct {
 	Prefix    string `query:"prefix" required:"true"`
 }
 
+type UserGetMediaResponse struct {
+	Id          string `json:"id"`
+	ContentType string `json:"contentType"`
+	Url         string `json:"url"`
+}
+
+func (req *UserGetMediaRequest) IsValid() bool {
+	return isSupportedMediaType(req.MediaType) && hasValidPrefix(req.Prefix)
+}
+
 type UserUploadMediaRequest struct {
 	MediaType string `json:"mediaType"`
 	Ext       string `json:"ext"`
 	Prefix    string `json:"prefix"`
 }
 
+type UserUploadMediaResponse struct {
+	Id  string `json:"id"`
+	Url string `json:"url"`
+}
+
 func (req *UserUploadMediaRequest) IsValid() bool {
-	return req.isSupportedMediaType() && req.hasValidPrefix() && req.isExtensionAllowed()
-}
-
-func (req *UserUploadMediaRequest) isSupportedMediaType() bool {
-	return req.MediaType == "image"
-}
-
-func (req *UserUploadMediaRequest) hasValidPrefix() bool {
-	return req.Prefix == "board"
-}
-
-func (req *UserUploadMediaRequest) isExtensionAllowed() bool {
-	_, ok := config.AllowedImageExtensions[req.Ext]
-	return ok
+	return isSupportedMediaType(req.MediaType) && hasValidPrefix(req.Prefix) && isExtensionAllowed(req.Ext)
 }
 
 func (req *UserUploadMediaRequest) ToUploadMediaDto() (*dtos.UploadMediaDto, error) {
@@ -55,7 +57,15 @@ func (req *UserUploadMediaRequest) ToUploadMediaDto() (*dtos.UploadMediaDto, err
 	}, nil
 }
 
-type UserUploadMediaResponse struct {
-	Id  string `json:"id"`
-	Url string `json:"url"`
+func isSupportedMediaType(mediaType string) bool {
+	return mediaType == "image"
+}
+
+func hasValidPrefix(prefix string) bool {
+	return prefix == "board"
+}
+
+func isExtensionAllowed(ext string) bool {
+	_, ok := config.AllowedImageExtensions[ext]
+	return ok
 }

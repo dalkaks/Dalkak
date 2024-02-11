@@ -5,7 +5,7 @@ import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
-	"net/http"
+	"dalkak/pkg/utils/validateutils"
 )
 
 type UserServiceImpl struct {
@@ -77,16 +77,28 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	return authTokens, nowTime, nil
 }
 
-func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserGetMediaRequest) (string, error) {
-	return "", nil
+func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserGetMediaRequest) (*payloads.UserGetMediaResponse, error) {
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	media, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	return &payloads.UserGetMediaResponse{
+		Id:  media.ID,
+		ContentType: media.ContentType,
+		Url: media.URL,
+	}, nil
 }
 
 func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto *payloads.UserUploadMediaRequest) (*payloads.UserUploadMediaResponse, error) {
-	if dto.IsValid() == false {
-		return nil, &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "Invalid request",
-		}
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return nil, err
 	}
 
 	uploadMediaDto, err := dto.ToUploadMediaDto()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/timeutils"
 	"net/http"
 
@@ -29,9 +30,10 @@ func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
 }
 
 func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
+	Pk := GenerateUserDataPk(walletAddress)
 	newUser := &UserData{
-		Pk:            GenerateUserDataPk(walletAddress),
-		Sk:            GenerateUserDataPk(walletAddress),
+		Pk:            Pk,
+		Sk:            Pk,
 		EntityType:    UserDataType,
 		WalletAddress: walletAddress,
 		Timestamp:     timeutils.GetTimestamp(),
@@ -59,10 +61,11 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
 }
 
 func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, error) {
+	Pk := GenerateUserDataPk(walletAddress)
 	var userToFind UserData
 	key := map[string]types.AttributeValue{
-		"Pk": &types.AttributeValueMemberS{Value: GenerateUserDataPk(walletAddress)},
-		"Sk": &types.AttributeValueMemberS{Value: GenerateUserDataPk(walletAddress)},
+		"Pk": &types.AttributeValueMemberS{Value: Pk},
+		"Sk": &types.AttributeValueMemberS{Value: Pk},
 	}
 
 	input := &dynamodb.GetItemInput{
@@ -92,10 +95,11 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 }
 
 func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, prefix string, dto *dtos.MediaMeta) error {
-	Sk, err := GenerateUserBoardImageDataSk(prefix, dto.ContentType)
+	mediaType, err := ConvertContentTypeToMediaType(dto.ContentType)
 	if err != nil {
 		return err
 	}
+	Sk := GenerateUserBoardImageDataSk(prefix, mediaType)
 
 	newUploadMedia := &UserMediaData{
 		Pk:         GenerateUserDataPk(userId),
@@ -129,4 +133,38 @@ func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, prefix stri
 		}
 	}
 	return nil
+}
+
+func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads.UserGetMediaRequest) (*dtos.MediaMeta, error) {
+	Sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType)
+	var mediaToFind UserMediaData
+	key := map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: GenerateUserDataPk(userId)},
+		"Sk": &types.AttributeValueMemberS{Value: Sk},
+	}
+
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String(repo.table),
+		Key:       key,
+	}
+
+	result, err := repo.client.GetItem(context.Background(), input)
+	if err != nil {
+		return nil, &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get user media data",
+		}
+	}
+
+	if result.Item != nil {
+		err = attributevalue.UnmarshalMap(result.Item, &mediaToFind)
+		if err != nil {
+			return nil, &dtos.AppError{
+				Code:    http.StatusInternalServerError,
+				Message: "Failed to unmarshal user media data",
+			}
+		}
+		return mediaToFind.ToMediaMeta(), nil
+	}
+	return nil, nil
 }

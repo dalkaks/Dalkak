@@ -12,6 +12,7 @@ type UploadMediaDto struct {
 
 type MediaMeta struct {
 	ID          string `json:"id"`
+	Prefix      string `json:"prefix"`
 	Extension   string `json:"extension"`
 	ContentType string `json:"contentType"`
 	URL         string `json:"url"`
@@ -39,14 +40,5 @@ func ToMediaType(s string) (MediaType, error) {
 			Code:    http.StatusBadRequest,
 			Message: "invalid media type",
 		}
-	}
-}
-
-func (m *MediaMeta) ToBoardImageDto() *BoardImageDto {
-	return &BoardImageDto{
-		Id:          m.ID,
-		Extension:   m.Extension,
-		ContentType: m.ContentType,
-		Url:         m.URL,
 	}
 }
