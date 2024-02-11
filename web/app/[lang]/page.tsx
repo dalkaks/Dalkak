@@ -1,7 +1,8 @@
 import Image from "next/image";
 import styles from "../page.module.css";
-import Button from "../Button";
+import Button from "../Meta";
 import { Locale, getDictionary } from "./dictionaries";
+import Meta from "../Meta";
 
 interface HomeProps {
   params: {
@@ -13,7 +14,7 @@ export default async function Home({ params: { lang } }: HomeProps) {
   const dict = await getDictionary(lang);
   return (
     <main className={styles.main}>
-      <Button>{dict.title}</Button>
+      <Meta dict={dict} />
       <div className={styles.description}>
         <p>
           Get started by editing&nbsp;
