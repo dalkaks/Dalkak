@@ -20,10 +20,10 @@ func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
-		mode:   mode,
-		domain: domain,
-		db:     userRepo,
-		kmsSet: kmsSet,
+		mode:    mode,
+		domain:  domain,
+		db:      userRepo,
+		kmsSet:  kmsSet,
 		storage: storage,
 	}
 }
@@ -77,7 +77,11 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	return authTokens, nowTime, nil
 }
 
-func (service *UserServiceImpl) CreatePresignedURL(dto *payloads.UserUploadMediaRequest, userInfo *dtos.UserInfo) (*payloads.UserUploadMediaResponse, error) {
+func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserGetMediaRequest) (string, error) {
+	return "", nil
+}
+
+func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto *payloads.UserUploadMediaRequest) (*payloads.UserUploadMediaResponse, error) {
 	if dto.IsValid() == false {
 		return nil, &dtos.AppError{
 			Code:    http.StatusBadRequest,

@@ -14,6 +14,11 @@ type UserAccessTokenResponse struct {
 	AccessToken string `json:"accessToken"`
 }
 
+type UserGetMediaRequest struct {
+	MediaType string `query:"mediaType" required:"true"`
+	Prefix    string `query:"prefix" required:"true"`
+}
+
 type UserUploadMediaRequest struct {
 	MediaType string `json:"mediaType"`
 	Ext       string `json:"ext"`
