@@ -88,7 +88,7 @@ func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto 
 		return nil, err
 	}
 
-	mediaMeta, presignedUrl, err := service.storage.CreatePresignedURL(uploadMediaDto)
+	mediaMeta, presignedUrl, err := service.storage.CreatePresignedURL(userInfo.WalletAddress, uploadMediaDto)
 	if err != nil {
 		return nil, err
 	}

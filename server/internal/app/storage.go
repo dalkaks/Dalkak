@@ -49,7 +49,7 @@ func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, 
 	return &Storage{client: storageClient, bucket: bucket, staticLink: staticLink}, nil
 }
 
-func (storage *Storage) CreatePresignedURL(dto *dtos.UploadMediaDto) (*dtos.MediaMeta, string, error) {
+func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaDto) (*dtos.MediaMeta, string, error) {
 	mediaType := dto.MediaType.String()
 	expires := 30 * time.Minute
 	presigner := s3.NewPresignClient(storage.client, func(o *s3.PresignOptions) {
@@ -67,6 +67,9 @@ func (storage *Storage) CreatePresignedURL(dto *dtos.UploadMediaDto) (*dtos.Medi
 		Bucket:      aws.String(storage.bucket),
 		Key:         aws.String(key),
 		ContentType: aws.String(contentType),
+		Metadata: map[string]string{
+			"userid": userId,
+		},
 	})
 	if err != nil {
 		return nil, "", &dtos.AppError{
