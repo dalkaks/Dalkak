@@ -36,7 +36,7 @@ func QuerySingleItem(client *dynamodb.Client, tableName string, expr expression.
 	if err != nil {
 		return &dtos.AppError{
 			Code:    http.StatusInternalServerError,
-			Message: "Failed to unmarshal user media data",
+			Message: "Failed to unmarshal user media data: " + err.Error(),
 		}
 	}
 	return nil

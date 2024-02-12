@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type UserRepositoryImpl struct {
@@ -64,36 +63,25 @@ func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
 
 func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, error) {
 	Pk := GenerateUserDataPk(walletAddress)
-	var userToFind UserData
-	key := map[string]types.AttributeValue{
-		"Pk": &types.AttributeValueMemberS{Value: Pk},
-		"Sk": &types.AttributeValueMemberS{Value: Pk},
-	}
+	var userToFind *UserData
 
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(repo.table),
-		Key:       key,
-	}
+	keyCond := expression.Key("Pk").Equal(expression.Value(Pk)).
+		And(expression.Key("Sk").Equal(expression.Value(Pk)))
 
-	result, err := repo.client.GetItem(context.Background(), input)
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
 	if err != nil {
 		return nil, &dtos.AppError{
 			Code:    http.StatusInternalServerError,
-			Message: "Failed to get user data",
+			Message: "Failed to build db expression",
 		}
 	}
 
-	if result.Item != nil {
-		err = attributevalue.UnmarshalMap(result.Item, &userToFind)
-		if err != nil {
-			return nil, &dtos.AppError{
-				Code:    http.StatusInternalServerError,
-				Message: "Failed to unmarshal user data",
-			}
-		}
-		return userToFind.ToUserDto(), nil
+	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &userToFind)
+	if err != nil || userToFind == nil {
+		return nil, err
 	}
-	return nil, nil
+
+	return userToFind.ToUserDto(), nil
 }
 
 func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
@@ -155,7 +143,7 @@ func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads
 	}
 
 	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &mediaToFind)
-	if err != nil || mediaToFind == nil{
+	if err != nil || mediaToFind == nil {
 		return nil, err
 	}
 
