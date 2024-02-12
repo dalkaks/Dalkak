@@ -61,7 +61,7 @@ func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaD
 		return nil, "", err
 	}
 
-	key := fmt.Sprintf("temp/%s/%s.%s", mediaType, id, dto.Ext)
+	key := fmt.Sprintf("temp/%s/%s/%s.%s", dto.Prefix, mediaType, id, dto.Ext)
 
 	presignedURL, err := presigner.PresignPutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(storage.bucket),
@@ -69,6 +69,7 @@ func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaD
 		ContentType: aws.String(contentType),
 		Metadata: map[string]string{
 			"userid": userId,
+			"prefix": dto.Prefix,
 		},
 	})
 	if err != nil {
