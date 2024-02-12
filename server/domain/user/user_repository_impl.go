@@ -5,6 +5,7 @@ import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
+	"dalkak/pkg/utils/dynamodbutils"
 	"dalkak/pkg/utils/timeutils"
 	"net/http"
 
@@ -139,7 +140,7 @@ func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.M
 
 func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads.UserGetMediaRequest) (*dtos.MediaMeta, error) {
 	Sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType)
-	var mediaToFind UserMediaData
+	var mediaToFind *UserMediaData
 
 	keyCond := expression.Key("Pk").Equal(expression.Value(GenerateUserDataPk(userId))).
 		And(expression.Key("Sk").Equal(expression.Value(Sk)))
@@ -153,31 +154,10 @@ func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads
 		}
 	}
 
-	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(repo.table),
-		KeyConditionExpression:    expr.KeyCondition(),
-		FilterExpression:          expr.Filter(),
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-	}
-	result, err := repo.client.Query(context.Background(), input)
-	if err != nil {
-		return nil, &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to get user media data",
-		}
+	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &mediaToFind)
+	if err != nil || mediaToFind == nil{
+		return nil, err
 	}
 
-	if len(result.Items) == 0 {
-		return nil, nil
-	}
-
-	err = attributevalue.UnmarshalMap(result.Items[0], &mediaToFind)
-	if err != nil {
-		return nil, &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to unmarshal user media data",
-		}
-	}
 	return mediaToFind.ToMediaMeta(), nil
 }
