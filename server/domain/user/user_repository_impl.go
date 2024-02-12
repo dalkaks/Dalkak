@@ -1,16 +1,12 @@
 package user
 
 import (
-	"context"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/dynamodbutils"
 	"dalkak/pkg/utils/timeutils"
-	"net/http"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
@@ -33,30 +29,17 @@ func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
 func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
 	Pk := GenerateUserDataPk(walletAddress)
 	newUser := &UserData{
-		Pk:            Pk,
-		Sk:            Pk,
-		EntityType:    UserDataType,
+		Pk:         Pk,
+		Sk:         Pk,
+		EntityType: UserDataType,
+		Timestamp:  timeutils.GetTimestamp(),
+
 		WalletAddress: walletAddress,
-		Timestamp:     timeutils.GetTimestamp(),
 	}
 
-	av, err := attributevalue.MarshalMap(newUser)
+	err := dynamodbutils.PutDynamoDBItem(repo.client, repo.table, newUser)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to marshal user data to map",
-		}
-	}
-
-	_, err = repo.client.PutItem(context.Background(), &dynamodb.PutItemInput{
-		TableName: aws.String(repo.table),
-		Item:      av,
-	})
-	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to put user data",
-		}
+		return err
 	}
 	return nil
 }
@@ -98,23 +81,9 @@ func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.M
 		IsConfirm:   false,
 	}
 
-	av, err := attributevalue.MarshalMap(newUploadMedia)
+	err = dynamodbutils.PutDynamoDBItem(repo.client, repo.table, newUploadMedia)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to marshal user media data to map",
-		}
-	}
-
-	_, err = repo.client.PutItem(context.Background(), &dynamodb.PutItemInput{
-		TableName: aws.String(repo.table),
-		Item:      av,
-	})
-	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to put user media data",
-		}
+		return err
 	}
 	return nil
 }
