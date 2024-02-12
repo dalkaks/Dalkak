@@ -67,14 +67,7 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 
 	keyCond := expression.Key("Pk").Equal(expression.Value(Pk)).
 		And(expression.Key("Sk").Equal(expression.Value(Pk)))
-
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
-	if err != nil {
-		return nil, &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to build db expression",
-		}
-	}
+	expr, err := dynamodbutils.GenerateExpression(keyCond, nil)
 
 	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &userToFind)
 	if err != nil || userToFind == nil {
@@ -133,14 +126,7 @@ func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads
 	keyCond := expression.Key("Pk").Equal(expression.Value(GenerateUserDataPk(userId))).
 		And(expression.Key("Sk").Equal(expression.Value(Sk)))
 	filt := expression.Name("IsConfirm").Equal(expression.Value(true))
-
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).WithFilter(filt).Build()
-	if err != nil {
-		return nil, &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to build db expression",
-		}
-	}
+	expr, err := dynamodbutils.GenerateExpression(keyCond, &filt)
 
 	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &mediaToFind)
 	if err != nil || mediaToFind == nil {
