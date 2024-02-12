@@ -113,7 +113,7 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 	}
 
 	media, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, dto)
-	if err != nil {
+	if err != nil || media == nil {
 		return nil, err
 	}
 

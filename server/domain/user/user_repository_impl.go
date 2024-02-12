@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -139,18 +140,27 @@ func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.M
 func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads.UserGetMediaRequest) (*dtos.MediaMeta, error) {
 	Sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType)
 	var mediaToFind UserMediaData
-	key := map[string]types.AttributeValue{
-		"Pk":        &types.AttributeValueMemberS{Value: GenerateUserDataPk(userId)},
-		"Sk":        &types.AttributeValueMemberS{Value: Sk},
-		"IsConfirm": &types.AttributeValueMemberBOOL{Value: true},
+
+	keyCond := expression.Key("Pk").Equal(expression.Value(GenerateUserDataPk(userId))).
+		And(expression.Key("Sk").Equal(expression.Value(Sk)))
+	filt := expression.Name("IsConfirm").Equal(expression.Value(true))
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).WithFilter(filt).Build()
+	if err != nil {
+		return nil, &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to build db expression",
+		}
 	}
 
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(repo.table),
-		Key:       key,
+	input := &dynamodb.QueryInput{
+		TableName:                 aws.String(repo.table),
+		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
 	}
-
-	result, err := repo.client.GetItem(context.Background(), input)
+	result, err := repo.client.Query(context.Background(), input)
 	if err != nil {
 		return nil, &dtos.AppError{
 			Code:    http.StatusInternalServerError,
@@ -158,15 +168,16 @@ func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads
 		}
 	}
 
-	if result.Item != nil {
-		err = attributevalue.UnmarshalMap(result.Item, &mediaToFind)
-		if err != nil {
-			return nil, &dtos.AppError{
-				Code:    http.StatusInternalServerError,
-				Message: "Failed to unmarshal user media data",
-			}
-		}
-		return mediaToFind.ToMediaMeta(), nil
+	if len(result.Items) == 0 {
+		return nil, nil
 	}
-	return nil, nil
+
+	err = attributevalue.UnmarshalMap(result.Items[0], &mediaToFind)
+	if err != nil {
+		return nil, &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to unmarshal user media data",
+		}
+	}
+	return mediaToFind.ToMediaMeta(), nil
 }
