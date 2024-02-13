@@ -35,6 +35,8 @@ func (handler *UserHandler) Routes() chi.Router {
 	
 	router.Get("/media", handler.getUserMedia)
 
+	router.Post("/media/confirm", handler.confirmMediaUpload)
+
 	return router
 }
 
@@ -151,4 +153,21 @@ func (handler *UserHandler) getUserMedia(w http.ResponseWriter, r *http.Request)
 	}
 
 	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
+}
+
+func (handler *UserHandler) confirmMediaUpload(w http.ResponseWriter, r *http.Request) {
+	var req payloads.UserConfirmMediaRequest
+	err := httputils.ReadJSON(w, r, &req)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	err = handler.userService.ConfirmMediaUpload(&req)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
 }

@@ -51,6 +51,31 @@ func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, 
 	return &Storage{client: storageClient, bucket: bucket, staticLink: staticLink}, nil
 }
 
+func (storage *Storage) GetHeadObject(key string) (*dtos.MediaHeadDto, error) {
+	headObjectOutput, err := storage.client.HeadObject(context.Background(), &s3.HeadObjectInput{
+		Bucket: aws.String(storage.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		if errors.Is(err, &types.NoSuchKey{}) || errors.Is(err, &types.NotFound{}) {
+			return nil, &dtos.AppError{
+				Code:    http.StatusNotFound,
+				Message: "No such key",
+			}
+		}
+		return nil, &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get head object",
+		}
+	}
+	return &dtos.MediaHeadDto{
+		Key:         key,
+		ContentType: *headObjectOutput.ContentType,
+		Length:      *headObjectOutput.ContentLength,
+		URL:				 storage.convertKeyToStaticLink(key),
+	}, nil
+}
+
 func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaDto) (*dtos.MediaMeta, string, error) {
 	mediaType := dto.MediaType.String()
 	expires := prefixExpireMinutes * time.Minute

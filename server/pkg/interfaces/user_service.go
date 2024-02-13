@@ -13,4 +13,5 @@ type UserService interface {
 
 	CreatePresignedURL(userInfo *dtos.UserInfo, req *payloads.UserUploadMediaRequest) (*payloads.UserUploadMediaResponse, error)
 	GetUserMedia(userInfo *dtos.UserInfo, req *payloads.UserGetMediaRequest) (*payloads.UserGetMediaResponse, error)
+	ConfirmMediaUpload(req *payloads.UserConfirmMediaRequest) error
 }

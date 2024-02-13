@@ -3,7 +3,6 @@ package user
 import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
-	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/dynamodbutils"
 	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/timeutils"
@@ -52,6 +51,9 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 	keyCond := expression.Key("Pk").Equal(expression.Value(Pk)).
 		And(expression.Key("Sk").Equal(expression.Value(Pk)))
 	expr, err := dynamodbutils.GenerateExpression(keyCond, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &userToFind)
 	if err != nil || userToFind == nil {
@@ -89,14 +91,24 @@ func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.M
 	return nil
 }
 
-func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *payloads.UserGetMediaRequest) (*dtos.MediaMeta, error) {
-	Sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType)
+func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *dtos.FindUserUploadMediaDto) (*dtos.MediaMeta, error) {
+	Sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType.String())
 	var mediaToFind *UserMediaData
 
 	keyCond := expression.Key("Pk").Equal(expression.Value(GenerateUserDataPk(userId))).
 		And(expression.Key("Sk").Equal(expression.Value(Sk)))
-	filt := expression.Name("IsConfirm").Equal(expression.Value(true))
-	expr, err := dynamodbutils.GenerateExpression(keyCond, &filt)
+	expr, err := dynamodbutils.GenerateExpression(keyCond, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if dto.IsConfirm != nil && *dto.IsConfirm {
+		filt := expression.Name("IsConfirm").Equal(expression.Value(true))
+		expr, err = dynamodbutils.GenerateExpression(keyCond, &filt)
+	}
+	if err != nil {
+		return nil, err
+	}
 
 	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &mediaToFind)
 	if err != nil || mediaToFind == nil {

@@ -6,6 +6,8 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/validateutils"
+	"log"
+	"net/http"
 )
 
 type UserServiceImpl struct {
@@ -112,7 +114,11 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 		return nil, err
 	}
 
-	media, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, dto)
+	findDto, err := dto.ToFindUserUploadMediaDto()
+	if err != nil {
+		return nil, err
+	}
+	media, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, findDto)
 	if err != nil || media == nil {
 		return nil, err
 	}
@@ -122,4 +128,55 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 		ContentType: media.ContentType,
 		Url:         media.URL,
 	}, nil
+}
+
+func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMediaRequest) error {
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return err
+	}
+
+	// db 미디어 가져오기
+	findDto, err := dto.ToFindUserUploadMediaDto()
+	if err != nil {
+		return err
+	}
+	media, err := service.db.FindUserUploadMedia(dto.UserId, findDto)
+	if media == nil {
+		return &dtos.AppError{
+			Code:    http.StatusNotFound,
+			Message: "media not found",
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	// storage 미디어 가져오기
+	mediaHeadDto, err := service.storage.GetHeadObject(dto.Key)
+	if mediaHeadDto == nil {
+		return &dtos.AppError{
+			Code:    http.StatusNotFound,
+			Message: "media head not found",
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	// storage 검증
+	if ok := mediaHeadDto.Verify(media); !ok {
+		log.Println("storage media verify failed")
+		return nil
+	}
+
+	log.Println("storage media verify success")
+
+	// if true
+	// db 미디어 업데이트
+
+	// if false
+	// storage 미디어 삭제
+
+	return nil
 }
