@@ -35,6 +35,17 @@ func ParseDomain(u string) (string, error) {
 	return host, nil
 }
 
+func ConvertContentTypeToMediaType(contentType string) (string, error) {
+	parts := strings.Split(contentType, "/")
+	if len(parts) < 2 {
+		return "", &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to split content type",
+		}
+	}
+	return parts[0], nil
+}
+
 func GetUserInfoData(r *http.Request) (*dtos.UserInfo, error) {
 	userInfo, ok := r.Context().Value("user").(dtos.UserInfo)
 	if !ok {

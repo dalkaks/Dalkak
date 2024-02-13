@@ -5,6 +5,7 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/dynamodbutils"
+	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/timeutils"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
@@ -61,7 +62,7 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 }
 
 func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
-	mediaType, err := ConvertContentTypeToMediaType(dto.ContentType)
+	mediaType, err := httputils.ConvertContentTypeToMediaType(dto.ContentType)
 	if err != nil {
 		return err
 	}

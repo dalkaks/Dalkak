@@ -2,8 +2,6 @@ package user
 
 import (
 	"dalkak/pkg/dtos"
-	"net/http"
-	"strings"
 )
 
 type UserData struct {
@@ -44,17 +42,6 @@ type UserMediaData struct {
 
 func GenerateUserBoardImageDataSk(prefix string, mediaType string) string {
 	return `Media#` + prefix + `#` + mediaType
-}
-
-func ConvertContentTypeToMediaType(contentType string) (string, error) {
-	parts := strings.Split(contentType, "/")
-	if len(parts) < 2 {
-		return "", &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to split content type",
-		}
-	}
-	return parts[0], nil
 }
 
 func (b *UserMediaData) ToMediaMeta() *dtos.MediaMeta {

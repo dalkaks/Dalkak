@@ -22,6 +22,8 @@ type Storage struct {
 	staticLink string
 }
 
+const prefixExpireMinutes = 10
+
 var _ interfaces.Storage = (*Storage)(nil)
 
 func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, error) {
@@ -51,7 +53,7 @@ func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, 
 
 func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaDto) (*dtos.MediaMeta, string, error) {
 	mediaType := dto.MediaType.String()
-	expires := 30 * time.Minute
+	expires := prefixExpireMinutes * time.Minute
 	presigner := s3.NewPresignClient(storage.client, func(o *s3.PresignOptions) {
 		o.Expires = expires
 	})
@@ -69,7 +71,6 @@ func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaD
 		ContentType: aws.String(contentType),
 		Metadata: map[string]string{
 			"userid": userId,
-			"prefix": dto.Prefix,
 		},
 	})
 	if err != nil {
