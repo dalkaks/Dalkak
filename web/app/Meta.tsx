@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Providers from "./providers";
-import Button from "./Button";
+import Button from "./MetaButton";
 
 const Meta = ({ dict }: { dict: any }) => {
   const [href, setHref] = useState("");
