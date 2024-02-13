@@ -1,8 +1,9 @@
-import Image from "next/image";
-import styles from "../page.module.css";
-import Button from "../Meta";
-import { Locale, getDictionary } from "./dictionaries";
-import Meta from "../Meta";
+import Image from 'next/image';
+import styles from '../page.module.css';
+import { Locale, getDictionary } from './dictionaries';
+import Meta from '../Meta';
+import Button from './components/Button';
+import mockWallet from '@/mock/walletData.json';
 
 interface HomeProps {
   params: {
@@ -15,6 +16,7 @@ export default async function Home({ params: { lang } }: HomeProps) {
   return (
     <main className={styles.main}>
       <Meta dict={dict} />
+      <Button data={mockWallet} title="login"></Button>
       <div className={styles.description}>
         <p>
           Get started by editing&nbsp;

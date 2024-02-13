@@ -1,15 +1,27 @@
-import ENV from "@/app/resources/env-constants";
+import serviceModule from "../../serviceModule";
 
-interface RequestLogin {
+export interface RequestLogin {
   walletAddress: string;
   signature: string;
 }
 
+const LOGIN_ERRORS = {
+  '400': 'Invalid wallet address or signature',
+
+}
+
+const loginErrorHandle = (res: Response) => {
+  if (!res.ok) {
+    throw new Error("Network response was not ok");
+  }
+  return res;
+}
+
+
 const loginService = async (req: RequestLogin) => {
-  const res = await fetch(`${ENV.SERVER_PATH}/user/login`, {
-    method: "POST",
-    body: JSON.stringify(req),
-  });
+  const res = await serviceModule('POST', 'user/auth', req)
+
+  console.log(res)
 
   return res;
 };
