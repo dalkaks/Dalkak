@@ -1,8 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"dalkak/config"
+	"dalkak/pkg/utils/httputils"
+	"encoding/json"
 	"log"
+	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -21,6 +27,11 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 		log.Printf("Failed to load AWS SDK config, %v", err)
 		return err
 	}
+
+	lambdaConfig, err := config.LoadConfig[config.LambdaConfig](ctx, "Common", "LambdaConfig")
+	devDomain := lambdaConfig.DevDomain
+	prodDomain := lambdaConfig.ProdDomain
+
 	s3Client := s3.NewFromConfig(sdkConfig)
 
 	for _, record := range s3Event.Records {
@@ -32,27 +43,69 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 		})
 		if err != nil {
 			log.Printf("Failed to get object head for bucket: %s, key: %s, %v", bucket, key, err)
-			return nil
+			continue
 		}
 
-		log.Printf("Received event for bucket: %s, key: %s, size: %d", bucket, key, headObjectOutput.ContentLength)
-	}
+		log.Printf("Received event for bucket: %s, key: %s, metadata: %v", bucket, key, headObjectOutput.Metadata)
 
+		userId := headObjectOutput.Metadata["userid"]
+		if userId == "" {
+			log.Printf("No user id in metadata, bucket: %s, key: %s", bucket, key)
+			continue
+		}
+
+		prefix := extractPrefix(key)
+		if prefix == "" {
+			log.Printf("No prefix in key, bucket: %s, key: %s", bucket, key)
+			continue
+		}
+
+		if headObjectOutput.ContentType == nil {
+			log.Printf("No content type in metadata, bucket: %s, key: %s", bucket, key)
+			continue
+		}
+		mediaType, err := httputils.ConvertContentTypeToMediaType(*headObjectOutput.ContentType)
+		if err != nil {
+			log.Printf("Failed to convert content type to media type, %v", err)
+			continue
+		}
+
+		var requestUrl string
+		if bucket == "dalkak-dev" {
+			requestUrl = devDomain + "/user/media/confirm"
+		} else if bucket == "dalkak-prod" {
+			requestUrl = prodDomain + "/user/media/confirm"
+		} else {
+			log.Printf("Invalid bucket name, %s", bucket)
+			continue
+		}
+
+		requestBody, err := json.Marshal(map[string]string{
+			"userId":    userId,
+			"prefix":    prefix,
+			"mediaType": mediaType,
+		})
+		if err != nil {
+			log.Printf("Failed to marshal request body, %v", err)
+			continue
+		}
+
+		resp, err := http.Post(requestUrl, "application/json", bytes.NewBuffer(requestBody))
+		if err != nil {
+			log.Printf("Failed to send http request, %v", err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		log.Printf("resp: %v", resp)
+	}
 	return nil
 }
 
-// func getUserMediaData(bucketName, objectKey string) (*user.UserMediaData, error) {
-// 	// DynamoDB에서 데이터 조회 로직 구현
-// 	// 예시 코드는 실제 로직과 다를 수 있음
-// 	return nil, nil
-// }
-
-// func updateUserMediaData(data *user.UserMediaData) error {
-// 	// DynamoDB에서 데이터 업데이트 로직 구현
-// 	return nil
-// }
-
-// func deleteS3Object(bucketName, objectKey string) error {
-// 	// S3 객체 삭제 로직 구현
-// 	return nil
-// }
+func extractPrefix(key string) string {
+	parts := strings.Split(key, "/")
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[1]
+}
