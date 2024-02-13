@@ -58,6 +58,12 @@ func (req *UserUploadMediaRequest) ToUploadMediaDto() (*dtos.UploadMediaDto, err
 	}, nil
 }
 
+type UserConfirmMediaRequest struct {
+	UserId    string `json:"userId"`
+	Key       string `json:"key"`
+	MediaType string `json:"mediaType"`
+}
+
 func isSupportedMediaType(mediaType string) bool {
 	return mediaType == "image"
 }

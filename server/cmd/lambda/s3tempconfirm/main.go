@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"dalkak/config"
+	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/httputils"
+	"dalkak/pkg/utils/lambdautils"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -22,17 +23,13 @@ func main() {
 }
 
 func handler(ctx context.Context, s3Event events.S3Event) error {
-	sdkConfig, err := awsConfig.LoadDefaultConfig(ctx)
+	sdkConfig, lambdaConfig, err := lambdautils.GetLambdaSdkConfig(ctx)
 	if err != nil {
-		log.Printf("Failed to load AWS SDK config, %v", err)
+		lambdautils.HandleError(err)
 		return err
 	}
 
-	lambdaConfig, err := config.LoadConfig[config.LambdaConfig](ctx, "Common", "LambdaConfig")
-	devDomain := lambdaConfig.DevDomain
-	prodDomain := lambdaConfig.ProdDomain
-
-	s3Client := s3.NewFromConfig(sdkConfig)
+	s3Client := s3.NewFromConfig(*sdkConfig)
 
 	for _, record := range s3Event.Records {
 		bucket := record.S3.Bucket.Name
@@ -42,51 +39,35 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 			Key:    aws.String(key),
 		})
 		if err != nil {
-			log.Printf("Failed to get object head for bucket: %s, key: %s, %v", bucket, key, err)
+			lambdautils.HandleError(err)
 			continue
 		}
-
 		log.Printf("Received event for bucket: %s, key: %s, metadata: %v", bucket, key, headObjectOutput.Metadata)
 
 		userId := headObjectOutput.Metadata["userid"]
 		if userId == "" {
-			log.Printf("No user id in metadata, bucket: %s, key: %s", bucket, key)
-			continue
-		}
-
-		prefix := extractPrefix(key)
-		if prefix == "" {
-			log.Printf("No prefix in key, bucket: %s, key: %s", bucket, key)
+			lambdautils.HandleError(errors.New("No user id in metadata, bucket: " + bucket + ", key: " + key))
 			continue
 		}
 
 		if headObjectOutput.ContentType == nil {
-			log.Printf("No content type in metadata, bucket: %s, key: %s", bucket, key)
+			lambdautils.HandleError(errors.New("No content type in head object output, bucket: " + bucket + ", key: " + key))
 			continue
 		}
 		mediaType, err := httputils.ConvertContentTypeToMediaType(*headObjectOutput.ContentType)
 		if err != nil {
-			log.Printf("Failed to convert content type to media type, %v", err)
+			lambdautils.HandleError(errors.New("Failed to convert content type to media type, bucket: " + bucket + ", key: " + key + ", content type: " + *headObjectOutput.ContentType))
 			continue
 		}
 
-		var requestUrl string
-		if bucket == "dalkak-dev" {
-			requestUrl = devDomain + "/user/media/confirm"
-		} else if bucket == "dalkak-prod" {
-			requestUrl = prodDomain + "/user/media/confirm"
-		} else {
-			log.Printf("Invalid bucket name, %s", bucket)
-			continue
-		}
-
-		requestBody, err := json.Marshal(map[string]string{
-			"userId":    userId,
-			"prefix":    prefix,
-			"mediaType": mediaType,
-		})
+		requestUrl, err := getRequestUrl(bucket, lambdaConfig)
 		if err != nil {
-			log.Printf("Failed to marshal request body, %v", err)
+			lambdautils.HandleError(err)
+			continue
+		}
+		requestBody, err := getRequestBody(userId, key, mediaType)
+		if err != nil {
+			lambdautils.HandleError(err)
 			continue
 		}
 
@@ -102,10 +83,21 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 	return nil
 }
 
-func extractPrefix(key string) string {
-	parts := strings.Split(key, "/")
-	if len(parts) < 2 {
-		return ""
+func getRequestUrl(bucket string, lambdaConfig *config.LambdaConfig) (string, error) {
+	if bucket == "dalkak-dev" {
+		return lambdaConfig.DevDomain + "/user/media/confirm", nil
+	} else if bucket == "dalkak-prod" {
+		return lambdaConfig.ProdDomain + "/user/media/confirm", nil
+	} else {
+		return "", errors.New("Invalid bucket name, " + bucket)
 	}
-	return parts[1]
+}
+
+func getRequestBody(userId, key, mediaType string) ([]byte, error) {
+	requestData := payloads.UserConfirmMediaRequest{
+		UserId:    userId,
+		Key:       key,
+		MediaType: mediaType,
+	}
+	return json.Marshal(requestData)
 }
