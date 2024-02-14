@@ -5,8 +5,10 @@ import (
 )
 
 type UserRepository interface {
-	FindUser(walletAddress string) (*dtos.UserDto, error)
 	CreateUser(walletAddress string) error
+	FindUser(walletAddress string) (*dtos.UserDto, error)
 
-	CreateUserUploadMedia(userId string, prefix string, dto *dtos.MediaMeta) error
+	CreateUserUploadMedia(userId string, dto *dtos.MediaMeta) error
+	FindUserUploadMedia(userId string, dto *dtos.FindUserUploadMediaDto) (*dtos.MediaMeta, error)
+	UpdateUserUploadMedia(userId string, findDto *dtos.MediaMeta, updateDto *dtos.UpdateUserUploadMediaDto) error
 }

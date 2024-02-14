@@ -22,6 +22,8 @@ type Storage struct {
 	staticLink string
 }
 
+const prefixExpireMinutes = 10
+
 var _ interfaces.Storage = (*Storage)(nil)
 
 func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, error) {
@@ -49,38 +51,82 @@ func NewStorage(ctx context.Context, mode string, staticLink string) (*Storage, 
 	return &Storage{client: storageClient, bucket: bucket, staticLink: staticLink}, nil
 }
 
-func (storage *Storage) CreatePresignedURL(dto *dtos.UploadMediaDto) (*dtos.MediaMeta, error) {
+func (storage *Storage) GetHeadObject(key string) (*dtos.MediaHeadDto, error) {
+	headObjectOutput, err := storage.client.HeadObject(context.Background(), &s3.HeadObjectInput{
+		Bucket: aws.String(storage.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		if errors.Is(err, &types.NoSuchKey{}) || errors.Is(err, &types.NotFound{}) {
+			return nil, &dtos.AppError{
+				Code:    http.StatusNotFound,
+				Message: "No such key",
+			}
+		}
+		return nil, &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get head object",
+		}
+	}
+	return &dtos.MediaHeadDto{
+		Key:         key,
+		ContentType: *headObjectOutput.ContentType,
+		Length:      *headObjectOutput.ContentLength,
+		URL:				 storage.convertKeyToStaticLink(key),
+	}, nil
+}
+
+func (storage *Storage) DeleteObject(key string) error {
+	_, err := storage.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
+		Bucket: aws.String(storage.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to delete object",
+		}
+	}
+	return nil
+}
+
+func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaDto) (*dtos.MediaMeta, string, error) {
 	mediaType := dto.MediaType.String()
-	expires := 30 * time.Minute
+	expires := prefixExpireMinutes * time.Minute
 	presigner := s3.NewPresignClient(storage.client, func(o *s3.PresignOptions) {
 		o.Expires = expires
 	})
 	contentType := fmt.Sprintf("%s/%s", mediaType, dto.Ext)
 	id, err := storage.generateMediaId(dto)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	key := fmt.Sprintf("temp/%s/%s.%s", mediaType, id, dto.Ext)
+	key := fmt.Sprintf("temp/%s/%s/%s.%s", dto.Prefix, mediaType, id, dto.Ext)
 
 	presignedURL, err := presigner.PresignPutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(storage.bucket),
 		Key:         aws.String(key),
 		ContentType: aws.String(contentType),
+		Metadata: map[string]string{
+			"userid": userId,
+		},
 	})
 	if err != nil {
-		return nil, &dtos.AppError{
+		return nil, "", &dtos.AppError{
 			Code:    http.StatusInternalServerError,
 			Message: "Failed to create presigned url",
 		}
 	}
+	storageUrl := storage.convertKeyToStaticLink(key)
 
 	return &dtos.MediaMeta{
 		ID:          id,
+		Prefix:      dto.Prefix,
 		Extension:   dto.Ext,
 		ContentType: contentType,
-		URL:         presignedURL.URL,
-	}, nil
+		URL:         storageUrl,
+	}, presignedURL.URL, nil
 }
 
 func (storage *Storage) generateMediaId(dto *dtos.UploadMediaDto) (string, error) {
@@ -102,4 +148,8 @@ func (storage *Storage) generateMediaId(dto *dtos.UploadMediaDto) (string, error
 		Code:    http.StatusInternalServerError,
 		Message: "Failed to generate media id",
 	}
+}
+
+func (storage *Storage) convertKeyToStaticLink(key string) string {
+	return storage.staticLink + key
 }

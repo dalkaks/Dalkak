@@ -1,14 +1,13 @@
 package user
 
 import (
-	"context"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/utils/dynamodbutils"
+	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/timeutils"
-	"net/http"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -29,104 +28,116 @@ func NewUserRepository(db interfaces.Database) *UserRepositoryImpl {
 }
 
 func (repo *UserRepositoryImpl) CreateUser(walletAddress string) error {
+	pk := GenerateUserDataPk(walletAddress)
 	newUser := &UserData{
-		Pk:            GenerateUserDataPk(walletAddress),
-		Sk:            GenerateUserDataPk(walletAddress),
-		EntityType:    UserDataType,
+		Pk:         pk,
+		Sk:         pk,
+		EntityType: UserDataType,
+		Timestamp:  timeutils.GetTimestamp(),
+
 		WalletAddress: walletAddress,
-		Timestamp:     timeutils.GetTimestamp(),
 	}
 
-	av, err := attributevalue.MarshalMap(newUser)
+	err := dynamodbutils.PutDynamoDBItem(repo.client, repo.table, newUser)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to marshal user data to map",
-		}
-	}
-
-	_, err = repo.client.PutItem(context.Background(), &dynamodb.PutItemInput{
-		TableName: aws.String(repo.table),
-		Item:      av,
-	})
-	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to put user data",
-		}
+		return err
 	}
 	return nil
 }
 
 func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, error) {
-	var userToFind UserData
-	key := map[string]types.AttributeValue{
-		"Pk": &types.AttributeValueMemberS{Value: GenerateUserDataPk(walletAddress)},
-		"Sk": &types.AttributeValueMemberS{Value: GenerateUserDataPk(walletAddress)},
-	}
+	pk := GenerateUserDataPk(walletAddress)
+	var userToFind *UserData
 
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(repo.table),
-		Key:       key,
-	}
-
-	result, err := repo.client.GetItem(context.Background(), input)
+	keyCond := expression.Key("Pk").Equal(expression.Value(pk)).
+		And(expression.Key("Sk").Equal(expression.Value(pk)))
+	expr, err := dynamodbutils.GenerateQueryExpression(keyCond, nil)
 	if err != nil {
-		return nil, &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to get user data",
-		}
+		return nil, err
 	}
 
-	if result.Item != nil {
-		err = attributevalue.UnmarshalMap(result.Item, &userToFind)
-		if err != nil {
-			return nil, &dtos.AppError{
-				Code:    http.StatusInternalServerError,
-				Message: "Failed to unmarshal user data",
-			}
-		}
-		return userToFind.ToUserDto(), nil
+	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &userToFind)
+	if err != nil || userToFind == nil {
+		return nil, err
 	}
-	return nil, nil
+
+	return userToFind.ToUserDto(), nil
 }
 
-func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, prefix string, dto *dtos.MediaMeta) error {
-	Sk, err := GenerateUserBoardImageDataSk(prefix, dto.ContentType)
+func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
+	mediaType, err := httputils.ConvertContentTypeToMediaType(dto.ContentType)
+	if err != nil {
+		return err
+	}
+	sk := GenerateUserBoardImageDataSk(dto.Prefix, mediaType)
+
+	newUploadMedia := &UserMediaData{
+		Pk:         GenerateUserDataPk(userId),
+		Sk:         sk,
+		EntityType: sk,
+		Timestamp:  timeutils.GetTimestamp(),
+
+		Id:          dto.ID,
+		Prefix:      dto.Prefix,
+		Extension:   dto.Extension,
+		ContentType: dto.ContentType,
+		Url:         dto.URL,
+		IsConfirm:   false,
+	}
+
+	err = dynamodbutils.PutDynamoDBItem(repo.client, repo.table, newUploadMedia)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *dtos.FindUserUploadMediaDto) (*dtos.MediaMeta, error) {
+	sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType.String())
+	var mediaToFind *UserMediaData
+
+	keyCond := expression.Key("Pk").Equal(expression.Value(GenerateUserDataPk(userId))).
+		And(expression.Key("Sk").Equal(expression.Value(sk)))
+	expr, err := dynamodbutils.GenerateQueryExpression(keyCond, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if dto.IsConfirm != nil && *dto.IsConfirm {
+		filt := expression.Name("IsConfirm").Equal(expression.Value(true))
+		expr, err = dynamodbutils.GenerateQueryExpression(keyCond, &filt)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	err = dynamodbutils.QuerySingleItem(repo.client, repo.table, expr, &mediaToFind)
+	if err != nil || mediaToFind == nil {
+		return nil, err
+	}
+
+	return mediaToFind.ToMediaMeta(), nil
+}
+
+func (repo *UserRepositoryImpl) UpdateUserUploadMedia(userId string, findDto *dtos.MediaMeta, updateDto *dtos.UpdateUserUploadMediaDto) error {
+	mediaType, err := httputils.ConvertContentTypeToMediaType(findDto.ContentType)
 	if err != nil {
 		return err
 	}
 
-	newUploadMedia := &UserMediaData{
-		Pk:         GenerateUserDataPk(userId),
-		Sk:         Sk,
-		EntityType: Sk,
-		Timestamp:  timeutils.GetTimestamp(),
+	pk := GenerateUserDataPk(userId)
+	sk := GenerateUserBoardImageDataSk(findDto.Prefix, mediaType)
 
-		Id:          dto.ID,
-		Prefix:      prefix,
-		Extension:   dto.Extension,
-		ContentType: dto.ContentType,
-		Url:         dto.URL,
+	key := map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: pk},
+		"Sk": &types.AttributeValueMemberS{Value: sk},
 	}
 
-	av, err := attributevalue.MarshalMap(newUploadMedia)
+	update := expression.Set(expression.Name("IsConfirm"), expression.Value(updateDto.IsConfirm))
+	expr, err := dynamodbutils.GenerateUpdateExpression(update)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to marshal user media data to map",
-		}
+		return err
 	}
 
-	_, err = repo.client.PutItem(context.Background(), &dynamodb.PutItemInput{
-		TableName: aws.String(repo.table),
-		Item:      av,
-	})
-	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to put user media data",
-		}
-	}
-	return nil
+	return dynamodbutils.UpdateDynamoDBItem(repo.client, repo.table, key, expr)
 }
