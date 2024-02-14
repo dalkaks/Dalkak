@@ -37,7 +37,7 @@ export default async function Home({ params: { lang } }: HomeProps) {
       <div className={styles.center}>
         <Image
           className={styles.logo}
-          src="/next.svg"
+          src="/images/next.svg"
           alt="Next.js Logo"
           width={180}
           height={37}
