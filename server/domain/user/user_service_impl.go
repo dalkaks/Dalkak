@@ -142,14 +142,14 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 		return err
 	}
 	media, err := service.db.FindUserUploadMedia(dto.UserId, findDto)
+	if err != nil {
+		return err
+	}
 	if media == nil {
 		return &dtos.AppError{
 			Code:    http.StatusNotFound,
 			Message: "media not found",
 		}
-	}
-	if err != nil {
-		return err
 	}
 
 	// storage 미디어 가져오기
