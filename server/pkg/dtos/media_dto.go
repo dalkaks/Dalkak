@@ -25,6 +25,10 @@ type FindUserUploadMediaDto struct {
 	IsConfirm *bool
 }
 
+type UpdateUserUploadMediaDto struct {
+	IsConfirm bool
+}
+
 type MediaHeadDto struct {
 	Key         string
 	ContentType string

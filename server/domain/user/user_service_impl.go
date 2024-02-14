@@ -6,7 +6,6 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/validateutils"
-	"log"
 	"net/http"
 )
 
@@ -136,7 +135,6 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 		return err
 	}
 
-	// db 미디어 가져오기
 	findDto, err := dto.ToFindUserUploadMediaDto()
 	if err != nil {
 		return err
@@ -152,31 +150,22 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 		}
 	}
 
-	// storage 미디어 가져오기
 	mediaHeadDto, err := service.storage.GetHeadObject(dto.Key)
-	if mediaHeadDto == nil {
-		return &dtos.AppError{
-			Code:    http.StatusNotFound,
-			Message: "media head not found",
-		}
-	}
 	if err != nil {
 		return err
 	}
 
 	// storage 검증
 	if ok := mediaHeadDto.Verify(media); !ok {
-		log.Println("storage media verify failed")
 		return nil
 	}
 
-	log.Println("storage media verify success")
-
-	// if true
-	// db 미디어 업데이트
-
-	// if false
-	// storage 미디어 삭제
+	err = service.db.UpdateUserUploadMedia(dto.UserId, media, &dtos.UpdateUserUploadMediaDto{
+		IsConfirm: true,
+	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
