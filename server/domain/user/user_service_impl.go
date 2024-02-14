@@ -155,8 +155,11 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 		return err
 	}
 
-	// storage 검증
 	if ok := mediaHeadDto.Verify(media); !ok {
+		err := service.storage.DeleteObject(dto.Key)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -166,6 +169,5 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 	if err != nil {
 		return err
 	}
-
 	return nil
 }

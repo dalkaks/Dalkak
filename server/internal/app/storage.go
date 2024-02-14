@@ -76,6 +76,20 @@ func (storage *Storage) GetHeadObject(key string) (*dtos.MediaHeadDto, error) {
 	}, nil
 }
 
+func (storage *Storage) DeleteObject(key string) error {
+	_, err := storage.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
+		Bucket: aws.String(storage.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to delete object",
+		}
+	}
+	return nil
+}
+
 func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaDto) (*dtos.MediaMeta, string, error) {
 	mediaType := dto.MediaType.String()
 	expires := prefixExpireMinutes * time.Minute
