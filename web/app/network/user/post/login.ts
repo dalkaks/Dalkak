@@ -27,7 +27,7 @@ const ERROR_CASE: { [key in number]: any } = {
   }
 };
 
-const loginService = async (req: RequestLogin) => {
+const login = async (req: RequestLogin) => {
   const res = await serviceModule<ResponseSuccess<ResponseLogin>>(
     'POST',
     'user/auth',
@@ -37,4 +37,4 @@ const loginService = async (req: RequestLogin) => {
   return res;
 };
 
-export default loginService;
+export default login;

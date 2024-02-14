@@ -12,7 +12,8 @@ const postService = async <S, E extends ResponseError>(
     body: param && JSON.stringify(param),
     headers: {
       'Content-Type': 'application/json'
-    }
+    },
+    credentials: 'include'
   });
   console.log(res);
   if (res.ok) {
@@ -32,7 +33,8 @@ const getService = async <S, E extends ResponseError>(
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      credentials: 'include'
     }
   );
   console.log(res);

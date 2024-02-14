@@ -4,6 +4,7 @@ import { Locale, getDictionary } from './dictionaries';
 import Meta from '../Meta';
 import Button from './components/Button';
 import mockWallet from '@/mock/walletData.json';
+import RfButton from './components/RfButton';
 
 interface HomeProps {
   params: {
@@ -17,6 +18,7 @@ export default async function Home({ params: { lang } }: HomeProps) {
     <main className={styles.main}>
       <Meta dict={dict} />
       <Button data={mockWallet} title="login"></Button>
+      <RfButton title="refresh"></RfButton>
       <div className={styles.description}>
         <p>
           Get started by editing&nbsp;

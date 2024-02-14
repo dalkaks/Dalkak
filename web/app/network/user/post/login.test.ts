@@ -12,7 +12,7 @@ describe('POST /user/login', () => {
     await loginService(mockWallet);
 
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(fetch).toHaveBeenCalledWith(`http://localhost:80/user/auth`, {
+    expect(fetch).toHaveBeenCalledWith(`${ENV.SERVER_PATH}/user/auth`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

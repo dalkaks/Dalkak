@@ -20,7 +20,10 @@ const errorHandler = (res: ResponseError, errorCase?: typeof ERROR_CASE) => {
   errorCase ?? ERROR_CASE;
   if (!ERROR_CASE[res.status]) throw new Error('Unknown Error');
 
-  const error = ERROR_CASE[res.status][res.error.message || 'DEFAULT'];
+  const errorQuery = Object.keys(ERROR_CASE[res.status]);
+  const error = errorQuery.includes(res.error.message)
+    ? ERROR_CASE[res.status][res.error.message]
+    : ERROR_CASE[res.status]['DEFAULT'];
 
   return new Error(error);
 };
