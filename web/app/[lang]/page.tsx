@@ -5,9 +5,9 @@ import Meta from '../Meta';
 import Button from './components/Button';
 import mockWallet from '@/mock/walletData.json';
 import RfButton from './components/RfButton';
-import { Card, CardContent } from '@/components/ui/card';
 import { CardWithForm } from './components/CardWithForm';
 import { CardDemo } from './components/CardDemo';
+import PsButton from './components/PsButton';
 
 interface HomeProps {
   params: {
@@ -22,6 +22,7 @@ export default async function Home({ params: { lang } }: HomeProps) {
       <Meta dict={dict} />
       <Button data={mockWallet} title="login"></Button>
       <RfButton title="refresh"></RfButton>
+      <PsButton title="presign"></PsButton>
       <CardWithForm />
       <CardDemo />
       <div className={styles.description}>
