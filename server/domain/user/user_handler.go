@@ -32,7 +32,7 @@ func (handler *UserHandler) Routes() chi.Router {
 	router.Post("/logout", handler.logout)
 
 	router.Post("/media/presigned", handler.createPresignedURL)
-	
+
 	router.Get("/media", handler.getUserMedia)
 
 	router.Post("/media/confirm", handler.confirmMediaUpload)
@@ -116,7 +116,7 @@ func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	var req payloads.UserUploadMediaRequest
+	var req payloads.UserCreateMediaRequest
 	err = httputils.ReadJSON(w, r, &req)
 	if err != nil {
 		httputils.HandleAppError(w, err)

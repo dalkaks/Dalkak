@@ -78,7 +78,7 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	return authTokens, nowTime, nil
 }
 
-func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto *payloads.UserUploadMediaRequest) (*payloads.UserUploadMediaResponse, error) {
+func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto *payloads.UserCreateMediaRequest) (*payloads.UserCreateMediaResponse, error) {
 	err := validateutils.Validate(dto)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto 
 		return nil, err
 	}
 
-	return &payloads.UserUploadMediaResponse{
+	return &payloads.UserCreateMediaResponse{
 		Id:           mediaMeta.ID,
 		Url:          mediaMeta.URL,
 		PresignedUrl: presignedUrl,

@@ -13,19 +13,6 @@ type UserData struct {
 	WalletAddress string
 }
 
-const UserDataType = "User"
-
-func GenerateUserDataPk(walletAddress string) string {
-	return UserDataType + `#` + walletAddress
-}
-
-func (u *UserData) ToUserDto() *dtos.UserDto {
-	return &dtos.UserDto{
-		WalletAddress: u.WalletAddress,
-		Timestamp:     u.Timestamp,
-	}
-}
-
 type UserMediaData struct {
 	Pk         string
 	Sk         string
@@ -40,8 +27,21 @@ type UserMediaData struct {
 	IsConfirm   bool
 }
 
+const UserDataType = "User"
+
+func GenerateUserDataPk(walletAddress string) string {
+	return UserDataType + `#` + walletAddress
+}
+
 func GenerateUserBoardImageDataSk(prefix string, mediaType string) string {
 	return `Media#` + prefix + `#` + mediaType
+}
+
+func (u *UserData) ToUserDto() *dtos.UserDto {
+	return &dtos.UserDto{
+		WalletAddress: u.WalletAddress,
+		Timestamp:     u.Timestamp,
+	}
 }
 
 func (b *UserMediaData) ToMediaMeta() *dtos.MediaMeta {

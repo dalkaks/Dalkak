@@ -16,9 +16,68 @@ type UserAccessTokenResponse struct {
 	AccessToken string `json:"accessToken"`
 }
 
+type UserCreateMediaRequest struct {
+	MediaType string `json:"mediaType"`
+	Ext       string `json:"ext"`
+	Prefix    string `json:"prefix"`
+}
+
+type UserCreateMediaResponse struct {
+	Id           string `json:"id"`
+	Url          string `json:"url"`
+	PresignedUrl string `json:"presignedUrl"`
+}
+
 type UserGetMediaRequest struct {
 	MediaType string `query:"mediaType" required:"true"`
 	Prefix    string `query:"prefix" required:"true"`
+}
+
+type UserGetMediaResponse struct {
+	Id          string `json:"id"`
+	ContentType string `json:"contentType"`
+	Url         string `json:"url"`
+}
+
+type UserConfirmMediaRequest struct {
+	UserId    string `json:"userId"`
+	Key       string `json:"key"`
+	MediaType string `json:"mediaType"`
+}
+
+type UserDeleteMediaRequest struct {
+	Url       string `query:"url" required:"true"`
+	MediaType string `query:"mediaType" required:"true"`
+	Prefix    string `query:"prefix" required:"true"`
+}
+
+func (req *UserCreateMediaRequest) IsValid() bool {
+	return isSupportedMediaType(req.MediaType) && hasValidPrefix(req.Prefix) && isExtensionAllowed(req.Ext)
+}
+
+func (req *UserCreateMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUploadMediaDto, error) {
+	mediaType, err := dtos.ToMediaType(req.MediaType)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dtos.FindUserUploadMediaDto{
+		MediaType: mediaType,
+		Prefix:    req.Prefix,
+	}, nil
+}
+
+func (req *UserCreateMediaRequest) ToUploadMediaDto() (*dtos.UploadMediaDto, error) {
+	mediaType, err := dtos.ToMediaType(req.MediaType)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dtos.UploadMediaDto{
+		MediaType: mediaType,
+		Ext:       req.Ext,
+		Prefix:    req.Prefix,
+	}, nil
 }
 
 func (req *UserGetMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUploadMediaDto, error) {
@@ -38,61 +97,8 @@ func (req *UserGetMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUpload
 	}, nil
 }
 
-type UserGetMediaResponse struct {
-	Id          string `json:"id"`
-	ContentType string `json:"contentType"`
-	Url         string `json:"url"`
-}
-
 func (req *UserGetMediaRequest) IsValid() bool {
 	return isSupportedMediaType(req.MediaType) && hasValidPrefix(req.Prefix)
-}
-
-type UserUploadMediaRequest struct {
-	MediaType string `json:"mediaType"`
-	Ext       string `json:"ext"`
-	Prefix    string `json:"prefix"`
-}
-
-type UserUploadMediaResponse struct {
-	Id           string `json:"id"`
-	Url          string `json:"url"`
-	PresignedUrl string `json:"presignedUrl"`
-}
-
-func (req *UserUploadMediaRequest) IsValid() bool {
-	return isSupportedMediaType(req.MediaType) && hasValidPrefix(req.Prefix) && isExtensionAllowed(req.Ext)
-}
-
-func (req *UserUploadMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUploadMediaDto, error) {
-	mediaType, err := dtos.ToMediaType(req.MediaType)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dtos.FindUserUploadMediaDto{
-		MediaType: mediaType,
-		Prefix:    req.Prefix,
-	}, nil
-}
-
-func (req *UserUploadMediaRequest) ToUploadMediaDto() (*dtos.UploadMediaDto, error) {
-	mediaType, err := dtos.ToMediaType(req.MediaType)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dtos.UploadMediaDto{
-		MediaType: mediaType,
-		Ext:       req.Ext,
-		Prefix:    req.Prefix,
-	}, nil
-}
-
-type UserConfirmMediaRequest struct {
-	UserId    string `json:"userId"`
-	Key       string `json:"key"`
-	MediaType string `json:"mediaType"`
 }
 
 func (req *UserConfirmMediaRequest) IsValid() bool {
@@ -121,12 +127,6 @@ func (req *UserConfirmMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUp
 		MediaType: mediaType,
 		Prefix:    prefix,
 	}, nil
-}
-
-type UserDeleteMediaRequest struct {
-	Url       string `query:"url" required:"true"`
-	MediaType string `query:"mediaType" required:"true"`
-	Prefix    string `query:"prefix" required:"true"`
 }
 
 func (req *UserDeleteMediaRequest) IsValid() bool {

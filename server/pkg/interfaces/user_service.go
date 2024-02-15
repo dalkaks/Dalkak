@@ -11,7 +11,7 @@ type UserService interface {
 	AuthAndSignUp(walletAddress string, signature string) (*dtos.AuthTokens, int64, error)
 	ReissueRefresh(refreshToken string) (*dtos.AuthTokens, int64, error)
 
-	CreatePresignedURL(userInfo *dtos.UserInfo, req *payloads.UserUploadMediaRequest) (*payloads.UserUploadMediaResponse, error)
+	CreatePresignedURL(userInfo *dtos.UserInfo, req *payloads.UserCreateMediaRequest) (*payloads.UserCreateMediaResponse, error)
 	GetUserMedia(userInfo *dtos.UserInfo, req *payloads.UserGetMediaRequest) (*payloads.UserGetMediaResponse, error)
 	ConfirmMediaUpload(req *payloads.UserConfirmMediaRequest) error
 }
