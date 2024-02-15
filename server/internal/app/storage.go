@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -72,7 +73,7 @@ func (storage *Storage) GetHeadObject(key string) (*dtos.MediaHeadDto, error) {
 		Key:         key,
 		ContentType: *headObjectOutput.ContentType,
 		Length:      *headObjectOutput.ContentLength,
-		URL:				 storage.convertKeyToStaticLink(key),
+		URL:         storage.convertKeyToStaticLink(key),
 	}, nil
 }
 
@@ -127,6 +128,16 @@ func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaD
 		ContentType: contentType,
 		URL:         storageUrl,
 	}, presignedURL.URL, nil
+}
+
+func (storage *Storage) ConvertStaticLinkToKey(url string) (string, error) {
+	if url == "" || !strings.HasPrefix(url, storage.staticLink) {
+		return "", &dtos.AppError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid url",
+		}
+	}
+	return url[len(storage.staticLink):], nil
 }
 
 func (storage *Storage) generateMediaId(dto *dtos.UploadMediaDto) (string, error) {

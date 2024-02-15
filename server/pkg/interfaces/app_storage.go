@@ -7,4 +7,6 @@ type Storage interface {
 	DeleteObject(key string) error
 	
 	CreatePresignedURL(userId string, dto *dtos.UploadMediaDto) (*dtos.MediaMeta, string, error)
+
+	ConvertStaticLinkToKey(url string) (string, error)
 }
