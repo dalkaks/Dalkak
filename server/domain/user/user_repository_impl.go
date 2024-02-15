@@ -141,3 +141,20 @@ func (repo *UserRepositoryImpl) UpdateUserUploadMedia(userId string, findDto *dt
 
 	return dynamodbutils.UpdateDynamoDBItem(repo.client, repo.table, key, expr)
 }
+
+func (repo *UserRepositoryImpl) DeleteUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
+	mediaType, err := httputils.ConvertContentTypeToMediaType(dto.ContentType)
+	if err != nil {
+		return err
+	}
+
+	pk := GenerateUserDataPk(userId)
+	sk := GenerateUserBoardImageDataSk(dto.Prefix, mediaType)
+
+	key := map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: pk},
+		"Sk": &types.AttributeValueMemberS{Value: sk},
+	}
+
+	return dynamodbutils.DeleteDynamoDBItem(repo.client, repo.table, key)
+}

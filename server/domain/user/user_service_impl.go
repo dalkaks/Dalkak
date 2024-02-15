@@ -84,6 +84,29 @@ func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto 
 		return nil, err
 	}
 
+	findDto, err := dto.ToFindUserUploadMediaDto()
+	if err != nil {
+		return nil, err
+	}
+	prevMedia, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, findDto)
+	if err != nil {
+		return nil, err
+	}
+	if prevMedia != nil {
+		key, err := service.storage.ConvertStaticLinkToKey(prevMedia.URL)
+		if err != nil {
+			return nil, err
+		}
+		err = service.storage.DeleteObject(key)
+		if err != nil {
+			return nil, err
+		}
+		err = service.db.DeleteUserUploadMedia(userInfo.WalletAddress, prevMedia)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	uploadMediaDto, err := dto.ToUploadMediaDto()
 	if err != nil {
 		return nil, err
@@ -94,7 +117,6 @@ func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto 
 		return nil, err
 	}
 
-	// Todo : 기한이 지남에 따라 upload media 삭제
 	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, mediaMeta)
 	if err != nil {
 		return nil, err
@@ -166,6 +188,49 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 	err = service.db.UpdateUserUploadMedia(dto.UserId, media, &dtos.UpdateUserUploadMediaDto{
 		IsConfirm: true,
 	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (service *UserServiceImpl) DeleteUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserDeleteMediaRequest) error {
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return err
+	}
+
+	findDto, err := dto.ToFindUserUploadMediaDto()
+	if err != nil {
+		return err
+	}
+	media, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, findDto)
+	if err != nil {
+		return err
+	}
+	if media == nil {
+		return &dtos.AppError{
+			Code:    http.StatusNotFound,
+			Message: "media not found",
+		}
+	}
+
+	if ok := dto.Verify(media); !ok {
+		return &dtos.AppError{
+			Code:    http.StatusBadRequest,
+			Message: "invalid request",
+		}
+	}
+	key, err := service.storage.ConvertStaticLinkToKey(dto.Url)
+	if err != nil {
+		return err
+	}
+	err = service.storage.DeleteObject(key)
+	if err != nil {
+		return err
+	}
+
+	err = service.db.DeleteUserUploadMedia(userInfo.WalletAddress, media)
 	if err != nil {
 		return err
 	}

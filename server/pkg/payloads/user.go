@@ -64,6 +64,18 @@ func (req *UserUploadMediaRequest) IsValid() bool {
 	return isSupportedMediaType(req.MediaType) && hasValidPrefix(req.Prefix) && isExtensionAllowed(req.Ext)
 }
 
+func (req *UserUploadMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUploadMediaDto, error) {
+	mediaType, err := dtos.ToMediaType(req.MediaType)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dtos.FindUserUploadMediaDto{
+		MediaType: mediaType,
+		Prefix:    req.Prefix,
+	}, nil
+}
+
 func (req *UserUploadMediaRequest) ToUploadMediaDto() (*dtos.UploadMediaDto, error) {
 	mediaType, err := dtos.ToMediaType(req.MediaType)
 	if err != nil {
@@ -108,6 +120,32 @@ func (req *UserConfirmMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUp
 	return &dtos.FindUserUploadMediaDto{
 		MediaType: mediaType,
 		Prefix:    prefix,
+	}, nil
+}
+
+type UserDeleteMediaRequest struct {
+	Url       string `query:"url" required:"true"`
+	MediaType string `query:"mediaType" required:"true"`
+	Prefix    string `query:"prefix" required:"true"`
+}
+
+func (req *UserDeleteMediaRequest) IsValid() bool {
+	return isSupportedMediaType(req.MediaType)
+}
+
+func (req *UserDeleteMediaRequest) Verify(meta *dtos.MediaMeta) bool {
+	return meta.URL == req.Url
+}
+
+func (req *UserDeleteMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUploadMediaDto, error) {
+	mediaType, err := dtos.ToMediaType(req.MediaType)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dtos.FindUserUploadMediaDto{
+		MediaType: mediaType,
+		Prefix:    req.Prefix,
 	}, nil
 }
 

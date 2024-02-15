@@ -55,3 +55,18 @@ func UpdateDynamoDBItem(client *dynamodb.Client, tableName string, key map[strin
 
 	return nil
 }
+
+func DeleteDynamoDBItem(client *dynamodb.Client, tableName string, key map[string]types.AttributeValue) error {
+	_, err := client.DeleteItem(context.Background(), &dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key:       key,
+	})
+	if err != nil {
+		return &dtos.AppError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to delete db data",
+		}
+	}
+
+	return nil
+}
