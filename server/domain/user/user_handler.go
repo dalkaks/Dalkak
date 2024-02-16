@@ -31,6 +31,12 @@ func (handler *UserHandler) Routes() chi.Router {
 
 	router.Post("/logout", handler.logout)
 
+	router.Post("/media/presigned", handler.createPresignedURL)
+	
+	router.Get("/media", handler.getUserMedia)
+
+	router.Post("/media/confirm", handler.confirmMediaUpload)
+
 	return router
 }
 
@@ -101,4 +107,67 @@ func (handler *UserHandler) logout(w http.ResponseWriter, r *http.Request) {
 func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
 	httputils.DeleteCookieRefresh(w)
 	httputils.HandleAppError(w, err)
+}
+
+func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Request) {
+	userInfo, err := httputils.GetUserInfoData(r)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	var req payloads.UserUploadMediaRequest
+	err = httputils.ReadJSON(w, r, &req)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	result, err := handler.userService.CreatePresignedURL(userInfo, &req)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
+}
+
+func (handler *UserHandler) getUserMedia(w http.ResponseWriter, r *http.Request) {
+	userInfo, err := httputils.GetUserInfoData(r)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	var query payloads.UserGetMediaRequest
+	err = httputils.GetQuery(r, &query)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	result, err := handler.userService.GetUserMedia(userInfo, &query)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
+}
+
+func (handler *UserHandler) confirmMediaUpload(w http.ResponseWriter, r *http.Request) {
+	var req payloads.UserConfirmMediaRequest
+	err := httputils.ReadJSON(w, r, &req)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	err = handler.userService.ConfirmMediaUpload(&req)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
 }

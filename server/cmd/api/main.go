@@ -24,7 +24,7 @@ func main() {
 	var db interfaces.Database = appInstance.Database
   var storage interfaces.Storage = appInstance.Storage
 
-	userService := user.NewUserService(Mode, appInstance.Domain, db, appInstance.KmsSet)
+	userService := user.NewUserService(Mode, appInstance.Domain, db, appInstance.KmsSet, storage)
 	boardService := board.NewBoardService(Mode, appInstance.Domain, db, storage)
 
 	err = appInstance.StartServer(port, userService, boardService)

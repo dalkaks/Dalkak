@@ -3,5 +3,8 @@ package interfaces
 import "dalkak/pkg/dtos"
 
 type Storage interface {
-	CreatePresignedURL(mediaType dtos.MediaType, ext string) (*dtos.MediaMeta, error)
+	GetHeadObject(key string) (*dtos.MediaHeadDto, error)
+	DeleteObject(key string) error
+	
+	CreatePresignedURL(userId string, dto *dtos.UploadMediaDto) (*dtos.MediaMeta, string, error)
 }

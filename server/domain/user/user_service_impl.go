@@ -4,23 +4,28 @@ import (
 	appsecurity "dalkak/internal/security"
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
+	"dalkak/pkg/payloads"
+	"dalkak/pkg/utils/validateutils"
+	"net/http"
 )
 
 type UserServiceImpl struct {
-	mode   string
-	domain string
-	db     interfaces.UserRepository
-	kmsSet *appsecurity.KmsSet
+	mode    string
+	domain  string
+	db      interfaces.UserRepository
+	kmsSet  *appsecurity.KmsSet
+	storage interfaces.Storage
 }
 
-func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *appsecurity.KmsSet) interfaces.UserService {
+func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *appsecurity.KmsSet, storage interfaces.Storage) interfaces.UserService {
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
-		mode:   mode,
-		domain: domain,
-		db:     userRepo,
-		kmsSet: kmsSet,
+		mode:    mode,
+		domain:  domain,
+		db:      userRepo,
+		kmsSet:  kmsSet,
+		storage: storage,
 	}
 }
 
@@ -71,4 +76,98 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	}
 
 	return authTokens, nowTime, nil
+}
+
+func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto *payloads.UserUploadMediaRequest) (*payloads.UserUploadMediaResponse, error) {
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	uploadMediaDto, err := dto.ToUploadMediaDto()
+	if err != nil {
+		return nil, err
+	}
+
+	mediaMeta, presignedUrl, err := service.storage.CreatePresignedURL(userInfo.WalletAddress, uploadMediaDto)
+	if err != nil {
+		return nil, err
+	}
+
+	// Todo : 기한이 지남에 따라 upload media 삭제
+	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, mediaMeta)
+	if err != nil {
+		return nil, err
+	}
+
+	return &payloads.UserUploadMediaResponse{
+		Id:           mediaMeta.ID,
+		Url:          mediaMeta.URL,
+		PresignedUrl: presignedUrl,
+	}, nil
+}
+
+func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserGetMediaRequest) (*payloads.UserGetMediaResponse, error) {
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	findDto, err := dto.ToFindUserUploadMediaDto()
+	if err != nil {
+		return nil, err
+	}
+	media, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, findDto)
+	if err != nil || media == nil {
+		return nil, err
+	}
+
+	return &payloads.UserGetMediaResponse{
+		Id:          media.ID,
+		ContentType: media.ContentType,
+		Url:         media.URL,
+	}, nil
+}
+
+func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMediaRequest) error {
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return err
+	}
+
+	findDto, err := dto.ToFindUserUploadMediaDto()
+	if err != nil {
+		return err
+	}
+	media, err := service.db.FindUserUploadMedia(dto.UserId, findDto)
+	if err != nil {
+		return err
+	}
+	if media == nil {
+		return &dtos.AppError{
+			Code:    http.StatusNotFound,
+			Message: "media not found",
+		}
+	}
+
+	mediaHeadDto, err := service.storage.GetHeadObject(dto.Key)
+	if err != nil {
+		return err
+	}
+
+	if ok := mediaHeadDto.Verify(media); !ok {
+		err := service.storage.DeleteObject(dto.Key)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	err = service.db.UpdateUserUploadMedia(dto.UserId, media, &dtos.UpdateUserUploadMediaDto{
+		IsConfirm: true,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
