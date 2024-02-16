@@ -12,3 +12,9 @@ type UserInfo struct {
 type GenerateTokenDto struct {
 	WalletAddress string `json:"walletAddress"`
 }
+
+func NewGenerateTokenDto(walletAddress string) *GenerateTokenDto {
+	return &GenerateTokenDto{
+		WalletAddress: walletAddress,
+	}
+}

@@ -51,7 +51,7 @@ func (handler *UserHandlerImpl) RouteAuthAndSignUp(w http.ResponseWriter, r *htt
 		return
 	}
 
-	authTokens, tokenTime, err := handler.userService.AuthAndSignUp(req.WalletAddress, req.Signature)
+	authTokens, tokenTime, err := handler.userService.AuthAndSignUp(&req)
 	if err != nil {
 		handleAppErrorAndDeleteCookieRefresh(w, err)
 		return
@@ -66,7 +66,8 @@ func (handler *UserHandlerImpl) RouteAuthAndSignUp(w http.ResponseWriter, r *htt
 	}
 
 	result := &payloads.UserAccessTokenResponse{
-		AccessToken: authTokens.AccessToken,
+		AccessToken:  authTokens.AccessToken,
+		RefreshToken: authTokens.RefreshToken,
 	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
 		handleAppErrorAndDeleteCookieRefresh(w, err)
@@ -95,7 +96,8 @@ func (handler *UserHandlerImpl) RouteReissueRefresh(w http.ResponseWriter, r *ht
 	}
 
 	result := &payloads.UserAccessTokenResponse{
-		AccessToken: authTokens.AccessToken,
+		AccessToken:  authTokens.AccessToken,
+		RefreshToken: authTokens.RefreshToken,
 	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
 		handleAppErrorAndDeleteCookieRefresh(w, err)

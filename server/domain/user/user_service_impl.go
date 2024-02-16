@@ -37,23 +37,21 @@ func (service *UserServiceImpl) GetDomain() string {
 	return service.domain
 }
 
-func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature string) (*dtos.AuthTokens, int64, error) {
-	user, err := service.db.FindUser(walletAddress)
+func (service *UserServiceImpl) AuthAndSignUp(dto *payloads.UserAuthAndSignUpRequest) (*dtos.AuthTokens, int64, error) {
+	user, err := service.db.FindUser(dto.WalletAddress)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	if user == nil {
-		err := service.db.CreateUser(walletAddress)
+		err := service.db.CreateUser(dto.WalletAddress)
 		if err != nil {
 			return nil, 0, err
 		}
 	}
 
-	generateTokenDto := dtos.GenerateTokenDto{
-		WalletAddress: walletAddress,
-	}
-	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.KMS, &generateTokenDto)
+	generateTokenDto := dtos.NewGenerateTokenDto(dto.WalletAddress)
+	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.KMS, generateTokenDto)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -67,10 +65,8 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 		return nil, 0, err
 	}
 
-	generateTokenDto := dtos.GenerateTokenDto{
-		WalletAddress: walletAddress,
-	}
-	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.KMS, &generateTokenDto)
+	generateTokenDto := dtos.NewGenerateTokenDto(walletAddress)
+	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.KMS, generateTokenDto)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -118,7 +114,7 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 	return payloads.NewUserGetMediaResponse(media), nil
 }
 
-func (service *UserServiceImpl) ConfirmMediaUpload(userInfo *dtos.UserInfo, dto *payloads.UserConfirmMediaRequest) (error) {
+func (service *UserServiceImpl) ConfirmMediaUpload(userInfo *dtos.UserInfo, dto *payloads.UserConfirmMediaRequest) error {
 	err := validateutils.Validate(dto)
 	if err != nil {
 		return err
