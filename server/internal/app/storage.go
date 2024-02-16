@@ -66,6 +66,7 @@ func (storage *Storage) GetHeadObject(key string) (*dtos.MediaHeadDto, error) {
 		ContentType: *headObjectOutput.ContentType,
 		Length:      *headObjectOutput.ContentLength,
 		URL:         storage.convertKeyToStaticLink(key),
+		MetaUserId:  headObjectOutput.Metadata["userid"],
 	}, nil
 }
 

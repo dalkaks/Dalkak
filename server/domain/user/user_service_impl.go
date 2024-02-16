@@ -118,25 +118,25 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 	return payloads.NewUserGetMediaResponse(media), nil
 }
 
-func (service *UserServiceImpl) ConfirmMediaUpload(userInfo *dtos.UserInfo, dto *payloads.UserConfirmMediaRequest) (bool, error) {
+func (service *UserServiceImpl) ConfirmMediaUpload(userInfo *dtos.UserInfo, dto *payloads.UserConfirmMediaRequest) (error) {
 	err := validateutils.Validate(dto)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	media, err := service.readMedia(userInfo.WalletAddress, dto)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if media == nil {
-		return false, dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgMediaNotFound, errors.New("media not found"))
+		return dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgMediaNotFound, errors.New("media not found"))
 	}
 
 	err = service.confirmMedia(userInfo, dto, media)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 }
 
 func (service *UserServiceImpl) DeleteUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserDeleteMediaRequest) error {
@@ -203,7 +203,7 @@ func (service *UserServiceImpl) confirmMedia(userInfo *dtos.UserInfo, dto *paylo
 		return err
 	}
 
-	if ok := mediaHeadDto.Verify(media); !ok {
+	if ok := mediaHeadDto.Verify(userInfo.WalletAddress, media); !ok {
 		err := service.storage.DeleteObject(dto.Key)
 		if err != nil {
 			return err

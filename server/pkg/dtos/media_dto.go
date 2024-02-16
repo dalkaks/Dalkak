@@ -34,6 +34,7 @@ type MediaHeadDto struct {
 	ContentType string
 	Length      int64
 	URL         string
+	MetaUserId  string
 }
 
 func GenerateTempKey(prefix string, mediaType string, id string, ext string) string {
@@ -48,8 +49,8 @@ func GenerateContentType(mediaType string, ext string) string {
 	return mediaType + "/" + ext
 }
 
-func (m *MediaHeadDto) Verify(meta *MediaMeta) bool {
-	return int64(config.MaxUploadSize) > m.Length && m.ContentType == meta.ContentType && m.URL == meta.URL
+func (m *MediaHeadDto) Verify(userId string, meta *MediaMeta) bool {
+	return int64(config.MaxUploadSize) > m.Length && m.ContentType == meta.ContentType && m.URL == meta.URL && userId == m.MetaUserId
 }
 
 type MediaType int
