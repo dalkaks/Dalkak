@@ -26,8 +26,8 @@ func main() {
 
 	userService := user.NewUserService(Mode, appInstance.Domain, db, appInstance.KmsSet, storage)
 	boardService := board.NewBoardService(Mode, appInstance.Domain, db, storage)
-
 	err = appInstance.StartServer(port, userService, boardService)
+
 	if err != nil {
 		log.Fatal(err)
 	}

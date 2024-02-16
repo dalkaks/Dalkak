@@ -10,38 +10,38 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type UserHandler struct {
+type UserHandlerImpl struct {
 	userService             interfaces.UserService
 	verifyMetaMaskSignature func(next http.Handler) http.Handler
 }
 
-func NewUserHandler(userService interfaces.UserService, verifyMetaMaskSignature func(next http.Handler) http.Handler) *UserHandler {
-	return &UserHandler{userService: userService, verifyMetaMaskSignature: verifyMetaMaskSignature}
+func NewUserHandler(userService interfaces.UserService, verifyMetaMaskSignature func(next http.Handler) http.Handler) *UserHandlerImpl {
+	return &UserHandlerImpl{userService: userService, verifyMetaMaskSignature: verifyMetaMaskSignature}
 }
 
-func (handler *UserHandler) Routes() chi.Router {
+func (handler *UserHandlerImpl) Routes() chi.Router {
 	router := chi.NewRouter()
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})
 
-	router.With(handler.verifyMetaMaskSignature).Post("/auth", handler.authAndSignUp)
+	router.With(handler.verifyMetaMaskSignature).Post("/auth", handler.RouteAuthAndSignUp)
 
-	router.Post("/refresh", handler.reissueRefresh)
+	router.Post("/refresh", handler.RouteReissueRefresh)
 
-	router.Post("/logout", handler.logout)
+	router.Post("/logout", handler.RouteLogout)
 
-	router.Post("/media/presigned", handler.createPresignedURL)
+	router.Post("/media/presigned", handler.RouteCreatePresignedURL)
 
-	router.Get("/media", handler.getUserMedia)
+	router.Get("/media", handler.RouteGetUserMedia)
 
-	router.Post("/media/confirm", handler.confirmMediaUpload)
+	router.Post("/media/confirm", handler.RouteConfirmMediaUpload)
 
 	return router
 }
 
-func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandlerImpl) RouteAuthAndSignUp(w http.ResponseWriter, r *http.Request) {
 	var req payloads.UserAuthAndSignUpRequest
 	err := httputils.ReadJSON(w, r, &req)
 	if err != nil {
@@ -71,7 +71,7 @@ func (handler *UserHandler) authAndSignUp(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandlerImpl) RouteReissueRefresh(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := httputils.GetCookieRefresh(r)
 	if err != nil {
 		handleAppErrorAndDeleteCookieRefresh(w, err)
@@ -100,17 +100,12 @@ func (handler *UserHandler) reissueRefresh(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (handler *UserHandler) logout(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandlerImpl) RouteLogout(w http.ResponseWriter, r *http.Request) {
 	httputils.DeleteCookieRefresh(w)
 	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
 }
 
-func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
-	httputils.DeleteCookieRefresh(w)
-	httputils.HandleAppError(w, err)
-}
-
-func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandlerImpl) RouteCreatePresignedURL(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := parseutils.GetUserInfoData(r)
 	if err != nil {
 		httputils.HandleAppError(w, err)
@@ -133,7 +128,7 @@ func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Re
 	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
 }
 
-func (handler *UserHandler) getUserMedia(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandlerImpl) RouteGetUserMedia(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := parseutils.GetUserInfoData(r)
 	if err != nil {
 		httputils.HandleAppError(w, err)
@@ -156,7 +151,7 @@ func (handler *UserHandler) getUserMedia(w http.ResponseWriter, r *http.Request)
 	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
 }
 
-func (handler *UserHandler) confirmMediaUpload(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandlerImpl) RouteConfirmMediaUpload(w http.ResponseWriter, r *http.Request) {
 	var req payloads.UserConfirmMediaRequest
 	err := httputils.ReadJSON(w, r, &req)
 	if err != nil {
@@ -171,4 +166,9 @@ func (handler *UserHandler) confirmMediaUpload(w http.ResponseWriter, r *http.Re
 	}
 
 	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
+}
+
+func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
+	httputils.DeleteCookieRefresh(w)
+	httputils.HandleAppError(w, err)
 }

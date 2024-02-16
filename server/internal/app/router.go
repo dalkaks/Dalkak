@@ -13,8 +13,8 @@ import (
 func (app *APP) NewRouter(userService interfaces.UserService, boardService interfaces.BoardService) *chi.Mux {
 	router := chi.NewRouter()
 
-	userHandler := user.NewUserHandler(userService, app.verifyMetaMaskSignature)
-	boardHandler := board.NewBoardHandler(boardService)
+	var userHandler interfaces.UserHandler = user.NewUserHandler(userService, app.verifyMetaMaskSignature)
+	var boardHandler interfaces.BoardHandler = board.NewBoardHandler(boardService)
 
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Logger)

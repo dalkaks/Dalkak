@@ -6,15 +6,15 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type BoardHandler struct {
+type BoardHandlerImpl struct {
 	boardService interfaces.BoardService
 }
 
-func NewBoardHandler(boardService interfaces.BoardService) *BoardHandler {
-	return &BoardHandler{boardService}
+func NewBoardHandler(boardService interfaces.BoardService) *BoardHandlerImpl {
+	return &BoardHandlerImpl{boardService}
 }
 
-func (handler *BoardHandler) Routes() chi.Router {
+func (handler *BoardHandlerImpl) Routes() chi.Router {
 	router := chi.NewRouter()
 
 	return router
