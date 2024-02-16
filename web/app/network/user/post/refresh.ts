@@ -1,3 +1,5 @@
+'use server';
+
 import errorHandler, { errorGuard } from '../../common/util/errorHandler';
 import { ResponseSuccess } from '../../common/type/response';
 import serviceModule from '../../serviceModule';

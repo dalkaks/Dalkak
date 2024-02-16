@@ -6,13 +6,17 @@ import presign from '@/app/network/media/post/presign';
 const PsButton = ({ title }: { title: string }) => {
   return (
     <button
-      onClick={() =>
-        presign({
-          mediaType: 'image',
-          ext: 'jpeg',
-          prefix: 'board'
-        })
-      }
+      onClick={async () => {
+        try {
+          await presign({
+            mediaType: 'image',
+            ext: 'jpeg',
+            prefix: 'board'
+          });
+        } catch (error) {
+          alert(error);
+        }
+      }}
     >
       {title}
     </button>

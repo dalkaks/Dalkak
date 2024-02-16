@@ -5,15 +5,18 @@ type RequestType = 'POST' | 'GET';
 
 const postService = async <S, E extends ResponseError>(
   path: string,
-  param?: any
+  param?: any,
+  header?: object
 ) => {
   const res = await fetch(`${ENV.SERVER_PATH}/${path}`, {
     method: 'POST',
     body: param && JSON.stringify(param),
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...header
     },
-    credentials: 'include'
+    credentials: 'include',
+    ...header
   });
   console.log(res);
   if (res.ok) {
@@ -25,14 +28,16 @@ const postService = async <S, E extends ResponseError>(
 
 const getService = async <S, E extends ResponseError>(
   path: string,
-  param?: any
+  param?: any,
+  header?: object
 ) => {
   const res = await fetch(
     `${ENV.SERVER_PATH}/${path}?${new URLSearchParams(param).toString()}`,
     {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...header
       },
       credentials: 'include'
     }
@@ -45,12 +50,12 @@ const getService = async <S, E extends ResponseError>(
   }
 };
 
-const serviceModule = <S>(type: RequestType, path: string, param?: any) => {
+const serviceModule = <S>(type: RequestType, path: string, param?: any, header?: object) => {
   switch (type) {
     case 'POST':
-      return postService<S, ResponseError>(path, param);
+      return postService<S, ResponseError>(path, param, header);
     case 'GET':
-      return getService<S, ResponseError>(path, param);
+      return getService<S, ResponseError>(path, param, header);
   }
 };
 

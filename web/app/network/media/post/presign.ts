@@ -1,7 +1,10 @@
+'use server'
+
 import errorHandler, { errorGuard } from '../../common/util/errorHandler';
 import { ResponseSuccess } from '../../common/type/response';
 import serviceModule from '../../serviceModule';
 import { NftFileExt } from '@/type/nft/fileExtension';
+import { cookies } from 'next/headers';
 
 interface RequestPresign {
   mediaType: "image",
@@ -29,12 +32,18 @@ const ERROR_CASE: { [key in number]: any } = {
 };
 
 const presign = async (param: RequestPresign) => {
+  const token = cookies().get('access_token');
+  if (!token) throw new Error('로그인이 필요합니다');
   const res = await serviceModule<ResponseSuccess<ResponsePresign>>(
     'POST',
     'user/media/presigned',
-    param
+    param,
+    {
+      Authorization: `Bearer ${token.value}`
+    }
   );
   if (errorGuard(res)) throw errorHandler(res, ERROR_CASE);
+  console.log(res)
   return res;
 };
 

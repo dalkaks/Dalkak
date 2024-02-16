@@ -1,6 +1,9 @@
+'use server'
+
 import errorHandler, { errorGuard } from '../../common/util/errorHandler';
 import { ResponseSuccess } from '../../common/type/response';
 import serviceModule from '../../serviceModule';
+import { cookies } from 'next/headers';
 
 export interface RequestLogin {
   walletAddress: string;
@@ -33,7 +36,9 @@ const login = async (req: RequestLogin) => {
     'user/auth',
     req
   );
+
   if (errorGuard(res)) throw errorHandler(res, ERROR_CASE);
+  cookies().set('access_token', res.data.accessToken);
   return res;
 };
 
