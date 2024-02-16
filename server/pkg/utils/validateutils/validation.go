@@ -3,15 +3,12 @@ package validateutils
 import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
-	"net/http"
+	"errors"
 )
 
 func Validate(req interfaces.ValidatableRequest) error {
 	if !req.IsValid() {
-		return &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "Invalid request",
-		}
+		return dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgRequestInvalid, errors.New("invalid request"))
 	}
 	return nil
 }

@@ -5,8 +5,8 @@ import (
 	"context"
 	"dalkak/config"
 	"dalkak/pkg/payloads"
-	"dalkak/pkg/utils/httputils"
 	"dalkak/pkg/utils/lambdautils"
+	"dalkak/pkg/utils/parseutils"
 	"encoding/json"
 	"errors"
 	"log"
@@ -54,7 +54,7 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 			lambdautils.HandleError(errors.New("No content type in head object output, bucket: " + bucket + ", key: " + key))
 			continue
 		}
-		mediaType, err := httputils.ConvertContentTypeToMediaType(*headObjectOutput.ContentType)
+		mediaType, err := parseutils.ConvertContentTypeToMediaType(*headObjectOutput.ContentType)
 		if err != nil {
 			lambdautils.HandleError(errors.New("Failed to convert content type to media type, bucket: " + bucket + ", key: " + key + ", content type: " + *headObjectOutput.ContentType))
 			continue

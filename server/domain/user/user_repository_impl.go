@@ -4,7 +4,7 @@ import (
 	"dalkak/pkg/dtos"
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/utils/dynamodbutils"
-	"dalkak/pkg/utils/httputils"
+	"dalkak/pkg/utils/parseutils"
 	"dalkak/pkg/utils/timeutils"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
@@ -65,7 +65,7 @@ func (repo *UserRepositoryImpl) FindUser(walletAddress string) (*dtos.UserDto, e
 }
 
 func (repo *UserRepositoryImpl) CreateUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
-	mediaType, err := httputils.ConvertContentTypeToMediaType(dto.ContentType)
+	mediaType, err := parseutils.ConvertContentTypeToMediaType(dto.ContentType)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func (repo *UserRepositoryImpl) FindUserUploadMedia(userId string, dto *dtos.Fin
 }
 
 func (repo *UserRepositoryImpl) UpdateUserUploadMedia(userId string, findDto *dtos.MediaMeta, updateDto *dtos.UpdateUserUploadMediaDto) error {
-	mediaType, err := httputils.ConvertContentTypeToMediaType(findDto.ContentType)
+	mediaType, err := parseutils.ConvertContentTypeToMediaType(findDto.ContentType)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (repo *UserRepositoryImpl) UpdateUserUploadMedia(userId string, findDto *dt
 }
 
 func (repo *UserRepositoryImpl) DeleteUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
-	mediaType, err := httputils.ConvertContentTypeToMediaType(dto.ContentType)
+	mediaType, err := parseutils.ConvertContentTypeToMediaType(dto.ContentType)
 	if err != nil {
 		return err
 	}

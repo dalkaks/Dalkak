@@ -7,7 +7,6 @@ import (
 	"dalkak/pkg/utils/generateutils"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -59,15 +58,9 @@ func (storage *Storage) GetHeadObject(key string) (*dtos.MediaHeadDto, error) {
 	})
 	if err != nil {
 		if errors.Is(err, &types.NoSuchKey{}) || errors.Is(err, &types.NotFound{}) {
-			return nil, &dtos.AppError{
-				Code:    http.StatusNotFound,
-				Message: "No such key",
-			}
+			return nil, dtos.NewAppError(dtos.ErrCodeNotFound, dtos.ErrMsgStorageNoSuchKey, err)
 		}
-		return nil, &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to get head object",
-		}
+		return nil, dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgStorageInternal, err)
 	}
 	return &dtos.MediaHeadDto{
 		Key:         key,
@@ -83,10 +76,7 @@ func (storage *Storage) DeleteObject(key string) error {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to delete object",
-		}
+		return dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgStorageInternal, err)
 	}
 	return nil
 }
@@ -114,10 +104,7 @@ func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaD
 		},
 	})
 	if err != nil {
-		return nil, "", &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to create presigned url",
-		}
+		return nil, "", dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgStorageInternal, err)
 	}
 	storageUrl := storage.convertKeyToStaticLink(key)
 
@@ -132,10 +119,7 @@ func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaD
 
 func (storage *Storage) ConvertStaticLinkToKey(url string) (string, error) {
 	if url == "" || !strings.HasPrefix(url, storage.staticLink) {
-		return "", &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "Invalid url",
-		}
+		return "", dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgStorageInvalidURL, errors.New("invalid url"))
 	}
 	return url[len(storage.staticLink):], nil
 }
@@ -155,10 +139,7 @@ func (storage *Storage) generateMediaId(dto *dtos.UploadMediaDto) (string, error
 		return uuid, nil
 	}
 	// Todo: temp 파일 체크, error handling(중복 또는 에러)
-	return "", &dtos.AppError{
-		Code:    http.StatusInternalServerError,
-		Message: "Failed to generate media id",
-	}
+	return "", dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgStorageInternal, err)
 }
 
 func (storage *Storage) convertKeyToStaticLink(key string) string {

@@ -3,6 +3,7 @@ package httputils
 import (
 	"dalkak/config"
 	"dalkak/pkg/dtos"
+	"dalkak/pkg/utils/parseutils"
 	"net/http"
 	"time"
 )
@@ -12,9 +13,9 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 	refreshTokenDuration := time.Duration(config.RefreshTokenTTL) * time.Second
 	refreshTokenexpires := tokenExpires.Add(refreshTokenDuration)
 
-	parsedDomain, err := ParseDomain(domain)
+	parsedDomain, err := parseutils.ParseDomain(domain)
 	if err != nil {
-		return err
+		return dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgServerInternal, err)
 	}
 
 	isSecure := mode != "LOCAL"
@@ -35,10 +36,7 @@ func SetCookieRefresh(w http.ResponseWriter, mode string, refreshToken string, t
 func GetCookieRefresh(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
-		return "", &dtos.AppError{
-			Code:    http.StatusUnauthorized,
-			Message: "refresh token not found",
-		}
+		return "", dtos.NewAppError(dtos.ErrCodeUnauthorized, dtos.ErrMsgTokenRefeshNotFound, err)
 	}
 	return cookie.Value, nil
 }

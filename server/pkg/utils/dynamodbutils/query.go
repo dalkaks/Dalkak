@@ -3,7 +3,6 @@ package dynamodbutils
 import (
 	"context"
 	"dalkak/pkg/dtos"
-	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -22,10 +21,7 @@ func QuerySingleItem(client *dynamodb.Client, tableName string, expr expression.
 
 	result, err := client.Query(context.Background(), input)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to query user media data",
-		}
+		return dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgDBInternal, err)
 	}
 
 	if len(result.Items) == 0 {
@@ -34,10 +30,7 @@ func QuerySingleItem(client *dynamodb.Client, tableName string, expr expression.
 
 	err = attributevalue.UnmarshalMap(result.Items[0], dest)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to unmarshal user media data: " + err.Error(),
-		}
+		return dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgDBInternal, err)
 	}
 	return nil
 }

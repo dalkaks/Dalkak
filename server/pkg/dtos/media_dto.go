@@ -2,7 +2,7 @@ package dtos
 
 import (
 	"dalkak/config"
-	"net/http"
+	"errors"
 )
 
 type MediaMeta struct {
@@ -58,9 +58,6 @@ func ToMediaType(s string) (MediaType, error) {
 	case "video":
 		return Video, nil
 	default:
-		return 0, &AppError{
-			Code:    http.StatusBadRequest,
-			Message: "invalid media type",
-		}
+		return 0, NewAppError(ErrCodeBadRequest, ErrMsgMediaInvalidType, errors.New("invalid media type"))
 	}
 }

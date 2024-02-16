@@ -4,6 +4,7 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/httputils"
+	"dalkak/pkg/utils/parseutils"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -110,7 +111,7 @@ func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
 }
 
 func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Request) {
-	userInfo, err := httputils.GetUserInfoData(r)
+	userInfo, err := parseutils.GetUserInfoData(r)
 	if err != nil {
 		httputils.HandleAppError(w, err)
 		return
@@ -133,14 +134,14 @@ func (handler *UserHandler) createPresignedURL(w http.ResponseWriter, r *http.Re
 }
 
 func (handler *UserHandler) getUserMedia(w http.ResponseWriter, r *http.Request) {
-	userInfo, err := httputils.GetUserInfoData(r)
+	userInfo, err := parseutils.GetUserInfoData(r)
 	if err != nil {
 		httputils.HandleAppError(w, err)
 		return
 	}
 
 	var query payloads.UserGetMediaRequest
-	err = httputils.GetQuery(r, &query)
+	err = parseutils.GetQuery(r, &query)
 	if err != nil {
 		httputils.HandleAppError(w, err)
 		return

@@ -10,8 +10,8 @@ import (
 	"dalkak/pkg/utils/timeutils"
 	"encoding/asn1"
 	"encoding/base64"
+	"errors"
 	"math/big"
-	"net/http"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/kms"
@@ -60,10 +60,7 @@ func createToken(claims jwt.Claims, kmsSet *KmsSet) (string, error) {
 
 	signedPart, err := token.SigningString()
 	if err != nil {
-		return "", &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to sign token",
-		}
+		return "", dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgTokenSignFailed, err)
 	}
 
 	signInput := &kms.SignInput{
@@ -75,10 +72,7 @@ func createToken(claims jwt.Claims, kmsSet *KmsSet) (string, error) {
 
 	signOutput, err := kmsSet.Client.Sign(context.TODO(), signInput)
 	if err != nil {
-		return "", &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to sign token",
-		}
+		return "", dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgTokenSignFailed, err)
 	}
 	signature := base64.RawURLEncoding.EncodeToString(signOutput.Signature)
 
@@ -99,33 +93,21 @@ func ParseTokenWithPublicKey(tokenString string, kmsSet *KmsSet) (string, error)
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", &dtos.AppError{
-			Code:    http.StatusUnauthorized,
-			Message: "Failed to parse token claims",
-		}
+		return "", dtos.NewAppError(dtos.ErrCodeUnauthorized, dtos.ErrMsgTokenParseFailed, errors.New("failed to parse token"))
 	}
 
 	if exp, ok := claims["exp"].(float64); ok {
 		nowTime := timeutils.GetTimestamp()
 		if int64(exp) < nowTime {
-			return "", &dtos.AppError{
-				Code:    http.StatusUnauthorized,
-				Message: "Token is expired",
-			}
+			return "", dtos.NewAppError(dtos.ErrCodeUnauthorized, dtos.ErrMsgTokenExpired, errors.New("token is expired"))
 		}
 	} else {
-		return "", &dtos.AppError{
-			Code:    http.StatusUnauthorized,
-			Message: "exp claim is missing or not a number",
-		}
+		return "", dtos.NewAppError(dtos.ErrCodeUnauthorized, dtos.ErrMsgTokenInvalidClaim, errors.New("invalid token claim"))
 	}
 
 	sub, ok := claims["sub"].(string)
 	if !ok {
-		return "", &dtos.AppError{
-			Code:    http.StatusUnauthorized,
-			Message: "sub claim is missing or not a string",
-		}
+		return "", dtos.NewAppError(dtos.ErrCodeUnauthorized, dtos.ErrMsgTokenInvalidClaim, errors.New("invalid token claim"))
 	}
 	return sub, nil
 }
@@ -137,10 +119,7 @@ func verifyTokenSignature(tokenString string, kmsSet *KmsSet) error {
 
 	sigDer, err := base64.RawURLEncoding.DecodeString(jwtParts[2])
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusUnauthorized,
-			Message: "Invalid signature: failed to decode signature",
-		}
+		return dtos.NewAppError(dtos.ErrCodeUnauthorized, dtos.ErrMsgTokenInvalidSignature, err)
 	}
 
 	type ECDSASignature struct {
@@ -149,18 +128,12 @@ func verifyTokenSignature(tokenString string, kmsSet *KmsSet) error {
 	sigRS := &ECDSASignature{}
 	_, err = asn1.Unmarshal(sigDer, sigRS)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusUnauthorized,
-			Message: "Invalid signature: failed to unmarshal signature",
-		}
+		return dtos.NewAppError(dtos.ErrCodeUnauthorized, dtos.ErrMsgTokenInvalidSignature, err)
 	}
 
 	ok := ecdsa.Verify(kmsSet.PublicKey, digest[:], sigRS.R, sigRS.S)
 	if !ok {
-		return &dtos.AppError{
-			Code:    http.StatusUnauthorized,
-			Message: "Invalid signature: failed to verify signature",
-		}
+		return dtos.NewAppError(dtos.ErrCodeUnauthorized, dtos.ErrMsgTokenInvalidSignature, errors.New("invalid token signature"))
 	}
 	return nil
 }

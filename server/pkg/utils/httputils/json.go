@@ -46,6 +46,14 @@ func ErrorJSON(w http.ResponseWriter, err error, status ...int) {
 	_ = WriteJSON(w, statusCode, theError, "error")
 }
 
+func HandleAppError(w http.ResponseWriter, err error) {
+	if appErr, ok := err.(*dtos.AppError); ok {
+		ErrorJSON(w, appErr, appErr.Code)
+	} else {
+		ErrorJSON(w, err, http.StatusInternalServerError)
+	}
+}
+
 func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	maxBytes := 1024 * 1024 // one megabyte
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
@@ -55,19 +63,13 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	// attempt to decode the data
 	err := dec.Decode(data)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "invalid JSON",
-		}
+		return dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgJsonInvalid, err)
 	}
 
 	// make sure only one JSON value in payload
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
-		return &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "request body must only contain a single JSON object",
-		}
+		return dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgJsonInvalid, err)
 	}
 
 	return nil

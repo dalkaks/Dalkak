@@ -3,7 +3,6 @@ package dynamodbutils
 import (
 	"context"
 	"dalkak/pkg/dtos"
-	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -15,10 +14,7 @@ import (
 func PutDynamoDBItem[T any](client *dynamodb.Client, tableName string, data T) error {
 	av, err := attributevalue.MarshalMap(data)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to marshal data to map",
-		}
+		return dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgDBInternal, err)
 	}
 
 	_, err = client.PutItem(context.Background(), &dynamodb.PutItemInput{
@@ -26,10 +22,7 @@ func PutDynamoDBItem[T any](client *dynamodb.Client, tableName string, data T) e
 		Item:      av,
 	})
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to put db data",
-		}
+		return dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgDBInternal, err)
 	}
 
 	return nil
@@ -47,10 +40,7 @@ func UpdateDynamoDBItem(client *dynamodb.Client, tableName string, key map[strin
 
 	_, err := client.UpdateItem(context.Background(), input)
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to update db data",
-		}
+		return dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgDBInternal, err)
 	}
 
 	return nil
@@ -62,10 +52,7 @@ func DeleteDynamoDBItem(client *dynamodb.Client, tableName string, key map[strin
 		Key:       key,
 	})
 	if err != nil {
-		return &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to delete db data",
-		}
+		return dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgDBInternal, err)
 	}
 
 	return nil

@@ -2,7 +2,6 @@ package dynamodbutils
 
 import (
 	"dalkak/pkg/dtos"
-	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 )
@@ -16,10 +15,7 @@ func GenerateQueryExpression(keyCond expression.KeyConditionBuilder, filt *expre
 
 	expr, err := builder.Build()
 	if err != nil {
-		return expression.Expression{}, &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to build db expression",
-		}
+		return expression.Expression{}, dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgDBInternal, err)
 	}
 
 	return expr, nil
@@ -30,10 +26,7 @@ func GenerateUpdateExpression(update expression.UpdateBuilder) (expression.Expre
 
 	expr, err := builder.Build()
 	if err != nil {
-		return expression.Expression{}, &dtos.AppError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to build db expression",
-		}
+		return expression.Expression{}, dtos.NewAppError(dtos.ErrCodeInternal, dtos.ErrMsgDBInternal, err)
 	}
 
 	return expr, nil

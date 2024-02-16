@@ -6,7 +6,7 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/payloads"
 	"dalkak/pkg/utils/validateutils"
-	"net/http"
+	"errors"
 )
 
 type UserServiceImpl struct {
@@ -144,10 +144,7 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 		return err
 	}
 	if media == nil {
-		return &dtos.AppError{
-			Code:    http.StatusNotFound,
-			Message: "media not found",
-		}
+		return dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgMediaNotFound, errors.New("media not found"))
 	}
 
 	err = service.confirmMedia(dto, media)
@@ -173,17 +170,11 @@ func (service *UserServiceImpl) DeleteUserMedia(userInfo *dtos.UserInfo, dto *pa
 		return err
 	}
 	if media == nil {
-		return &dtos.AppError{
-			Code:    http.StatusNotFound,
-			Message: "media not found",
-		}
+		return dtos.NewAppError(dtos.ErrCodeNotFound, dtos.ErrMsgMediaNotFound, errors.New("media not found"))
 	}
 
 	if ok := dto.Verify(media); !ok {
-		return &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "invalid request",
-		}
+		return dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgRequestInvalid, errors.New("invalid request"))
 	}
 
 	err = service.deleteExistingMedia(userInfo, media)
@@ -217,7 +208,7 @@ func (service *UserServiceImpl) readMedia(userId string, dto *dtos.FindUserUploa
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return media, nil
 }
 

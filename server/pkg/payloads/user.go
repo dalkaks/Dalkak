@@ -3,7 +3,7 @@ package payloads
 import (
 	"dalkak/config"
 	"dalkak/pkg/dtos"
-	"net/http"
+	"errors"
 	"strings"
 )
 
@@ -99,10 +99,7 @@ func (req *UserCreateMediaRequest) ToUploadMediaDto() (*dtos.UploadMediaDto, err
 func (req *UserGetMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUploadMediaDto, error) {
 	mediaType, err := dtos.ToMediaType(req.MediaType)
 	if err != nil {
-		return nil, &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "invalid media type",
-		}
+		return nil, err
 	}
 
 	trueValue := true
@@ -124,18 +121,12 @@ func (req *UserConfirmMediaRequest) IsValid() bool {
 func (req *UserConfirmMediaRequest) ToFindUserUploadMediaDto() (*dtos.FindUserUploadMediaDto, error) {
 	mediaType, err := dtos.ToMediaType(req.MediaType)
 	if err != nil {
-		return nil, &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "invalid media type",
-		}
+		return nil, err
 	}
 
 	path := strings.Split(req.Key, "/")
 	if len(path) < 2 {
-		return nil, &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "invalid key: " + req.Key,
-		}
+		return nil, dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgMediaInvalidKey, errors.New("invalid key"))
 	}
 	prefix := path[1]
 
