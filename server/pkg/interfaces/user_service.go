@@ -15,3 +15,7 @@ type UserService interface {
 	GetUserMedia(userInfo *dtos.UserInfo, req *payloads.UserGetMediaRequest) (*payloads.UserGetMediaResponse, error)
 	ConfirmMediaUpload(req *payloads.UserConfirmMediaRequest) error
 }
+
+type MediaFinder interface {
+	ToFindUserUploadMediaDto() (*dtos.FindUserUploadMediaDto, error)
+}

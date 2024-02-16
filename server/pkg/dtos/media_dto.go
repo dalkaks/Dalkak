@@ -61,3 +61,24 @@ func ToMediaType(s string) (MediaType, error) {
 		return 0, NewAppError(ErrCodeBadRequest, ErrMsgMediaInvalidType, errors.New("invalid media type"))
 	}
 }
+
+func NewFindUserUploadMediaDto(mediaType MediaType, prefix string, opts ...FindUserUploadMediaOption) *FindUserUploadMediaDto {
+	dto := &FindUserUploadMediaDto{
+		MediaType: mediaType,
+		Prefix:    prefix,
+	}
+
+	for _, opt := range opts {
+		opt(dto)
+	}
+
+	return dto
+}
+
+type FindUserUploadMediaOption func(*FindUserUploadMediaDto)
+
+func WithConfirm(isConfirm bool) FindUserUploadMediaOption {
+	return func(f *FindUserUploadMediaDto) {
+		f.IsConfirm = &isConfirm
+	}
+}

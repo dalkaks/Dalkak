@@ -84,12 +84,7 @@ func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto 
 		return nil, err
 	}
 
-	findDto, err := dto.ToFindUserUploadMediaDto()
-	if err != nil {
-		return nil, err
-	}
-
-	media, err := service.readMedia(userInfo.WalletAddress, findDto)
+	media, err := service.readMedia(userInfo.WalletAddress, dto)
 	if err != nil {
 		return nil, err
 	}
@@ -115,12 +110,7 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 		return nil, err
 	}
 
-	findDto, err := dto.ToFindUserUploadMediaDto()
-	if err != nil {
-		return nil, err
-	}
-
-	media, err := service.readMedia(userInfo.WalletAddress, findDto)
+	media, err := service.readMedia(userInfo.WalletAddress, dto)
 	if err != nil {
 		return nil, err
 	}
@@ -134,12 +124,7 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 		return err
 	}
 
-	findDto, err := dto.ToFindUserUploadMediaDto()
-	if err != nil {
-		return err
-	}
-
-	media, err := service.readMedia(dto.UserId, findDto)
+	media, err := service.readMedia(dto.UserId, dto)
 	if err != nil {
 		return err
 	}
@@ -160,12 +145,7 @@ func (service *UserServiceImpl) DeleteUserMedia(userInfo *dtos.UserInfo, dto *pa
 		return err
 	}
 
-	findDto, err := dto.ToFindUserUploadMediaDto()
-	if err != nil {
-		return err
-	}
-
-	media, err := service.readMedia(userInfo.WalletAddress, findDto)
+	media, err := service.readMedia(userInfo.WalletAddress, dto)
 	if err != nil {
 		return err
 	}
@@ -203,8 +183,13 @@ func (service *UserServiceImpl) createMedia(userInfo *dtos.UserInfo, dto *payloa
 	return mediaMeta, presignedUrl, nil
 }
 
-func (service *UserServiceImpl) readMedia(userId string, dto *dtos.FindUserUploadMediaDto) (*dtos.MediaMeta, error) {
-	media, err := service.db.FindUserUploadMedia(userId, dto)
+func (service *UserServiceImpl) readMedia(userId string, finder interfaces.MediaFinder) (*dtos.MediaMeta, error) {
+	findDto, err := finder.ToFindUserUploadMediaDto()
+	if err != nil {
+		return nil, err
+	}
+
+	media, err := service.db.FindUserUploadMedia(userId, findDto)
 	if err != nil {
 		return nil, err
 	}
