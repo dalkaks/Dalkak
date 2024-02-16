@@ -88,45 +88,25 @@ func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto 
 	if err != nil {
 		return nil, err
 	}
-	prevMedia, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, findDto)
+
+	media, err := service.readMedia(userInfo.WalletAddress, findDto)
 	if err != nil {
 		return nil, err
 	}
-	if prevMedia != nil {
-		key, err := service.storage.ConvertStaticLinkToKey(prevMedia.URL)
-		if err != nil {
-			return nil, err
-		}
-		err = service.storage.DeleteObject(key)
-		if err != nil {
-			return nil, err
-		}
-		err = service.db.DeleteUserUploadMedia(userInfo.WalletAddress, prevMedia)
+
+	if media != nil {
+		err = service.deleteExistingMedia(userInfo, media)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	uploadMediaDto, err := dto.ToUploadMediaDto()
+	media, presignedUrl, err := service.createMedia(userInfo, dto)
 	if err != nil {
 		return nil, err
 	}
 
-	mediaMeta, presignedUrl, err := service.storage.CreatePresignedURL(userInfo.WalletAddress, uploadMediaDto)
-	if err != nil {
-		return nil, err
-	}
-
-	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, mediaMeta)
-	if err != nil {
-		return nil, err
-	}
-
-	return &payloads.UserCreateMediaResponse{
-		Id:           mediaMeta.ID,
-		Url:          mediaMeta.URL,
-		PresignedUrl: presignedUrl,
-	}, nil
+	return payloads.NewUserCreateMediaResponse(media, presignedUrl), nil
 }
 
 func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserGetMediaRequest) (*payloads.UserGetMediaResponse, error) {
@@ -139,16 +119,13 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 	if err != nil {
 		return nil, err
 	}
-	media, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, findDto)
-	if err != nil || media == nil {
+
+	media, err := service.readMedia(userInfo.WalletAddress, findDto)
+	if err != nil {
 		return nil, err
 	}
 
-	return &payloads.UserGetMediaResponse{
-		Id:          media.ID,
-		ContentType: media.ContentType,
-		Url:         media.URL,
-	}, nil
+	return payloads.NewUserGetMediaResponse(media), nil
 }
 
 func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMediaRequest) error {
@@ -161,7 +138,8 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 	if err != nil {
 		return err
 	}
-	media, err := service.db.FindUserUploadMedia(dto.UserId, findDto)
+
+	media, err := service.readMedia(dto.UserId, findDto)
 	if err != nil {
 		return err
 	}
@@ -172,6 +150,78 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 		}
 	}
 
+	err = service.confirmMedia(dto, media)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (service *UserServiceImpl) DeleteUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserDeleteMediaRequest) error {
+	err := validateutils.Validate(dto)
+	if err != nil {
+		return err
+	}
+
+	findDto, err := dto.ToFindUserUploadMediaDto()
+	if err != nil {
+		return err
+	}
+
+	media, err := service.readMedia(userInfo.WalletAddress, findDto)
+	if err != nil {
+		return err
+	}
+	if media == nil {
+		return &dtos.AppError{
+			Code:    http.StatusNotFound,
+			Message: "media not found",
+		}
+	}
+
+	if ok := dto.Verify(media); !ok {
+		return &dtos.AppError{
+			Code:    http.StatusBadRequest,
+			Message: "invalid request",
+		}
+	}
+
+	err = service.deleteExistingMedia(userInfo, media)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (service *UserServiceImpl) createMedia(userInfo *dtos.UserInfo, dto *payloads.UserCreateMediaRequest) (*dtos.MediaMeta, string, error) {
+	uploadMediaDto, err := dto.ToUploadMediaDto()
+	if err != nil {
+		return nil, "", err
+	}
+
+	mediaMeta, presignedUrl, err := service.storage.CreatePresignedURL(userInfo.WalletAddress, uploadMediaDto)
+	if err != nil {
+		return nil, "", err
+	}
+
+	err = service.db.CreateUserUploadMedia(userInfo.WalletAddress, mediaMeta)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return mediaMeta, presignedUrl, nil
+}
+
+func (service *UserServiceImpl) readMedia(userId string, dto *dtos.FindUserUploadMediaDto) (*dtos.MediaMeta, error) {
+	media, err := service.db.FindUserUploadMedia(userId, dto)
+	if err != nil {
+		return nil, err
+	}
+	
+	return media, nil
+}
+
+func (service *UserServiceImpl) confirmMedia(dto *payloads.UserConfirmMediaRequest, media *dtos.MediaMeta) error {
 	mediaHeadDto, err := service.storage.GetHeadObject(dto.Key)
 	if err != nil {
 		return err
@@ -194,34 +244,8 @@ func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMedi
 	return nil
 }
 
-func (service *UserServiceImpl) DeleteUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserDeleteMediaRequest) error {
-	err := validateutils.Validate(dto)
-	if err != nil {
-		return err
-	}
-
-	findDto, err := dto.ToFindUserUploadMediaDto()
-	if err != nil {
-		return err
-	}
-	media, err := service.db.FindUserUploadMedia(userInfo.WalletAddress, findDto)
-	if err != nil {
-		return err
-	}
-	if media == nil {
-		return &dtos.AppError{
-			Code:    http.StatusNotFound,
-			Message: "media not found",
-		}
-	}
-
-	if ok := dto.Verify(media); !ok {
-		return &dtos.AppError{
-			Code:    http.StatusBadRequest,
-			Message: "invalid request",
-		}
-	}
-	key, err := service.storage.ConvertStaticLinkToKey(dto.Url)
+func (service *UserServiceImpl) deleteExistingMedia(userInfo *dtos.UserInfo, media *dtos.MediaMeta) error {
+	key, err := service.storage.ConvertStaticLinkToKey(media.URL)
 	if err != nil {
 		return err
 	}
@@ -229,7 +253,6 @@ func (service *UserServiceImpl) DeleteUserMedia(userInfo *dtos.UserInfo, dto *pa
 	if err != nil {
 		return err
 	}
-
 	err = service.db.DeleteUserUploadMedia(userInfo.WalletAddress, media)
 	if err != nil {
 		return err

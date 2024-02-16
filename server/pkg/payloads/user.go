@@ -51,6 +51,22 @@ type UserDeleteMediaRequest struct {
 	Prefix    string `query:"prefix" required:"true"`
 }
 
+func NewUserCreateMediaResponse(meta *dtos.MediaMeta, presignedUrl string) *UserCreateMediaResponse {
+	return &UserCreateMediaResponse{
+		Id:           meta.ID,
+		Url:          meta.URL,
+		PresignedUrl: presignedUrl,
+	}
+}
+
+func NewUserGetMediaResponse(meta *dtos.MediaMeta) *UserGetMediaResponse {
+	return &UserGetMediaResponse{
+		Id:          meta.ID,
+		ContentType: meta.ContentType,
+		Url:         meta.URL,
+	}
+}
+
 func (req *UserCreateMediaRequest) IsValid() bool {
 	return isSupportedMediaType(req.MediaType) && hasValidPrefix(req.Prefix) && isExtensionAllowed(req.Ext)
 }
