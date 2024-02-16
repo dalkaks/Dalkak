@@ -36,6 +36,18 @@ type MediaHeadDto struct {
 	URL         string
 }
 
+func GenerateTempKey(prefix string, mediaType string, id string, ext string) string {
+	return "temp/" + prefix + "/" + mediaType + "/" + id + "." + ext
+}
+
+func GenerateMediaPath(prefix string, mediaType string, id string) string {
+	return prefix + "/" + mediaType + "/" + id
+}
+
+func GenerateContentType(mediaType string, ext string) string {
+	return mediaType + "/" + ext
+}
+
 func (m *MediaHeadDto) Verify(meta *MediaMeta) bool {
 	return int64(config.MaxUploadSize) > m.Length && m.ContentType == meta.ContentType && m.URL == meta.URL
 }

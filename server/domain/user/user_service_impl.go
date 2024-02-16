@@ -118,25 +118,25 @@ func (service *UserServiceImpl) GetUserMedia(userInfo *dtos.UserInfo, dto *paylo
 	return payloads.NewUserGetMediaResponse(media), nil
 }
 
-func (service *UserServiceImpl) ConfirmMediaUpload(dto *payloads.UserConfirmMediaRequest) error {
+func (service *UserServiceImpl) ConfirmMediaUpload(userInfo *dtos.UserInfo, dto *payloads.UserConfirmMediaRequest) (bool, error) {
 	err := validateutils.Validate(dto)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	media, err := service.readMedia(dto.UserId, dto)
+	media, err := service.readMedia(userInfo.WalletAddress, dto)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if media == nil {
-		return dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgMediaNotFound, errors.New("media not found"))
+		return false, dtos.NewAppError(dtos.ErrCodeBadRequest, dtos.ErrMsgMediaNotFound, errors.New("media not found"))
 	}
 
-	err = service.confirmMedia(dto, media)
+	err = service.confirmMedia(userInfo, dto, media)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	return true, nil
 }
 
 func (service *UserServiceImpl) DeleteUserMedia(userInfo *dtos.UserInfo, dto *payloads.UserDeleteMediaRequest) error {
@@ -197,7 +197,7 @@ func (service *UserServiceImpl) readMedia(userId string, finder interfaces.Media
 	return media, nil
 }
 
-func (service *UserServiceImpl) confirmMedia(dto *payloads.UserConfirmMediaRequest, media *dtos.MediaMeta) error {
+func (service *UserServiceImpl) confirmMedia(userInfo *dtos.UserInfo, dto *payloads.UserConfirmMediaRequest, media *dtos.MediaMeta) error {
 	mediaHeadDto, err := service.storage.GetHeadObject(dto.Key)
 	if err != nil {
 		return err
@@ -211,7 +211,7 @@ func (service *UserServiceImpl) confirmMedia(dto *payloads.UserConfirmMediaReque
 		return nil
 	}
 
-	err = service.db.UpdateUserUploadMedia(dto.UserId, media, &dtos.UpdateUserUploadMediaDto{
+	err = service.db.UpdateUserUploadMedia(userInfo.WalletAddress, media, &dtos.UpdateUserUploadMediaDto{
 		IsConfirm: true,
 	})
 	if err != nil {

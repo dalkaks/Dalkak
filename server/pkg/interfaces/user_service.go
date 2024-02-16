@@ -13,7 +13,7 @@ type UserService interface {
 
 	CreatePresignedURL(userInfo *dtos.UserInfo, req *payloads.UserCreateMediaRequest) (*payloads.UserCreateMediaResponse, error)
 	GetUserMedia(userInfo *dtos.UserInfo, req *payloads.UserGetMediaRequest) (*payloads.UserGetMediaResponse, error)
-	ConfirmMediaUpload(req *payloads.UserConfirmMediaRequest) error
+	ConfirmMediaUpload(userInfo *dtos.UserInfo, req *payloads.UserConfirmMediaRequest) (bool, error)
 }
 
 type MediaFinder interface {

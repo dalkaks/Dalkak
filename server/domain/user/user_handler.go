@@ -38,6 +38,8 @@ func (handler *UserHandlerImpl) Routes() chi.Router {
 
 	router.Post("/media/confirm", handler.RouteConfirmMediaUpload)
 
+	// router.Delete("/media", handler.RouteDeleteUserMedia)
+
 	return router
 }
 
@@ -152,20 +154,26 @@ func (handler *UserHandlerImpl) RouteGetUserMedia(w http.ResponseWriter, r *http
 }
 
 func (handler *UserHandlerImpl) RouteConfirmMediaUpload(w http.ResponseWriter, r *http.Request) {
+	userInfo, err := parseutils.GetUserInfoData(r)
+	if err != nil {
+		httputils.HandleAppError(w, err)
+		return
+	}
+
 	var req payloads.UserConfirmMediaRequest
-	err := httputils.ReadJSON(w, r, &req)
+	err = httputils.ReadJSON(w, r, &req)
 	if err != nil {
 		httputils.HandleAppError(w, err)
 		return
 	}
 
-	err = handler.userService.ConfirmMediaUpload(&req)
+	result, err := handler.userService.ConfirmMediaUpload(userInfo, &req)
 	if err != nil {
 		httputils.HandleAppError(w, err)
 		return
 	}
 
-	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
+	httputils.WriteJSONAndHandleError(w, http.StatusOK, result, httputils.HandleAppError)
 }
 
 func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {

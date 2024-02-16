@@ -6,7 +6,6 @@ import (
 	"dalkak/pkg/interfaces"
 	"dalkak/pkg/utils/generateutils"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -87,13 +86,13 @@ func (storage *Storage) CreatePresignedURL(userId string, dto *dtos.UploadMediaD
 	presigner := s3.NewPresignClient(storage.client, func(o *s3.PresignOptions) {
 		o.Expires = expires
 	})
-	contentType := fmt.Sprintf("%s/%s", mediaType, dto.Ext)
+	contentType := dtos.GenerateContentType(mediaType, dto.Ext)
 	id, err := storage.generateMediaId(dto)
 	if err != nil {
 		return nil, "", err
 	}
 
-	key := fmt.Sprintf("temp/%s/%s/%s.%s", dto.Prefix, mediaType, id, dto.Ext)
+	key := dtos.GenerateTempKey(dto.Prefix, mediaType, id, dto.Ext)
 
 	presignedURL, err := presigner.PresignPutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(storage.bucket),
@@ -126,7 +125,7 @@ func (storage *Storage) ConvertStaticLinkToKey(url string) (string, error) {
 
 func (storage *Storage) generateMediaId(dto *dtos.UploadMediaDto) (string, error) {
 	uuid := generateutils.GenerateUUID()
-	key := fmt.Sprintf("%s/%s/%s", dto.Prefix, dto.MediaType.String(), uuid)
+	key := dtos.GenerateMediaPath(dto.Prefix, dto.MediaType.String(), uuid)
 
 	_, err := storage.client.HeadObject(context.Background(), &s3.HeadObjectInput{
 		Bucket: aws.String(storage.bucket),

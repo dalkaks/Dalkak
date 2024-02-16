@@ -3,7 +3,6 @@ module dalkak
 go 1.21.5
 
 require (
-	github.com/aws/aws-lambda-go v1.46.0
 	github.com/aws/aws-sdk-go-v2 v1.24.1
 	github.com/aws/aws-sdk-go-v2/config v1.26.3
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.17

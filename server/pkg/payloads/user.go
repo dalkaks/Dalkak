@@ -40,7 +40,6 @@ type UserGetMediaResponse struct {
 }
 
 type UserConfirmMediaRequest struct {
-	UserId    string `json:"userId"`
 	Key       string `json:"key"`
 	MediaType string `json:"mediaType"`
 }
