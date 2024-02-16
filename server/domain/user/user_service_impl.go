@@ -13,18 +13,18 @@ type UserServiceImpl struct {
 	mode    string
 	domain  string
 	db      interfaces.UserRepository
-	kmsSet  *appsecurity.KmsSet
+	KMS     interfaces.KMS
 	storage interfaces.Storage
 }
 
-func NewUserService(mode string, domain string, db interfaces.Database, kmsSet *appsecurity.KmsSet, storage interfaces.Storage) interfaces.UserService {
+func NewUserService(mode string, domain string, db interfaces.Database, KMS interfaces.KMS, storage interfaces.Storage) interfaces.UserService {
 	userRepo := NewUserRepository(db)
 
 	return &UserServiceImpl{
 		mode:    mode,
 		domain:  domain,
 		db:      userRepo,
-		kmsSet:  kmsSet,
+		KMS:     KMS,
 		storage: storage,
 	}
 }
@@ -53,7 +53,7 @@ func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature st
 	generateTokenDto := dtos.GenerateTokenDto{
 		WalletAddress: walletAddress,
 	}
-	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.kmsSet, &generateTokenDto)
+	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.KMS, &generateTokenDto)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -62,7 +62,7 @@ func (service *UserServiceImpl) AuthAndSignUp(walletAddress string, signature st
 }
 
 func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthTokens, int64, error) {
-	walletAddress, err := appsecurity.ParseTokenWithPublicKey(refreshToken, service.kmsSet)
+	walletAddress, err := appsecurity.ParseTokenWithPublicKey(refreshToken, service.KMS)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -70,7 +70,7 @@ func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthT
 	generateTokenDto := dtos.GenerateTokenDto{
 		WalletAddress: walletAddress,
 	}
-	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.kmsSet, &generateTokenDto)
+	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.KMS, &generateTokenDto)
 	if err != nil {
 		return nil, 0, err
 	}
