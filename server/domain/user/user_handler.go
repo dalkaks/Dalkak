@@ -28,9 +28,7 @@ func (handler *UserHandlerImpl) Routes() chi.Router {
 
 	router.With(handler.verifyMetaMaskSignature).Post("/auth", handler.RouteAuthAndSignUp)
 
-	router.Post("/refresh", handler.RouteReissueRefresh)
-
-	router.Post("/logout", handler.RouteLogout)
+	router.Post("/refresh", handler.RouteReissueAccessToken)
 
 	router.Post("/media/presigned", handler.RouteCreatePresignedURL)
 
@@ -47,66 +45,38 @@ func (handler *UserHandlerImpl) RouteAuthAndSignUp(w http.ResponseWriter, r *htt
 	var req payloads.UserAuthAndSignUpRequest
 	err := httputils.ReadJSON(w, r, &req)
 	if err != nil {
-		handleAppErrorAndDeleteCookieRefresh(w, err)
+	httputils.HandleAppError(w, err)
 		return
 	}
 
-	authTokens, tokenTime, err := handler.userService.AuthAndSignUp(&req)
+	result, err := handler.userService.AuthAndSignUp(&req)
 	if err != nil {
-		handleAppErrorAndDeleteCookieRefresh(w, err)
+	httputils.HandleAppError(w, err)
 		return
 	}
 
-	mode := handler.userService.GetMode()
-	domain := handler.userService.GetDomain()
-	err = httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
-	if err != nil {
-		handleAppErrorAndDeleteCookieRefresh(w, err)
-		return
-	}
-
-	result := &payloads.UserAccessTokenResponse{
-		AccessToken:  authTokens.AccessToken,
-		RefreshToken: authTokens.RefreshToken,
-	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-		handleAppErrorAndDeleteCookieRefresh(w, err)
+	httputils.HandleAppError(w, err)
 	}
 }
 
-func (handler *UserHandlerImpl) RouteReissueRefresh(w http.ResponseWriter, r *http.Request) {
-	refreshToken, err := httputils.GetCookieRefresh(r)
+func (handler *UserHandlerImpl) RouteReissueAccessToken(w http.ResponseWriter, r *http.Request) {
+	var req payloads.UserReissueAccessTokenRequest
+	err := httputils.ReadJSON(w, r, &req)
 	if err != nil {
-		handleAppErrorAndDeleteCookieRefresh(w, err)
+	httputils.HandleAppError(w, err)
 		return
 	}
 
-	authTokens, tokenTime, err := handler.userService.ReissueRefresh(refreshToken)
+	result, err := handler.userService.ReissueAccessToken(&req)
 	if err != nil {
-		handleAppErrorAndDeleteCookieRefresh(w, err)
+	httputils.HandleAppError(w, err)
 		return
 	}
 
-	mode := handler.userService.GetMode()
-	domain := handler.userService.GetDomain()
-	err = httputils.SetCookieRefresh(w, mode, authTokens.RefreshToken, tokenTime, domain)
-	if err != nil {
-		handleAppErrorAndDeleteCookieRefresh(w, err)
-		return
-	}
-
-	result := &payloads.UserAccessTokenResponse{
-		AccessToken:  authTokens.AccessToken,
-		RefreshToken: authTokens.RefreshToken,
-	}
 	if err := httputils.WriteJSON(w, http.StatusOK, result); err != nil {
-		handleAppErrorAndDeleteCookieRefresh(w, err)
+	httputils.HandleAppError(w, err)
 	}
-}
-
-func (handler *UserHandlerImpl) RouteLogout(w http.ResponseWriter, r *http.Request) {
-	httputils.DeleteCookieRefresh(w)
-	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
 }
 
 func (handler *UserHandlerImpl) RouteCreatePresignedURL(w http.ResponseWriter, r *http.Request) {
@@ -199,9 +169,4 @@ func (handler *UserHandlerImpl) RouteDeleteUserMedia(w http.ResponseWriter, r *h
 	}
 
 	httputils.WriteJSONAndHandleError(w, http.StatusOK, nil, httputils.HandleAppError)
-}
-
-func handleAppErrorAndDeleteCookieRefresh(w http.ResponseWriter, err error) {
-	httputils.DeleteCookieRefresh(w)
-	httputils.HandleAppError(w, err)
 }

@@ -13,3 +13,4 @@ var AllowedImageExtensions = map[string]bool{
 
 const AccessTokenTTL = 30 * 60
 const RefreshTokenTTL = 14 * 24 * 60 * 60
+const AdditonalTokenTTL = 10

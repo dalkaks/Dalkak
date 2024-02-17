@@ -10,8 +10,7 @@ type UserHandler interface {
 	Routes() chi.Router
 
 	RouteAuthAndSignUp(w http.ResponseWriter, r *http.Request)
-	RouteReissueRefresh(w http.ResponseWriter, r *http.Request)
-	RouteLogout(w http.ResponseWriter, r *http.Request)
+	RouteReissueAccessToken(w http.ResponseWriter, r *http.Request)
 
 	RouteCreatePresignedURL(w http.ResponseWriter, r *http.Request)
 	RouteGetUserMedia(w http.ResponseWriter, r *http.Request)

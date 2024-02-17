@@ -11,40 +11,32 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateAuthTokens(domain string, KMS interfaces.KMS, tokenDto *dtos.GenerateTokenDto) (*dtos.AuthTokens, int64, error) {
-	nowTime := timeutils.GetTimestamp()
-	accessToken, err := generateAccessToken(domain, KMS, nowTime, tokenDto)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	refreshToken, err := generateRefreshToken(domain, KMS, nowTime, tokenDto)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return &dtos.AuthTokens{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nowTime, nil
-}
-
-func generateAccessToken(domain string, KMS interfaces.KMS, nowTime int64, tokenDto *dtos.GenerateTokenDto) (string, error) {
-	return createToken(jwt.MapClaims{
-		"sub": tokenDto.WalletAddress,
-		"iat": nowTime,
-		"exp": nowTime + config.AccessTokenTTL,
+func GenerateAccessToken(domain string, KMS interfaces.KMS, dto *dtos.GenerateTokenDto) (*dtos.AuthToken, error) {
+	token, err := createToken(jwt.MapClaims{
+		"sub": dto.WalletAddress,
+		"iat": dto.NowTime,
+		"exp": dto.NowTime + config.AccessTokenTTL + config.AdditonalTokenTTL,
 		"iss": domain,
 	}, KMS)
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewAuthToken(token, config.AccessTokenTTL), nil
 }
 
-func generateRefreshToken(domain string, KMS interfaces.KMS, nowTime int64, tokenDto *dtos.GenerateTokenDto) (string, error) {
+func GenerateRefreshToken(domain string, KMS interfaces.KMS, dto *dtos.GenerateTokenDto) (*dtos.AuthToken, error) {
 	tokenId := generateutils.GenerateUUID()
-	return createToken(jwt.MapClaims{
-		"sub": tokenDto.WalletAddress,
+	token, err := createToken(jwt.MapClaims{
+		"sub": dto.WalletAddress,
 		"tid": tokenId,
-		"exp": nowTime + config.RefreshTokenTTL,
+		"exp": dto.NowTime + config.RefreshTokenTTL + config.AdditonalTokenTTL,
 	}, KMS)
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewAuthToken(token, config.RefreshTokenTTL), nil
 }
 
 func createToken(claims jwt.Claims, KMS interfaces.KMS) (string, error) {
@@ -57,7 +49,7 @@ func createToken(claims jwt.Claims, KMS interfaces.KMS) (string, error) {
 
 	signature, err := KMS.CreateSianature(signedPart)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	signedToken := signedPart + "." + signature

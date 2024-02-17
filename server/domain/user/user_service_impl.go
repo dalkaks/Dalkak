@@ -37,41 +37,45 @@ func (service *UserServiceImpl) GetDomain() string {
 	return service.domain
 }
 
-func (service *UserServiceImpl) AuthAndSignUp(dto *payloads.UserAuthAndSignUpRequest) (*dtos.AuthTokens, int64, error) {
+func (service *UserServiceImpl) AuthAndSignUp(dto *payloads.UserAuthAndSignUpRequest) (*payloads.UserAuthAndSignUpResponse, error) {
 	user, err := service.db.FindUser(dto.WalletAddress)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if user == nil {
 		err := service.db.CreateUser(dto.WalletAddress)
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 	}
 
 	generateTokenDto := dtos.NewGenerateTokenDto(dto.WalletAddress)
-	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.KMS, generateTokenDto)
+	accessToken, err := appsecurity.GenerateAccessToken(service.domain, service.KMS, generateTokenDto)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
+	}
+	refreshToken, err := appsecurity.GenerateRefreshToken(service.domain, service.KMS, generateTokenDto)
+	if err != nil {
+		return nil, err
 	}
 
-	return authTokens, nowTime, nil
+	return payloads.NewUserAuthAndSignUpResponse(accessToken, refreshToken), nil
 }
 
-func (service *UserServiceImpl) ReissueRefresh(refreshToken string) (*dtos.AuthTokens, int64, error) {
-	walletAddress, err := appsecurity.ParseTokenWithPublicKey(refreshToken, service.KMS)
+func (service *UserServiceImpl) ReissueAccessToken(dto *payloads.UserReissueAccessTokenRequest) (*payloads.UserReissueAccessTokenResponse, error) {
+	walletAddress, err := appsecurity.ParseTokenWithPublicKey(dto.RefreshToken, service.KMS)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	generateTokenDto := dtos.NewGenerateTokenDto(walletAddress)
-	authTokens, nowTime, err := appsecurity.GenerateAuthTokens(service.domain, service.KMS, generateTokenDto)
+	accessToken, err := appsecurity.GenerateAccessToken(service.domain, service.KMS, generateTokenDto)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return authTokens, nowTime, nil
+	return payloads.NewUserReissueAccessTokenResponse(accessToken), nil
 }
 
 func (service *UserServiceImpl) CreatePresignedURL(userInfo *dtos.UserInfo, dto *payloads.UserCreateMediaRequest) (*payloads.UserCreateMediaResponse, error) {

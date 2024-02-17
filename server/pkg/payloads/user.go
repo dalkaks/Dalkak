@@ -12,9 +12,20 @@ type UserAuthAndSignUpRequest struct {
 	Signature     string
 }
 
-type UserAccessTokenResponse struct {
-	AccessToken  string `json:"accessToken"`
+type UserAuthAndSignUpResponse struct {
+	AccessToken     string `json:"accessToken"`
+	AccessTokenTTL  int64  `json:"accessTokenTTL"`
+	RefreshToken    string `json:"refreshToken"`
+	RefreshTokenTTL int64  `json:"refreshTokenTTL"`
+}
+
+type UserReissueAccessTokenRequest struct {
 	RefreshToken string `json:"refreshToken"`
+}
+
+type UserReissueAccessTokenResponse struct {
+	AccessToken    string `json:"accessToken"`
+	AccessTokenTTL int64  `json:"accessTokenTTL"`
 }
 
 type UserCreateMediaRequest struct {
@@ -49,6 +60,22 @@ type UserDeleteMediaRequest struct {
 	Url       string `query:"url" required:"true"`
 	MediaType string `query:"mediaType" required:"true"`
 	Prefix    string `query:"prefix" required:"true"`
+}
+
+func NewUserAuthAndSignUpResponse(accessTokenDto *dtos.AuthToken, refreshTokenDto *dtos.AuthToken) *UserAuthAndSignUpResponse {
+	return &UserAuthAndSignUpResponse{
+		AccessToken:     accessTokenDto.Token,
+		AccessTokenTTL:  accessTokenDto.TokenTTL,
+		RefreshToken:    refreshTokenDto.Token,
+		RefreshTokenTTL: refreshTokenDto.TokenTTL,
+	}
+}
+
+func NewUserReissueAccessTokenResponse(accessTokenDto *dtos.AuthToken) *UserReissueAccessTokenResponse {
+	return &UserReissueAccessTokenResponse{
+		AccessToken:    accessTokenDto.Token,
+		AccessTokenTTL: accessTokenDto.TokenTTL,
+	}
 }
 
 func NewUserCreateMediaResponse(meta *dtos.MediaMeta, presignedUrl string) *UserCreateMediaResponse {
