@@ -1,4 +1,4 @@
-import ENV from '../resources/env-constants';
+import ENV from '@/resources/env-constants';
 import { ResponseError } from './common/type/response';
 
 type RequestType = 'POST' | 'GET';
@@ -50,7 +50,12 @@ const getService = async <S, E extends ResponseError>(
   }
 };
 
-const serviceModule = <S>(type: RequestType, path: string, param?: any, header?: object) => {
+const serviceModule = <S>(
+  type: RequestType,
+  path: string,
+  param?: any,
+  header?: object
+) => {
   switch (type) {
     case 'POST':
       return postService<S, ResponseError>(path, param, header);

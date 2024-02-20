@@ -1,4 +1,4 @@
-import ENV from '@/app/resources/env-constants';
+import ENV from '@/resources/env-constants';
 import logout from './logout';
 
 jest.spyOn(global, 'fetch');

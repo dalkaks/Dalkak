@@ -1,4 +1,4 @@
-import ENV from '@/app/resources/env-constants';
+import ENV from '@/resources/env-constants';
 import loginService from './login';
 import mockWallet from '@/mock/walletData.json';
 
