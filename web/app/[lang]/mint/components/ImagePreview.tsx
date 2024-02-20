@@ -8,6 +8,7 @@ type Props = {
 };
 
 const ImagePreview = ({ file }: Props) => {
+  console.log(file);
   const image = URL.createObjectURL(file);
   return (
     <Card className="w-[450px] flex">
