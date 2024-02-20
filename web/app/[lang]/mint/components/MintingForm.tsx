@@ -39,81 +39,76 @@ const MintingForm = (props: Props) => {
     alert('Form submitted');
   }
   return (
-    <div>
-      <img src="/images/next.svg" alt="Next.js Logo" width={180} height={37} />
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            name="title"
-            control={form.control}
-            render={({ field }) => (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          name="title"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>NFT 이름 입력</FormLabel>
+              <FormControl>
+                <Input
+                  onChangeCapture={(e) => {
+                    console.log(e.currentTarget.value);
+                  }}
+                  placeholder="이름"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>NFT의 이름을 입력해 주세요.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="description"
+          control={form.control}
+          render={({ field }) => {
+            return (
               <FormItem>
-                <FormLabel>NFT 이름 입력</FormLabel>
+                <FormLabel>설명</FormLabel>
                 <FormControl>
                   <Input
                     onChangeCapture={(e) => {
                       console.log(e.currentTarget.value);
                     }}
-                    placeholder="이름"
+                    placeholder="설명"
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>NFT의 이름을 입력해 주세요.</FormDescription>
+                <FormDescription>
+                  민팅하시려는 NFT의 설명을 작성해 주세요.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
-            )}
-          />
-          <FormField
-            name="description"
-            control={form.control}
-            render={({ field }) => {
-              return (
-                <FormItem>
-                  <FormLabel>설명</FormLabel>
-                  <FormControl>
-                    <Input
-                      onChangeCapture={(e) => {
-                        console.log(e.currentTarget.value);
-                      }}
-                      placeholder="설명"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    민팅하시려는 NFT의 설명을 작성해 주세요.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-          <FormField
-            name="file"
-            control={form.control}
-            render={({ field }) => {
-              return (
-                <FormItem>
-                  <FormLabel>설명</FormLabel>
-                  <FormControl>
-                    <Input
-                      onChangeCapture={(e) =>
-                        console.log(e.currentTarget.files)
-                      }
-                      type="file"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    민팅하시려는 NFT의 설명을 작성해 주세요.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-          <Button type="submit">Submit</Button>
-        </form>
-      </Form>
-    </div>
+            );
+          }}
+        />
+        <FormField
+          name="file"
+          control={form.control}
+          render={({ field }) => {
+            return (
+              <FormItem>
+                <FormLabel>설명</FormLabel>
+                <FormControl>
+                  <Input
+                    onChangeCapture={(e) => console.log(e.currentTarget.files)}
+                    type="file"
+                  />
+                </FormControl>
+                <FormDescription>
+                  민팅하시려는 NFT의 설명을 작성해 주세요.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
   );
 };
 
