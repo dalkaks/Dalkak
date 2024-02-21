@@ -3,6 +3,7 @@ package application
 import (
 	"dalkak/config"
 	"dalkak/internal/core"
+	mediadomain "dalkak/internal/domain/media"
 	userdomain "dalkak/internal/domain/user"
 	appdto "dalkak/pkg/dto/app"
 )
@@ -14,6 +15,7 @@ type ApplicationImpl struct {
 	Keymanager   core.KeyManager
 	EventManager core.EventManager
 	UserDomain   userdomain.UserDomainService
+	MediaDomain  mediadomain.MediaDomainService
 }
 
 func NewApplication(appConfig *config.AppConfig, infra *core.Infra) {
@@ -23,7 +25,8 @@ func NewApplication(appConfig *config.AppConfig, infra *core.Infra) {
 		Storage:      infra.Storage,
 		Keymanager:   infra.Keymanager,
 		EventManager: infra.EventManager,
-		UserDomain:   userdomain.NewUserDomainService(infra.Database, infra.Storage, infra.Keymanager, infra.EventManager),
+		UserDomain:   userdomain.NewUserDomainService(infra.Database, infra.Keymanager, infra.EventManager),
+		MediaDomain:	mediadomain.NewMediaDomainService(appConfig, infra.Database, infra.Storage, infra.EventManager),
 	}
 
 	app.RegisterUserEventListeners()

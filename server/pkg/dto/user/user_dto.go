@@ -1,9 +1,11 @@
 package userdto
 
-type CreateUserDto struct {
-	WalletAddress string `json:"walletAddress"`
+type CheckAndCreateUserDto struct {
+	WalletAddress string
 }
 
-type FindUserDto struct {
-	WalletAddress string `json:"walletAddress"`
+func NewCheckAndCreateUserDto(walletAddress string) *CheckAndCreateUserDto {
+	return &CheckAndCreateUserDto{
+		WalletAddress: walletAddress,
+	}
 }

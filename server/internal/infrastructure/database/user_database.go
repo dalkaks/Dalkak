@@ -1,6 +1,7 @@
 package database
 
 import (
+	mediaobject "dalkak/internal/domain/media/object"
 	userobject "dalkak/internal/domain/user/object"
 	responseutil "dalkak/pkg/utils/response"
 
@@ -39,7 +40,6 @@ type UserMediaData struct {
 	Url         string
 	IsConfirm   bool
 }
-
 
 func (repo *Database) CreateUser(user *userobject.UserEntity) error {
 	pk := GenerateUserDataPk(user.WalletAddress)
@@ -84,33 +84,29 @@ func (repo *Database) FindUserByWalletAddress(walletAddress string) (*userobject
 	}, nil
 }
 
-// func (repo *Database) CreateUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
-// 	mediaType, err := parseutil.ConvertContentTypeToMediaType(dto.ContentType)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	sk := GenerateUserBoardImageDataSk(dto.Prefix, mediaType)
+func (repo *Database) CreateUserMediaTemp(userId string, mediaTemp *mediaobject.MediaTempAggregate) error {
+	sk := GenerateUserBoardImageDataSk(mediaTemp.Prefix.String(), mediaTemp.ContentType.ConvertToMediaType())
 
-// 	newUploadMedia := &UserMediaData{
-// 		Pk:         GenerateUserDataPk(userId),
-// 		Sk:         sk,
-// 		EntityType: sk,
-// 		Timestamp:  timeutil.GetTimestamp(),
+	newUploadMedia := &UserMediaData{
+		Pk:         GenerateUserDataPk(userId),
+		Sk:         sk,
+		EntityType: sk,
+		Timestamp:  mediaTemp.MediaEntity.Timestamp,
 
-// 		Id:          dto.ID,
-// 		Prefix:      dto.Prefix,
-// 		Extension:   dto.Extension,
-// 		ContentType: dto.ContentType,
-// 		Url:         dto.URL,
-// 		IsConfirm:   false,
-// 	}
+		Id:          mediaTemp.MediaEntity.Id,
+		Prefix:      mediaTemp.Prefix.String(),
+		Extension:   mediaTemp.ContentType.ConvertToExtension(),
+		ContentType: mediaTemp.ContentType.String(),
+		Url:         mediaTemp.MediaTempUrl.AccessUrl,
+		IsConfirm:   mediaTemp.MediaEntity.IsConfirm,
+	}
 
-// 	err = PutDynamoDBItem(repo.client, repo.table, newUploadMedia)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+	err := repo.PutDynamoDBItem(newUploadMedia)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // func (repo *Database) FindUserUploadMedia(userId string, dto *dtos.FindUserUploadMediaDto) (*dtos.MediaMeta, error) {
 // 	sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType.String())
