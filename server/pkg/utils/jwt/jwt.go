@@ -65,7 +65,7 @@ func createToken(claims jwt.Claims, keyManager core.KeyManager) (string, error) 
 
 	signedPart, err := token.SigningString()
 	if err != nil {
-		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgTokenSignFailed, err)
+		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgServerInternal, err)
 	}
 
 	signature, err := keyManager.CreateSianature(signedPart)

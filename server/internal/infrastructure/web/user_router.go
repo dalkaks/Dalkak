@@ -3,6 +3,7 @@ package web
 import (
 	"dalkak/internal/core"
 	userdto "dalkak/pkg/dto/user"
+	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -21,6 +22,9 @@ func SetupUserRoute(group fiber.Router, keyManager core.KeyManager, eventManager
 
 	group.Post("/refresh", WarpHandler(func(c fiber.Ctx) interface{} {
 		refreshToken := c.Cookies("refreshToken")
+		if refreshToken == "" {
+			return responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
+		}
 		sub, err := keyManager.ParseTokenWithPublicKey(refreshToken)
 		if err != nil {
 			return err

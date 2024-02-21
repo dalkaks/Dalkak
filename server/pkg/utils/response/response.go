@@ -13,36 +13,27 @@ const (
 
 	ErrCodeBadRequest   = http.StatusBadRequest
 	ErrCodeUnauthorized = http.StatusUnauthorized
+	ErrCodeForbidden    = http.StatusForbidden
 	ErrCodeNotFound     = http.StatusNotFound
 	ErrCodeTimeout      = http.StatusRequestTimeout
 	ErrCodeInternal     = http.StatusInternalServerError
 
-	ErrMsgJsonInvalid     = "REQUEST:INVALID_JSON"
-	ErrMsgRequestInvalid  = "REQUEST:INVALID_REQUEST"
-	ErrMsgRequestNotFound = "REQUEST:NOT_FOUND"
-	ErrMsgRequestTimeout  = "REQUEST:TIMEOUT"
+	ErrMsgRequestInvalid   = "REQUEST:INVALID_REQUEST"
+	ErrMsgRequestUnauth    = "REQUEST:UNAUTHORIZED"
+	ErrMsgRequestForbidden = "REQUEST:FORBIDDEN"
+	ErrMsgRequestNotFound  = "REQUEST:NOT_FOUND"
+	ErrMsgRequestTimeout   = "REQUEST:TIMEOUT"
 
 	ErrMsgTokenParseFailed      = "TOKEN:FAILED_TO_PARSE_TOKEN"
 	ErrMsgTokenExpired          = "TOKEN:EPIRED_TOKEN"
-	ErrMsgTokenInvalidClaim     = "TOKEN:INVALID_CLAIM"
 	ErrMsgTokenInvalidSignature = "TOKEN:INVALID_SIGNATURE"
-	ErrMsgTokenAccessNotFound   = "TOKEN:NO_ACCESS_TOKEN"
-	ErrMsgTokenRefeshNotFound   = "TOKEN:NO_REFRESH_TOKEN"
-	ErrMsgTokenSignFailed       = "TOKEN:FAILED_TO_SIGN_TOKEN"
 
 	ErrMsgMetaMaskInvalidSignature = "METAMASK:INVALID_SIGNATURE"
 	ErrMsgMetaMaskNotMatchAddress  = "METAMASK:NOT_MATCH_ADDRESS"
 
-	ErrMsgMediaInvalidType = "MEDIA:INVALID_TYPE"
-	ErrMsgMediaInvalidKey  = "MEDIA:INVALID_KEY"
-	ErrMsgMediaNotFound    = "MEDIA:NOT_FOUND"
-
-	ErrMsgStorageInvalidURL = "STORAGE:INVALID_URL"
-	ErrMsgStorageNoSuchKey  = "STORAGE:NO_SUCH_KEY"
-	ErrMsgStorageInternal   = "STORAGE:INTERNAL_ERROR"
-
-	ErrMsgDBInternal     = "DB:INTERNAL_ERROR"
-	ErrMsgServerInternal = "SERVER:INTERNAL_ERROR"
+	ErrMsgServerInternal  = "SERVER:INTERNAL_ERROR"
+	ErrMsgDBInternal      = "DB:INTERNAL_ERROR"
+	ErrMsgStorageInternal = "STORAGE:INTERNAL_ERROR"
 )
 
 type AppData struct {

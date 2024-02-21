@@ -6,6 +6,7 @@ import (
 	userdto "dalkak/pkg/dto/user"
 	cryptoutil "dalkak/pkg/utils/crypto"
 	jwtutil "dalkak/pkg/utils/jwt"
+	responseutil "dalkak/pkg/utils/response"
 	timeutil "dalkak/pkg/utils/time"
 )
 
@@ -16,8 +17,11 @@ func (app *ApplicationImpl) RegisterUserEventListeners() {
 }
 
 func (app *ApplicationImpl) handleAuthAndSignUp(event eventbus.Event) {
-	// ok
-	payload := event.Payload.(*userdto.AuthAndSignUpRequest)
+	payload, ok := event.Payload.(*userdto.AuthAndSignUpRequest)
+	if !ok {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid))
+		return
+	}
 
 	// 시그니처 검증
 	err := cryptoutil.VerifyMetaMaskSignature(&cryptoutil.MetaMaskSignature{
@@ -58,12 +62,15 @@ func (app *ApplicationImpl) handleAuthAndSignUp(event eventbus.Event) {
 
 	// 리턴
 	result := userdto.NewAuthAndSignUpResponse(accessToken.Token, accessToken.TokenTTL, refreshToken.Token, refreshToken.TokenTTL)
-	app.SendResponse(event.ResponseChan, result, nil)
+	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }
 
 func (app *ApplicationImpl) handleReissueAccessToken(event eventbus.Event) {
-	// ok
-	payload := event.Payload.(*userdto.ReissueAccessTokenRequest)
+	payload, ok := event.Payload.(*userdto.ReissueAccessTokenRequest)
+	if !ok {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid))
+		return
+	}
 
 	// 토큰 발급
 	accessToken, err := jwtutil.GenerateAccessToken(app.AppConfig.Domain, app.Keymanager, &jwtutil.GenerateTokenDto{
@@ -77,13 +84,20 @@ func (app *ApplicationImpl) handleReissueAccessToken(event eventbus.Event) {
 
 	// 리턴
 	result := userdto.NewReissueAccessTokenResponse(accessToken.Token, accessToken.TokenTTL)
-	app.SendResponse(event.ResponseChan, result, nil)
+	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }
 
 func (app *ApplicationImpl) handleCreateTempMedia(event eventbus.Event) {
-	// ok
 	userInfo := event.UserInfo
-	payload := event.Payload.(*userdto.CreateTempMediaRequest)
+	if userInfo == nil {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgRequestUnauth))
+		return
+	}
+	payload, ok := event.Payload.(*userdto.CreateTempMediaRequest)
+	if !ok {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid))
+		return
+	}
 
 	// 미디어 생성
 	dto := mediadto.NewCreateTempMediaDto(userInfo, payload.MediaType, payload.Ext, payload.Prefix)
@@ -102,5 +116,5 @@ func (app *ApplicationImpl) handleCreateTempMedia(event eventbus.Event) {
 
 	// 리턴
 	result := userdto.NewUserCreateMediaResponse(newMedia.MediaEntity.Id, newMedia.MediaTempUrl.AccessUrl, *newMedia.MediaTempUrl.UploadUrl)
-	app.SendResponse(event.ResponseChan, result, nil)
+	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }

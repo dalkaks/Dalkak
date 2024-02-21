@@ -78,7 +78,7 @@ func (kmsSet *KmsSet) CreateSianature(sign string) (string, error) {
 
 	signOutput, err := kmsSet.Client.Sign(context.TODO(), signInput)
 	if err != nil {
-		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgTokenSignFailed, err)
+		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgServerInternal, err)
 	}
 	signature := base64.RawURLEncoding.EncodeToString(signOutput.Signature)
 	return signature, nil
@@ -106,12 +106,12 @@ func (kmsSet *KmsSet) ParseTokenWithPublicKey(tokenString string) (string, error
 			return "", responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenExpired)
 		}
 	} else {
-		return "", responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenInvalidClaim)
+		return "", responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
 	}
 
 	sub, ok := claims["sub"].(string)
 	if !ok {
-		return "", responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenInvalidClaim)
+		return "", responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
 	}
 	return sub, nil
 }
