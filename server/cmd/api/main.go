@@ -2,33 +2,63 @@ package main
 
 import (
 	"context"
-	"dalkak/domain/board"
-	"dalkak/domain/user"
-	"dalkak/internal/app"
-	"dalkak/pkg/interfaces"
+	"dalkak/config"
+	"dalkak/internal/application"
+	"dalkak/internal/core"
+	"dalkak/internal/infrastructure/database"
+	"dalkak/internal/infrastructure/eventbus"
+	"dalkak/internal/infrastructure/key"
+	"dalkak/internal/infrastructure/storage"
+	"dalkak/internal/infrastructure/web"
 	"log"
 )
 
 var Mode string
 
-const port = 80
-
 func main() {
 	ctx := context.TODO()
 
-	appInstance, err := app.NewApplication(ctx, Mode)
+	appConfig, err := config.LoadConfig[config.AppConfig](ctx, Mode, "AppConfig")
 	if err != nil {
-		log.Fatalf("Error initializing application: %v", err)
+		log.Fatalf("Error loading config: %v", err)
 	}
 
-	var db interfaces.Database = appInstance.Database
-  var storage interfaces.Storage = appInstance.Storage
+	infra, err := initInfra(ctx, Mode, appConfig)
+	if err != nil {
+		log.Fatalf("Error initializing infrastructure: %v", err)
+	}
 
-	userService := user.NewUserService(Mode, appInstance.Domain, db, appInstance.KmsSet, storage)
-	boardService := board.NewBoardService(Mode, appInstance.Domain, db, storage)
+	application.NewApplication(appConfig, infra)
 
-	err = appInstance.StartServer(port, userService, boardService)
+	router := web.NewRouter(Mode, appConfig.Origin, infra)
+	err = router.Listen(":" + config.Port)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initInfra(ctx context.Context, mode string, appConfig *config.AppConfig) (*core.Infra, error) {
+	keymanager, err := key.NewKeyManager(ctx, mode, appConfig.KmsKeyId)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := database.NewDB(ctx, mode)
+	if err != nil {
+		return nil, err
+	}
+
+	storage, err := storage.NewStorage(ctx, mode, appConfig.StaticLink)
+	if err != nil {
+		return nil, err
+	}
+
+	eventmanager := eventbus.NewEventBus()
+
+	return &core.Infra{
+		Database:     db,
+		Storage:      storage,
+		Keymanager:   keymanager,
+		EventManager: eventmanager,
+	}, nil
 }
