@@ -17,5 +17,5 @@ func NewMediaTempUrl(staticLink, key, uploadUrl string) *MediaTempUrl {
 func GenerateMediaTempKey(userId string, prefix Prefix, contentType ContentType) string {
 	mediaTypeStr := contentType.ConvertToMediaType()
 	extensionStr := contentType.ConvertToExtension()
-	return "temp/" + userId + "/" + prefix.String() + "/" + mediaTypeStr + "/" + mediaTypeStr + extensionStr
+	return "temp/" + userId + "/" + prefix.String() + "/" + mediaTypeStr + "/" + mediaTypeStr + "." + extensionStr
 }

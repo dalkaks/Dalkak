@@ -83,14 +83,14 @@ func WarpHandler(handler HandleFunc) fiber.Handler {
 }
 
 func GetUserInfoFromContext(c fiber.Ctx, requireUserInfo bool) (*appdto.UserInfo, error) {
-	userInfo, ok := c.Locals("user").(*appdto.UserInfo)
-	if !ok || userInfo == nil {
+	userInfo, ok := c.Locals("user").(appdto.UserInfo)
+	if !ok {
 		if requireUserInfo {
-			return nil, responseutil.NewAppError(responseutil.ErrCodeUnauthorized, "User not authenticated")
+			return nil, responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgRequestUnauth)
 		}
 		return nil, nil
 	}
-	return userInfo, nil
+	return &userInfo, nil
 }
 
 func BindAndValidate(c fiber.Ctx, req interface{}) error {
@@ -129,6 +129,8 @@ func waitForResponse(responseChan chan appdto.Response, timeout time.Duration) i
 	case resp := <-responseChan:
 		if resp.Error != nil {
 			return responseutil.NewAppError(responseutil.ErrCodeInternal, resp.Error.Error())
+		} else if appData, ok := resp.Data.(*responseutil.AppData); ok {
+			return appData
 		}
 		return responseutil.NewAppData(resp.Data, responseutil.DataCodeSuccess)
 	case <-time.After(timeout):

@@ -37,7 +37,7 @@ func SetupUserRoute(group fiber.Router, keyManager core.KeyManager, eventManager
 		return PublishAndWaitResponse(eventManager, "post.user.refresh", nil, req)
 	}))
 
-	group.Post("/media/presinged", WarpHandler(func(c fiber.Ctx) interface{} {
+	group.Post("/media/presigned", WarpHandler(func(c fiber.Ctx) interface{} {
 		user, err := GetUserInfoFromContext(c, true)
 		if err != nil {
 			return err
