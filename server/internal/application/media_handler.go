@@ -64,6 +64,6 @@ func (app *ApplicationImpl) handleGetMediaTemp(event eventbus.Event) {
 	}
 
 	// 리턴
-	result := mediadto.NewGetMediaTempResponse(media.MediaEntity.Id, media.MediaTempUrl.AccessUrl, media.MediaTempUrl.AccessUrl)
+	result := mediadto.NewGetMediaTempResponse(media.MediaEntity.Id, media.ContentType.String(), media.MediaTempUrl.AccessUrl)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
 }

@@ -12,13 +12,38 @@ type MediaTempAggregate struct {
 	MediaTempUrl *mediavalueobject.MediaTempUrl
 }
 
-func NewMediaTempAggregate(mediaEntity *mediaentity.MediaEntity, prefix mediavalueobject.Prefix, contentType mediavalueobject.ContentType, mediaTempUrl *mediavalueobject.MediaTempUrl) *MediaTempAggregate {
-	return &MediaTempAggregate{
-		MediaEntity:  mediaEntity,
-		Prefix:       prefix,
-		ContentType:  contentType,
-		MediaTempUrl: mediaTempUrl,
+type MediaTempAggregateOption func(*MediaTempAggregate)
+
+func WithMediaEntity(mediaEntity *mediaentity.MediaEntity) MediaTempAggregateOption {
+	return func(aggregate *MediaTempAggregate) {
+		aggregate.MediaEntity = mediaEntity
 	}
+}
+
+func WithPrefix(prefix mediavalueobject.Prefix) MediaTempAggregateOption {
+	return func(aggregate *MediaTempAggregate) {
+		aggregate.Prefix = prefix
+	}
+}
+
+func WithContentType(contentType mediavalueobject.ContentType) MediaTempAggregateOption {
+	return func(aggregate *MediaTempAggregate) {
+		aggregate.ContentType = contentType
+	}
+}
+
+func WithMediaTempUrl(mediaTempUrl *mediavalueobject.MediaTempUrl) MediaTempAggregateOption {
+	return func(aggregate *MediaTempAggregate) {
+		aggregate.MediaTempUrl = mediaTempUrl
+	}
+}
+
+func NewMediaTempAggregate(options ...MediaTempAggregateOption) *MediaTempAggregate {
+	aggregate := &MediaTempAggregate{}
+	for _, option := range options {
+		option(aggregate)
+	}
+	return aggregate
 }
 
 func (m *MediaTempAggregate) CheckPublic() *MediaTempAggregate {
@@ -26,6 +51,14 @@ func (m *MediaTempAggregate) CheckPublic() *MediaTempAggregate {
 		return m
 	}
 	return nil
+}
+
+func (m *MediaTempAggregate) SetUploadUrl(uploadUrl string) {
+	if m.MediaTempUrl != nil {
+		m.MediaTempUrl.UploadUrl = &uploadUrl
+	} else {
+		m.MediaTempUrl = &mediavalueobject.MediaTempUrl{UploadUrl: &uploadUrl}
+	}
 }
 
 // package appdto
