@@ -1,4 +1,4 @@
-package mediaobject
+package mediavalueobject
 
 import responseutil "dalkak/pkg/utils/response"
 

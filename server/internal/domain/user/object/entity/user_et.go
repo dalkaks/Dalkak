@@ -1,4 +1,4 @@
-package userobject
+package userentity
 
 import timeutil "dalkak/pkg/utils/time"
 

@@ -1,9 +1,9 @@
 package userdomain
 
 import (
-	userobject "dalkak/internal/domain/user/object"
+	"dalkak/internal/infrastructure/database/dao"
 )
 
 type UserRepository interface {
-	FindUserByWalletAddress(walletAddress string) (*userobject.UserEntity, error)
+	FindUserByWalletAddress(walletAddress string) (*dao.UserDao, error)
 }

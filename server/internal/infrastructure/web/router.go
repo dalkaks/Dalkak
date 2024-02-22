@@ -66,6 +66,9 @@ func NewRouter(mode string, origin string, infra *core.Infra) *fiber.App {
 	userRoute := router.Group("/user")
 	SetupUserRoute(userRoute, infra.Keymanager, infra.EventManager)
 
+	mediaRoute := router.Group("/media")
+	SetupMediaRoute(mediaRoute, infra.EventManager)
+
 	// Default not found handler
 	router.All("*", WarpHandler(func(c fiber.Ctx) interface{} {
 		return responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgRequestNotFound)
@@ -94,12 +97,10 @@ func GetUserInfoFromContext(c fiber.Ctx, requireUserInfo bool) (*appdto.UserInfo
 }
 
 func BindAndValidate(c fiber.Ctx, req interface{}) error {
-	err := c.Bind().Body(req)
-	if err != nil {
-		return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid, err)
-	}
+	c.Bind().Body(req)
+	c.Bind().Query(req)
 
-	err = validate.Struct(req)
+	err := validate.Struct(req)
 	if err != nil {
 		return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid, err)
 	}

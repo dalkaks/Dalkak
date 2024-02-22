@@ -2,12 +2,12 @@ package userdomain
 
 import (
 	"dalkak/internal/core"
-	userobject "dalkak/internal/domain/user/object"
+	userentity "dalkak/internal/domain/user/object/entity"
 	userdto "dalkak/pkg/dto/user"
 )
 
 type UserDomainService interface {
-	CheckAndCreateUser(*userdto.CheckAndCreateUserDto) (*userobject.UserEntity, error)
+	CheckAndCreateUser(*userdto.CheckAndCreateUserDto) (*userentity.UserEntity, error)
 }
 
 type UserDomainServiceImpl struct {
@@ -24,11 +24,11 @@ func NewUserDomainService(database UserRepository, keymanager core.KeyManager, e
 	}
 }
 
-func (service *UserDomainServiceImpl) CheckAndCreateUser(dto *userdto.CheckAndCreateUserDto) (*userobject.UserEntity, error) {
-	user, err := service.Database.FindUserByWalletAddress(dto.WalletAddress)
-	if err != nil || user != nil {
+func (service *UserDomainServiceImpl) CheckAndCreateUser(dto *userdto.CheckAndCreateUserDto) (*userentity.UserEntity, error) {
+	userDao, err := service.Database.FindUserByWalletAddress(dto.WalletAddress)
+	if err != nil || userDao != nil {
 		return nil, err
 	}
-	newUser := userobject.NewUserEntity(dto.WalletAddress)
+	newUser := userentity.NewUserEntity(userDao.WalletAddress)
 	return newUser, nil
 }

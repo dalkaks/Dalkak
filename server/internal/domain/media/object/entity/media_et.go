@@ -1,4 +1,4 @@
-package mediaobject
+package mediaentity
 
 import (
 	generateutil "dalkak/pkg/utils/generate"
@@ -17,4 +17,16 @@ func NewMediaEntity() *MediaEntity {
 		IsConfirm:   false,
 		Timestamp:   timeutil.GetTimestamp(),
 	}
+}
+
+func ConvertMediaEntity(Id string, IsConfirm bool, Timestamp int64) *MediaEntity {
+	return &MediaEntity{
+		Id:          Id,
+		IsConfirm:   IsConfirm,
+		Timestamp:   Timestamp,
+	}
+}
+
+func (media *MediaEntity) IsPublic() bool {
+	return media.IsConfirm
 }

@@ -3,12 +3,15 @@ package mediadomain
 import (
 	"dalkak/config"
 	"dalkak/internal/core"
-	mediaobject "dalkak/internal/domain/media/object"
+	mediafactory "dalkak/internal/domain/media/factory"
+	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
+	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
 	mediadto "dalkak/pkg/dto/media"
 )
 
 type MediaDomainService interface {
-	CreateMediaTemp(dto *mediadto.CreateTempMediaDto) (*mediaobject.MediaTempAggregate, error)
+	CreateMediaTemp(dto *mediadto.CreateMediaTempDto) (*mediaaggregate.MediaTempAggregate, error)
+	GetMediaTemp(dto *mediadto.GetMediaTempDto) (*mediaaggregate.MediaTempAggregate, error)
 }
 
 type MediaDomainServiceImpl struct {
@@ -27,27 +30,38 @@ func NewMediaDomainService(appConfig *config.AppConfig, database MediaRepository
 	}
 }
 
-func (service *MediaDomainServiceImpl) CreateMediaTemp(dto *mediadto.CreateTempMediaDto) (*mediaobject.MediaTempAggregate, error) {
-	prefix, err := mediaobject.NewPrefix(dto.Prefix)
+func (service *MediaDomainServiceImpl) CreateMediaTemp(dto *mediadto.CreateMediaTempDto) (*mediaaggregate.MediaTempAggregate, error) {
+	factory := mediafactory.NewCreateMediaTempDtoFactory(dto, service.StaticLink)
+	mediaTemp, err := factory.CreateMediaTempAggregate()
 	if err != nil {
 		return nil, err
 	}
 
-	contentType, err := mediaobject.NewContentType(dto.MediaType, dto.Ext)
+	uploadUrl, err := service.Storage.CreatePresignedURL(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink), mediaTemp.ContentType.String())
 	if err != nil {
 		return nil, err
 	}
 
-	media := mediaobject.NewMediaEntity()
+	mediaTemp.SetUploadUrl(uploadUrl)
+	return mediaTemp, nil
+}
 
-	mediaKey := mediaobject.GenerateMediaTempKey(dto.UserInfo.GetUserId(), prefix, contentType)
-	uploadUrl, err := service.Storage.CreatePresignedURL(mediaKey, contentType.String())
+func (service *MediaDomainServiceImpl) GetMediaTemp(dto *mediadto.GetMediaTempDto) (*mediaaggregate.MediaTempAggregate, error) {
+	prefix, err := mediavalueobject.NewPrefix(dto.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	mediaTempUrl := mediaobject.NewMediaTempUrl(service.StaticLink, mediaKey, uploadUrl)
+	mediaTempDao, err := service.Database.FindMediaTemp(dto.UserInfo.GetUserId(), dto.MediaType, prefix.String())
+	if mediaTempDao == nil || err != nil {
+		return nil, err
+	}
 
-	mediaTempAggregate := mediaobject.NewMediaTempAggregate(media, prefix, contentType, mediaTempUrl)
-	return mediaTempAggregate, nil
+	factory := mediafactory.NewMediaTempDaoFactory(mediaTempDao, service.StaticLink)
+	mediaTemp, err := factory.CreateMediaTempAggregate()
+	if err != nil {
+		return nil, err
+	}
+
+	return mediaTemp.CheckPublic(), nil
 }

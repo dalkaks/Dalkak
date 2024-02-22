@@ -1,8 +1,9 @@
 package database
 
 import (
-	mediaobject "dalkak/internal/domain/media/object"
-	userobject "dalkak/internal/domain/user/object"
+	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
+	userentity "dalkak/internal/domain/user/object/entity"
+	"dalkak/internal/infrastructure/database/dao"
 	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
@@ -41,7 +42,7 @@ type UserMediaData struct {
 	IsConfirm   bool
 }
 
-func (repo *Database) CreateUser(user *userobject.UserEntity) error {
+func (repo *Database) CreateUser(user *userentity.UserEntity) error {
 	pk := GenerateUserDataPk(user.WalletAddress)
 	newUser := &UserData{
 		Pk:         pk,
@@ -59,7 +60,7 @@ func (repo *Database) CreateUser(user *userobject.UserEntity) error {
 	return nil
 }
 
-func (repo *Database) FindUserByWalletAddress(walletAddress string) (*userobject.UserEntity, error) {
+func (repo *Database) FindUserByWalletAddress(walletAddress string) (*dao.UserDao, error) {
 	pk := GenerateUserDataPk(walletAddress)
 	var userToFind *UserData
 
@@ -78,13 +79,13 @@ func (repo *Database) FindUserByWalletAddress(walletAddress string) (*userobject
 		return nil, nil
 	}
 
-	return &userobject.UserEntity{
+	return &dao.UserDao{
 		WalletAddress: userToFind.WalletAddress,
 		Timestamp:     userToFind.Timestamp,
 	}, nil
 }
 
-func (repo *Database) CreateUserMediaTemp(userId string, mediaTemp *mediaobject.MediaTempAggregate) error {
+func (repo *Database) CreateUserMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error {
 	sk := GenerateUserBoardImageDataSk(mediaTemp.Prefix.String(), mediaTemp.ContentType.ConvertToMediaType())
 
 	newUploadMedia := &UserMediaData{
@@ -108,32 +109,36 @@ func (repo *Database) CreateUserMediaTemp(userId string, mediaTemp *mediaobject.
 	return nil
 }
 
-// func (repo *Database) FindUserUploadMedia(userId string, dto *dtos.FindUserUploadMediaDto) (*dtos.MediaMeta, error) {
-// 	sk := GenerateUserBoardImageDataSk(dto.Prefix, dto.MediaType.String())
-// 	var mediaToFind *UserMediaData
+func (repo *Database) FindMediaTemp(userId, mediaType, prefix string) (*dao.MediaTempDao, error) {
+	sk := GenerateUserBoardImageDataSk(prefix, mediaType)
+	var mediaToFind *UserMediaData
 
-// 	keyCond := expression.Key("Pk").Equal(expression.Value(GenerateUserDataPk(userId))).
-// 		And(expression.Key("Sk").Equal(expression.Value(sk)))
-// 	expr, err := GenerateQueryExpression(keyCond, nil)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	keyCond := expression.Key("Pk").Equal(expression.Value(GenerateUserDataPk(userId))).
+		And(expression.Key("Sk").Equal(expression.Value(sk)))
+	expr, err := GenerateQueryExpression(keyCond, nil)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
 
-// 	if dto.IsConfirm != nil && *dto.IsConfirm {
-// 		filt := expression.Name("IsConfirm").Equal(expression.Value(true))
-// 		expr, err = GenerateQueryExpression(keyCond, &filt)
-// 	}
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	err = repo.QuerySingleItem(expr, &mediaToFind)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+	if mediaToFind == nil {
+		return nil, nil
+	}
 
-// 	err = QuerySingleItem(repo.client, repo.table, expr, &mediaToFind)
-// 	if err != nil || mediaToFind == nil {
-// 		return nil, err
-// 	}
+	return &dao.MediaTempDao{
+		Id:          mediaToFind.Id,
+		Prefix:      mediaToFind.Prefix,
+		Extension:   mediaToFind.Extension,
+		ContentType: mediaToFind.ContentType,
+		Url:         mediaToFind.Url,
+		IsConfirm:   mediaToFind.IsConfirm,
+		Timestamp:   mediaToFind.Timestamp,
+	}, nil
 
-// 	return mediaToFind.ToMediaMeta(), nil
-// }
+}
 
 // func (repo *Database) UpdateUserUploadMedia(userId string, findDto *dtos.MediaMeta, updateDto *dtos.UpdateUserUploadMediaDto) error {
 // 	mediaType, err := parseutil.ConvertContentTypeToMediaType(findDto.ContentType)
