@@ -1,9 +1,9 @@
 package mediadto
 
 type CreateTempMediaRequest struct {
-	MediaType string `json:"mediaType"`
-	Ext       string `json:"ext"`
-	Prefix    string `json:"prefix"`
+	MediaType string `json:"mediaType" validate:"required"`
+	Ext       string `json:"ext" validate:"required"`
+	Prefix    string `json:"prefix" validate:"required"`
 }
 
 type CreateTempMediaResponse struct {

@@ -21,6 +21,6 @@ func SetupMediaRoute(group fiber.Router, eventManager core.EventManager) {
 			return err
 		}
 
-		return PublishAndWaitResponse(eventManager, "post.presigned", user, req)
+		return PublishAndWaitResponse(eventManager, "post.media.presigned", user, req)
 	}))
 }
