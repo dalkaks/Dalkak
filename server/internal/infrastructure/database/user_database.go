@@ -1,8 +1,8 @@
 package database
 
 import (
-	mediaobject "dalkak/internal/domain/media/object"
-	userobject "dalkak/internal/domain/user/object"
+	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
+	userentity "dalkak/internal/domain/user/object/entity"
 	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
@@ -41,7 +41,7 @@ type UserMediaData struct {
 	IsConfirm   bool
 }
 
-func (repo *Database) CreateUser(user *userobject.UserEntity) error {
+func (repo *Database) CreateUser(user *userentity.UserEntity) error {
 	pk := GenerateUserDataPk(user.WalletAddress)
 	newUser := &UserData{
 		Pk:         pk,
@@ -59,7 +59,7 @@ func (repo *Database) CreateUser(user *userobject.UserEntity) error {
 	return nil
 }
 
-func (repo *Database) FindUserByWalletAddress(walletAddress string) (*userobject.UserEntity, error) {
+func (repo *Database) FindUserByWalletAddress(walletAddress string) (*userentity.UserEntity, error) {
 	pk := GenerateUserDataPk(walletAddress)
 	var userToFind *UserData
 
@@ -78,13 +78,13 @@ func (repo *Database) FindUserByWalletAddress(walletAddress string) (*userobject
 		return nil, nil
 	}
 
-	return &userobject.UserEntity{
+	return &userentity.UserEntity{
 		WalletAddress: userToFind.WalletAddress,
 		Timestamp:     userToFind.Timestamp,
 	}, nil
 }
 
-func (repo *Database) CreateUserMediaTemp(userId string, mediaTemp *mediaobject.MediaTempAggregate) error {
+func (repo *Database) CreateUserMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error {
 	sk := GenerateUserBoardImageDataSk(mediaTemp.Prefix.String(), mediaTemp.ContentType.ConvertToMediaType())
 
 	newUploadMedia := &UserMediaData{

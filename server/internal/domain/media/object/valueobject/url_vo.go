@@ -1,4 +1,4 @@
-package mediaobject
+package mediavalueobject
 
 import parseutil "dalkak/pkg/utils/parse"
 

@@ -1,17 +1,22 @@
-package mediaobject
+package mediaaggregate
+
+import (
+	mediaentity "dalkak/internal/domain/media/object/entity"
+	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
+)
 
 type MediaTempAggregate struct {
-	MediaEntity  *MediaEntity
-	Prefix       Prefix
-	ContentType  ContentType
-	MediaTempUrl *MediaTempUrl
+	MediaEntity  *mediaentity.MediaEntity
+	Prefix       mediavalueobject.Prefix
+	ContentType  mediavalueobject.ContentType
+	MediaTempUrl *mediavalueobject.MediaTempUrl
 }
 
-func NewMediaTempAggregate(mediaEntity *MediaEntity, prefix Prefix, contentType ContentType, mediaTempUrl *MediaTempUrl) *MediaTempAggregate {
+func NewMediaTempAggregate(mediaEntity *mediaentity.MediaEntity, prefix mediavalueobject.Prefix, contentType mediavalueobject.ContentType, mediaTempUrl *mediavalueobject.MediaTempUrl) *MediaTempAggregate {
 	return &MediaTempAggregate{
 		MediaEntity:  mediaEntity,
-		Prefix:      prefix,
-		ContentType: contentType,
+		Prefix:       prefix,
+		ContentType:  contentType,
 		MediaTempUrl: mediaTempUrl,
 	}
 }

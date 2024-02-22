@@ -1,4 +1,4 @@
-package mediaobject
+package mediaentity
 
 import (
 	generateutil "dalkak/pkg/utils/generate"
