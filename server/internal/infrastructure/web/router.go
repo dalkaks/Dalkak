@@ -66,6 +66,9 @@ func NewRouter(mode string, origin string, infra *core.Infra) *fiber.App {
 	userRoute := router.Group("/user")
 	SetupUserRoute(userRoute, infra.Keymanager, infra.EventManager)
 
+	mediaRoute := router.Group("/media")
+	SetupMediaRoute(mediaRoute, infra.EventManager)
+
 	// Default not found handler
 	router.All("*", WarpHandler(func(c fiber.Ctx) interface{} {
 		return responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgRequestNotFound)

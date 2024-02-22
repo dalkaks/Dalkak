@@ -30,6 +30,7 @@ func NewApplication(appConfig *config.AppConfig, infra *core.Infra) {
 	}
 
 	app.RegisterUserEventListeners()
+	app.RegisterMediaEventListeners()
 }
 
 func (app *ApplicationImpl) SendResponse(responseChan chan<- appdto.Response, data interface{}, err error) {
