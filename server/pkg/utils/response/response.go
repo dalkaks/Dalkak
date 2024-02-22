@@ -25,11 +25,11 @@ const (
 	ErrMsgRequestTimeout   = "REQUEST:TIMEOUT"
 
 	ErrMsgTokenParseFailed      = "TOKEN:FAILED_TO_PARSE_TOKEN"
-	ErrMsgTokenExpired          = "TOKEN:EPIRED_TOKEN"
+	ErrMsgTokenExpired          = "TOKEN:EXPIRED_TOKEN"
 	ErrMsgTokenInvalidSignature = "TOKEN:INVALID_SIGNATURE"
 
 	ErrMsgMetaMaskInvalidSignature = "METAMASK:INVALID_SIGNATURE"
-	ErrMsgMetaMaskNotMatchAddress  = "METAMASK:NOT_MATCH_ADDRESS"
+	ErrMsgMetaMaskNotMatchAddress  = "METAMASK:INVALID_ADDRESS"
 
 	ErrMsgServerInternal  = "SERVER:INTERNAL_ERROR"
 	ErrMsgDBInternal      = "DB:INTERNAL_ERROR"
