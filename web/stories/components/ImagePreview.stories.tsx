@@ -12,7 +12,7 @@ const meta = {
     file: { control: { type: 'file' } }
   },
 
-  render: (args, { loaded }) => {
+  render: (_, { loaded }) => {
     return <ImagePreview file={loaded.file} />;
   }
 } satisfies Meta<typeof ImagePreview>;

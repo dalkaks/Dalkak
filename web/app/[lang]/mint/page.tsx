@@ -1,15 +1,10 @@
-'use client';
-
 import React, { useState } from 'react';
-import MintingForm from './components/MintingForm';
-import ImagePreview from './components/ImagePreview';
+import MintingLayout from './components/MintingLayout';
 
 const page = () => {
-  const [file, setFile] = useState<File>(new File([], ''));
   return (
-    <div className="flex">
-      <ImagePreview file={file} />
-      <MintingForm setFile={setFile} />
+    <div className="flex h-[100vh]">
+      <MintingLayout />
     </div>
   );
 };

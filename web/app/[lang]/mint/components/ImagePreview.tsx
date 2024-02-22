@@ -8,11 +8,11 @@ type Props = {
 };
 
 const ImagePreview = ({ file }: Props) => {
-  console.log(file);
-  const image = URL.createObjectURL(file);
+  const defaultImage = '/images/no-image.webp';
+  const image = file.size ? URL.createObjectURL(file) : defaultImage;
   return (
-    <Card className="w-[450px] flex">
-      <AspectRatio ratio={16 / 9}>
+    <Card className="flex h-[450px] w-[450px]">
+      <AspectRatio ratio={1 / 1}>
         <Image
           src={image}
           className="rounded-md object-cover"
