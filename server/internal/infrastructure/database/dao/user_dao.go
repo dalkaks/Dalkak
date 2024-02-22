@@ -1,5 +1,10 @@
 package dao
 
+type UserDao struct {
+	WalletAddress string `json:"wallet_address"`
+	Timestamp     int64  `json:"timestamp"`
+}
+
 type MediaTempDao struct {
 	Id          string `json:"id"`
 	Prefix      string `json:"prefix"`

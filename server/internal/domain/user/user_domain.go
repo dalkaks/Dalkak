@@ -25,10 +25,10 @@ func NewUserDomainService(database UserRepository, keymanager core.KeyManager, e
 }
 
 func (service *UserDomainServiceImpl) CheckAndCreateUser(dto *userdto.CheckAndCreateUserDto) (*userentity.UserEntity, error) {
-	user, err := service.Database.FindUserByWalletAddress(dto.WalletAddress)
-	if err != nil || user != nil {
+	userDao, err := service.Database.FindUserByWalletAddress(dto.WalletAddress)
+	if err != nil || userDao != nil {
 		return nil, err
 	}
-	newUser := userentity.NewUserEntity(dto.WalletAddress)
+	newUser := userentity.NewUserEntity(userDao.WalletAddress)
 	return newUser, nil
 }

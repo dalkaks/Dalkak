@@ -21,7 +21,7 @@ type DatabaseManager interface {
 	GetTable() string
 
 	CreateUser(user *userentity.UserEntity) error
-	FindUserByWalletAddress(walletAddress string) (*userentity.UserEntity, error)
+	FindUserByWalletAddress(walletAddress string) (*dao.UserDao, error)
 
 	CreateUserMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
 	FindMediaTemp(userId, mediaType, prefix string) (*dao.MediaTempDao, error)

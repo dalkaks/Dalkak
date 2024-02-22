@@ -60,7 +60,7 @@ func (repo *Database) CreateUser(user *userentity.UserEntity) error {
 	return nil
 }
 
-func (repo *Database) FindUserByWalletAddress(walletAddress string) (*userentity.UserEntity, error) {
+func (repo *Database) FindUserByWalletAddress(walletAddress string) (*dao.UserDao, error) {
 	pk := GenerateUserDataPk(walletAddress)
 	var userToFind *UserData
 
@@ -79,7 +79,7 @@ func (repo *Database) FindUserByWalletAddress(walletAddress string) (*userentity
 		return nil, nil
 	}
 
-	return &userentity.UserEntity{
+	return &dao.UserDao{
 		WalletAddress: userToFind.WalletAddress,
 		Timestamp:     userToFind.Timestamp,
 	}, nil
