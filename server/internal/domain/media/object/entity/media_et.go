@@ -18,3 +18,15 @@ func NewMediaEntity() *MediaEntity {
 		Timestamp:   timeutil.GetTimestamp(),
 	}
 }
+
+func ConvertMediaEntity(Id string, IsConfirm bool, Timestamp int64) *MediaEntity {
+	return &MediaEntity{
+		Id:          Id,
+		IsConfirm:   IsConfirm,
+		Timestamp:   Timestamp,
+	}
+}
+
+func (media *MediaEntity) IsPublic() bool {
+	return media.IsConfirm
+}

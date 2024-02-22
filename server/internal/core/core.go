@@ -3,6 +3,7 @@ package core
 import (
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	userentity "dalkak/internal/domain/user/object/entity"
+	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -23,7 +24,7 @@ type DatabaseManager interface {
 	FindUserByWalletAddress(walletAddress string) (*userentity.UserEntity, error)
 
 	CreateUserMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
-	// FindUserUploadMedia(userId string, dto *dtos.FindUserUploadMediaDto) (*dtos.MediaMeta, error)
+	FindMediaTemp(userId, mediaType, prefix string) (*dao.MediaTempDao, error)
 	// UpdateUserUploadMedia(userId string, findDto *dtos.MediaMeta, updateDto *dtos.UpdateUserUploadMediaDto) error
 	// DeleteUserUploadMedia(userId string, dto *dtos.MediaMeta) error
 }

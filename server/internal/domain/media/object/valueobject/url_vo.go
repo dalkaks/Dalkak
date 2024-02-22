@@ -4,13 +4,17 @@ import parseutil "dalkak/pkg/utils/parse"
 
 type MediaTempUrl struct {
 	AccessUrl string  `json:"accessUrl"`
-	UploadUrl *string `json:"uploadUrl"`
+	UploadUrl *string `json:"uploadUrl,omitempty"`
 }
 
 func NewMediaTempUrl(staticLink, key, uploadUrl string) *MediaTempUrl {
+	var uploadUrlPtr *string
+	if uploadUrl != "" {
+		uploadUrlPtr = &uploadUrl
+	}
 	return &MediaTempUrl{
 		AccessUrl: parseutil.ConvertKeyToStaticLink(staticLink, key),
-		UploadUrl: &uploadUrl,
+		UploadUrl: uploadUrlPtr,
 	}
 }
 

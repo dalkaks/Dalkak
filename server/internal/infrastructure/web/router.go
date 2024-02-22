@@ -97,12 +97,10 @@ func GetUserInfoFromContext(c fiber.Ctx, requireUserInfo bool) (*appdto.UserInfo
 }
 
 func BindAndValidate(c fiber.Ctx, req interface{}) error {
-	err := c.Bind().Body(req)
-	if err != nil {
-		return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid, err)
-	}
+	c.Bind().Body(req)
+	c.Bind().Query(req)
 
-	err = validate.Struct(req)
+	err := validate.Struct(req)
 	if err != nil {
 		return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid, err)
 	}

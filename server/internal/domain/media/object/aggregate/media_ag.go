@@ -21,6 +21,13 @@ func NewMediaTempAggregate(mediaEntity *mediaentity.MediaEntity, prefix mediaval
 	}
 }
 
+func (m *MediaTempAggregate) CheckPublic() *MediaTempAggregate {
+	if m.MediaEntity.IsPublic() {
+		return m
+	}
+	return nil
+}
+
 // package appdto
 
 // type MediaHeadDto struct {

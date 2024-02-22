@@ -38,28 +38,40 @@ func (contentType ContentType) String() string {
 }
 
 func (contentType ContentType) IsAllowedContentType() bool {
-	part := strings.Split(contentType.String(), "/")
-	if len(part) != 2 {
+	mediaType, extension := SplitContentType(contentType.String())
+	if mediaType == "" || extension == "" {
 		return false
 	}
 
-	mediaType, extension := part[0], part[1]
+	return IsAllowedExtension(mediaType, extension)
+}
+
+func IsAllowedMediaType(mediaType string) bool {
+	_, exists := AllowedContentType[mediaType]
+	return exists
+}
+
+func IsAllowedExtension(mediaType, extension string) bool {
 	if allowedExtensions, ok := AllowedContentType[mediaType]; ok {
-		for ext, allowed := range allowedExtensions {
-			if allowed && ext == extension {
-				return true
-			}
-		}
+		return allowedExtensions[extension]
 	}
 	return false
 }
 
+func SplitContentType(contentTypeStr string) (string, string) {
+	parts := strings.Split(contentTypeStr, "/")
+	if len(parts) != 2 {
+		return "", ""
+	}
+	return parts[0], parts[1]
+}
+
 func (contentType ContentType) ConvertToMediaType() string {
-	parts := strings.Split(contentType.String(), "/")
-	return parts[0]
+	mediaType, _ := SplitContentType(contentType.String())
+	return mediaType
 }
 
 func (contentType ContentType) ConvertToExtension() string {
-	parts := strings.Split(contentType.String(), "/")
-	return parts[1]
+	_, extension := SplitContentType(contentType.String())
+	return extension
 }

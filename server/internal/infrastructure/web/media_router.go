@@ -15,12 +15,27 @@ func SetupMediaRoute(group fiber.Router, eventManager core.EventManager) {
 			return err
 		}
 
-		req := new(mediadto.CreateTempMediaRequest)
+		req := new(mediadto.CreateMediaTempRequest)
 		err = BindAndValidate(c, req)
 		if err != nil {
 			return err
 		}
 
 		return PublishAndWaitResponse(eventManager, "post.media.presigned", user, req)
+	}))
+
+	group.Get("/", WarpHandler(func(c fiber.Ctx) interface{} {
+		user, err := GetUserInfoFromContext(c, true)
+		if err != nil {
+			return err
+		}
+
+		req := new(mediadto.GetMediaTempRequest)
+		err = BindAndValidate(c, req)
+		if err != nil {
+			return err
+		}
+
+		return PublishAndWaitResponse(eventManager, "get.media", user, req)
 	}))
 }
