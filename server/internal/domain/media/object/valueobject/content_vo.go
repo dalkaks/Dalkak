@@ -5,8 +5,6 @@ import (
 	"strings"
 )
 
-const MaxUploadSize = 32 << 20 // 32 MB
-
 var AllowedContentType = map[string]map[string]bool{
 	"image": {
 		"jpg":  true,

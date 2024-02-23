@@ -24,6 +24,8 @@ const (
 	ErrMsgRequestNotFound  = "REQUEST:NOT_FOUND"
 	ErrMsgRequestTimeout   = "REQUEST:TIMEOUT"
 
+	ErrMsgDataNotFound = "DATA:NOT_FOUND"
+
 	ErrMsgTokenParseFailed      = "TOKEN:FAILED_TO_PARSE_TOKEN"
 	ErrMsgTokenExpired          = "TOKEN:EXPIRED_TOKEN"
 	ErrMsgTokenInvalidSignature = "TOKEN:INVALID_SIGNATURE"

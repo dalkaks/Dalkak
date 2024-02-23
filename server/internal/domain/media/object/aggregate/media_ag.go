@@ -3,6 +3,7 @@ package mediaaggregate
 import (
 	mediaentity "dalkak/internal/domain/media/object/entity"
 	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
+	responseutil "dalkak/pkg/utils/response"
 )
 
 type MediaTempAggregate struct {
@@ -10,6 +11,7 @@ type MediaTempAggregate struct {
 	Prefix       mediavalueobject.Prefix
 	ContentType  mediavalueobject.ContentType
 	MediaTempUrl *mediavalueobject.MediaTempUrl
+	Length       *mediavalueobject.Length
 }
 
 type MediaTempAggregateOption func(*MediaTempAggregate)
@@ -38,6 +40,12 @@ func WithMediaTempUrl(mediaTempUrl *mediavalueobject.MediaTempUrl) MediaTempAggr
 	}
 }
 
+func WithLength(length mediavalueobject.Length) MediaTempAggregateOption {
+	return func(aggregate *MediaTempAggregate) {
+		aggregate.Length = &length
+	}
+}
+
 func NewMediaTempAggregate(options ...MediaTempAggregateOption) *MediaTempAggregate {
 	aggregate := &MediaTempAggregate{}
 	for _, option := range options {
@@ -61,22 +69,36 @@ func (m *MediaTempAggregate) SetUploadUrl(uploadUrl string) {
 	}
 }
 
-// package appdto
+func (m *MediaTempAggregate) ConfirmMediaTemp(Id string, contentTypeStr string, lengthInt int64) (*MediaTempUpdate, error) {
+	contentType, err := mediavalueobject.NewContentType(mediavalueobject.SplitContentType(contentTypeStr))
+	if err != nil {
+		return nil, err
+	}
 
-// type MediaHeadDto struct {
-// 	Key         string
-// 	ContentType string
-// 	Length      int64
-// 	URL         string
-// 	MetaUserId  string
-// }
+	_, err = mediavalueobject.NewLength(lengthInt)
+	if err != nil {
+		return nil, err
+	}
 
-// func (m *MediaHeadDto) Verify(userId string, meta *MediaMeta) bool {
-// 	return int64(config.MaxUploadSize) > m.Length && m.ContentType == meta.ContentType && m.URL == meta.URL && userId == m.MetaUserId
-// }
+	if !m.MediaEntity.CheckId(Id) {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+	}
 
-// func WithConfirm(isConfirm bool) FindUserUploadMediaOption {
-// 	return func(f *FindUserUploadMediaDto) {
-// 		f.IsConfirm = &isConfirm
-// 	}
-// }
+	return &MediaTempUpdate{
+		MediaEntity: &mediaentity.MediaEntity{
+			Id:        m.MediaEntity.Id,
+			IsConfirm: true,
+			Timestamp: m.MediaEntity.Timestamp,
+		},
+		Prefix:       m.Prefix,
+		ContentType:  contentType,
+		MediaTempUrl: m.MediaTempUrl,
+	}, nil
+}
+
+type MediaTempUpdate struct {
+	MediaEntity  *mediaentity.MediaEntity
+	Prefix       mediavalueobject.Prefix
+	ContentType  mediavalueobject.ContentType
+	MediaTempUrl *mediavalueobject.MediaTempUrl
+}

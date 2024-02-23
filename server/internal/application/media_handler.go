@@ -9,6 +9,7 @@ import (
 func (app *ApplicationImpl) RegisterMediaEventListeners() {
 	app.EventManager.Subscribe("post.media.presigned", app.handleCreateMediaTemp)
 	app.EventManager.Subscribe("get.media", app.handleGetMediaTemp)
+	app.EventManager.Subscribe("post.media.confirm", app.handleConfirmMediaTemp)
 }
 
 func (app *ApplicationImpl) handleCreateMediaTemp(event eventbus.Event) {
@@ -32,14 +33,14 @@ func (app *ApplicationImpl) handleCreateMediaTemp(event eventbus.Event) {
 	}
 
 	// 미디어 저장
-	err = app.Database.CreateUserMediaTemp(userInfo.GetUserId(), newMedia)
+	err = app.Database.CreateMediaTemp(userInfo.GetUserId(), newMedia)
 	if err != nil {
 		app.SendResponse(event.ResponseChan, nil, err)
 		return
 	}
 
 	// 리턴
-	result := mediadto.NewGetMediaTempResponse(newMedia.MediaEntity.Id, newMedia.MediaTempUrl.AccessUrl, *newMedia.MediaTempUrl.UploadUrl)
+	result := mediadto.NewCreateMediaTempResponse(newMedia.MediaEntity.Id, newMedia.MediaTempUrl.AccessUrl, *newMedia.MediaTempUrl.UploadUrl)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }
 
@@ -65,5 +66,37 @@ func (app *ApplicationImpl) handleGetMediaTemp(event eventbus.Event) {
 
 	// 리턴
 	result := mediadto.NewGetMediaTempResponse(media.MediaEntity.Id, media.ContentType.String(), media.MediaTempUrl.AccessUrl)
+	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
+}
+
+func (app *ApplicationImpl) handleConfirmMediaTemp(event eventbus.Event) {
+	userInfo := event.UserInfo
+	if userInfo == nil {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgRequestUnauth))
+		return
+	}
+	payload, ok := event.Payload.(*mediadto.ConfirmMediaTempRequest)
+	if !ok {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid))
+		return
+	}
+
+	// 미디어 컨펌
+	dto := mediadto.NewConfirmMediaTempDto(userInfo, payload.Id, payload.MediaType, payload.Prefix)
+	mediaTempUpdate, err := app.MediaDomain.ConfirmMediaTemp(dto)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+
+	// 미디어 저장
+	err = app.Database.UpdateMediaTempConfirm(userInfo.GetUserId(), mediaTempUpdate)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+
+	// 리턴
+	result := mediadto.NewConfirmMediaTempResponse(mediaTempUpdate.MediaTempUrl.AccessUrl)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
 }

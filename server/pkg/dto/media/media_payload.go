@@ -38,3 +38,19 @@ func NewGetMediaTempResponse(id string, contentType string, accessUrl string) *G
 		AccessUrl:   accessUrl,
 	}
 }
+
+type ConfirmMediaTempRequest struct {
+	Id        string `json:"id" validate:"required"`
+	MediaType string `json:"mediaType" validate:"required"`
+	Prefix    string `json:"prefix" validate:"required"`
+}
+
+type ConfirmMediaTempResponse struct {
+	AccessUrl string `json:"accessUrl"`
+}
+
+func NewConfirmMediaTempResponse(accessUrl string) *ConfirmMediaTempResponse {
+	return &ConfirmMediaTempResponse{
+		AccessUrl: accessUrl,
+	}
+}
