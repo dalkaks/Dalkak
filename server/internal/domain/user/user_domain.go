@@ -29,6 +29,6 @@ func (service *UserDomainServiceImpl) CheckAndCreateUser(dto *userdto.CheckAndCr
 	if err != nil || userDao != nil {
 		return nil, err
 	}
-	newUser := userentity.NewUserEntity(userDao.WalletAddress)
+	newUser := userentity.NewUserEntity(dto.WalletAddress)
 	return newUser, nil
 }
