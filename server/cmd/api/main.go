@@ -38,7 +38,7 @@ func main() {
 }
 
 func initInfra(ctx context.Context, mode string, appConfig *config.AppConfig) (*core.Infra, error) {
-	keymanager, err := key.NewKeyManager(ctx, mode, appConfig.KmsKeyId)
+	keymanager, err := key.NewKeyManager(ctx, mode, appConfig.KmsKeyId, appConfig.Domain)
 	if err != nil {
 		return nil, err
 	}

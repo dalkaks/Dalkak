@@ -22,24 +22,24 @@ type GenerateTokenDto struct {
 	NowTime       int64  `json:"nowTime"`
 }
 
-func GenerateAuthToken(domain string, keyManager core.KeyManager, dto *GenerateTokenDto) (*AuthToken, *AuthToken, error) {
-	accessToken, err := GenerateAccessToken(domain, keyManager, dto)
+func GenerateAuthToken(keyManager core.KeyManager, dto *GenerateTokenDto) (*AuthToken, *AuthToken, error) {
+	accessToken, err := GenerateAccessToken(keyManager, dto)
 	if err != nil {
 		return nil, nil, err
 	}
-	refreshToken, err := GenerateRefreshToken(domain, keyManager, dto)
+	refreshToken, err := GenerateRefreshToken(keyManager, dto)
 	if err != nil {
 		return nil, nil, err
 	}
 	return accessToken, refreshToken, nil
 }
 
-func GenerateAccessToken(domain string, keyManager core.KeyManager, dto *GenerateTokenDto) (*AuthToken, error) {
+func GenerateAccessToken(keyManager core.KeyManager, dto *GenerateTokenDto) (*AuthToken, error) {
 	token, err := createToken(jwt.MapClaims{
 		"sub": dto.WalletAddress,
 		"iat": dto.NowTime,
 		"exp": dto.NowTime + AccessTokenTTL + AdditonalTokenTTL,
-		"iss": domain,
+		"iss": keyManager.GetDomain(),
 	}, keyManager)
 	if err != nil {
 		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgServerInternal, err)
@@ -47,7 +47,7 @@ func GenerateAccessToken(domain string, keyManager core.KeyManager, dto *Generat
 	return newAuthToken(token, AccessTokenTTL), nil
 }
 
-func GenerateRefreshToken(domain string, keyManager core.KeyManager, dto *GenerateTokenDto) (*AuthToken, error) {
+func GenerateRefreshToken(keyManager core.KeyManager, dto *GenerateTokenDto) (*AuthToken, error) {
 	tokenId := generateutil.GenerateUUID()
 	token, err := createToken(jwt.MapClaims{
 		"sub": dto.WalletAddress,

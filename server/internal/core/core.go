@@ -39,6 +39,8 @@ type StorageManager interface {
 type KeyManager interface {
 	CreateSianature(sign string) (string, error)
 	ParseTokenWithPublicKey(token string) (string, error)
+	GetDomain() string
+	GetMode() string
 }
 
 type EventManager interface {
