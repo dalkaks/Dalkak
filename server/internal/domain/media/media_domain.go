@@ -69,23 +69,16 @@ func (service *MediaDomainServiceImpl) GetMediaTemp(dto *mediadto.GetMediaTempDt
 }
 
 func (service *MediaDomainServiceImpl) ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error) {
-	prefix, err := mediavalueobject.NewPrefix(dto.Prefix)
+	mediaTemp, err := service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, dto.MediaType, dto.Prefix))
 	if err != nil {
 		return nil, err
 	}
-
-	mediaTempDao, err := service.Database.FindMediaTemp(dto.UserInfo.GetUserId(), dto.MediaType, prefix.String())
-	if err != nil {
-		return nil, err
-	}
-	if mediaTempDao == nil {
+	if mediaTemp == nil {
 		return nil, responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgDataNotFound)
 	}
 
-	factory := mediafactory.NewMediaTempDaoFactory(mediaTempDao, service.StaticLink)
-	mediaTemp, err := factory.CreateMediaTempAggregate()
-	if err != nil {
-		return nil, err
+	if mediaTemp.CheckConfirm() {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeConflict, responseutil.ErrMsgDataConflict)
 	}
 
 	mediaHead, err := service.Storage.GetHeadObject(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink))

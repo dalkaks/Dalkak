@@ -31,6 +31,10 @@ func (media *MediaEntity) IsPublic() bool {
 	return media.IsConfirm
 }
 
+func (media *MediaEntity) CheckConfirm() bool {
+	return media.IsConfirm
+}
+
 func (media *MediaEntity) CheckId(id string) bool {
 	return media.Id == id	
 }

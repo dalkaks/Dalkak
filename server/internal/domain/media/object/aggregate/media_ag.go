@@ -61,6 +61,10 @@ func (m *MediaTempAggregate) CheckPublic() *MediaTempAggregate {
 	return nil
 }
 
+func (m *MediaTempAggregate) CheckConfirm() bool {
+	return m.MediaEntity.CheckConfirm()
+}
+
 func (m *MediaTempAggregate) SetUploadUrl(uploadUrl string) {
 	if m.MediaTempUrl != nil {
 		m.MediaTempUrl.UploadUrl = &uploadUrl
