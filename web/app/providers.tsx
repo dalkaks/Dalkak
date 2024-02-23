@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { MetaMaskProvider } from "@metamask/sdk-react";
-import React from "react";
+import { MetaMaskProvider } from '@metamask/sdk-react';
+import React from 'react';
 
 type Props = {
   children: any;
@@ -11,12 +11,12 @@ type Props = {
 const Providers = ({ children, href }: Props) => {
   return (
     <MetaMaskProvider
-      debug={false}
+      debug={true}
       sdkOptions={{
         dappMetadata: {
-          name: "My dapp",
-          url: href,
-        },
+          name: 'My dapp',
+          url: href
+        }
       }}
     >
       {children}
