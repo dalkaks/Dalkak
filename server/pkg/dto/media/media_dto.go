@@ -31,3 +31,19 @@ func NewGetMediaTempDto(userInfo *appdto.UserInfo, mediaType, prefix string) *Ge
 		Prefix:    prefix,
 	}
 }
+
+type ConfirmMediaTempDto struct {
+	UserInfo  *appdto.UserInfo
+	Id        string
+	MediaType string
+	Prefix    string
+}
+
+func NewConfirmMediaTempDto(userInfo *appdto.UserInfo, id string, mediaType, prefix string) *ConfirmMediaTempDto {
+	return &ConfirmMediaTempDto{
+		UserInfo:  userInfo,
+		Id:        id,
+		MediaType: mediaType,
+		Prefix:    prefix,
+	}
+}

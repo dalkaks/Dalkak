@@ -7,11 +7,13 @@ import (
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
 	mediadto "dalkak/pkg/dto/media"
+	responseutil "dalkak/pkg/utils/response"
 )
 
 type MediaDomainService interface {
 	CreateMediaTemp(dto *mediadto.CreateMediaTempDto) (*mediaaggregate.MediaTempAggregate, error)
 	GetMediaTemp(dto *mediadto.GetMediaTempDto) (*mediaaggregate.MediaTempAggregate, error)
+	ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error)
 }
 
 type MediaDomainServiceImpl struct {
@@ -64,4 +66,32 @@ func (service *MediaDomainServiceImpl) GetMediaTemp(dto *mediadto.GetMediaTempDt
 	}
 
 	return mediaTemp.CheckPublic(), nil
+}
+
+func (service *MediaDomainServiceImpl) ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error) {
+	mediaTemp, err := service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, dto.MediaType, dto.Prefix))
+	if err != nil {
+		return nil, err
+	}
+	if mediaTemp == nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgDataNotFound)
+	}
+
+	if mediaTemp.CheckConfirm() {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeConflict, responseutil.ErrMsgDataConflict)
+	}
+
+	mediaHead, err := service.Storage.GetHeadObject(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink))
+	if err != nil {
+		return nil, err
+	}
+	if mediaHead == nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgDataNotFound)
+	}
+
+	mediaTempUpdate, err := mediaTemp.ConfirmMediaTemp(dto.Id, mediaHead.ContentType, mediaHead.Length)
+	if err != nil {
+		return nil, err
+	}
+	return mediaTempUpdate, nil
 }

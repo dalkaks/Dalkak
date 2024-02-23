@@ -49,7 +49,7 @@ func (app *ApplicationImpl) handleAuthAndSignUp(event eventbus.Event) {
 	}
 
 	// 토큰 발급
-	accessToken, refreshToken, err := jwtutil.GenerateAuthToken(app.AppConfig.Domain, app.Keymanager, &jwtutil.GenerateTokenDto{
+	accessToken, refreshToken, err := jwtutil.GenerateAuthToken(app.Keymanager, &jwtutil.GenerateTokenDto{
 		WalletAddress: payload.WalletAddress,
 		NowTime:       timeutil.GetTimestamp(),
 	})
@@ -71,7 +71,7 @@ func (app *ApplicationImpl) handleReissueAccessToken(event eventbus.Event) {
 	}
 
 	// 토큰 발급
-	accessToken, err := jwtutil.GenerateAccessToken(app.AppConfig.Domain, app.Keymanager, &jwtutil.GenerateTokenDto{
+	accessToken, err := jwtutil.GenerateAccessToken(app.Keymanager, &jwtutil.GenerateTokenDto{
 		WalletAddress: payload.WalletAddress,
 		NowTime:       timeutil.GetTimestamp(),
 	})

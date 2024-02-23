@@ -7,6 +7,7 @@ import (
 	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 const UserDataType = "User"
@@ -85,7 +86,7 @@ func (repo *Database) FindUserByWalletAddress(walletAddress string) (*dao.UserDa
 	}, nil
 }
 
-func (repo *Database) CreateUserMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error {
+func (repo *Database) CreateMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error {
 	sk := GenerateUserBoardImageDataSk(mediaTemp.Prefix.String(), mediaTemp.ContentType.ConvertToMediaType())
 
 	newUploadMedia := &UserMediaData{
@@ -140,28 +141,24 @@ func (repo *Database) FindMediaTemp(userId, mediaType, prefix string) (*dao.Medi
 
 }
 
-// func (repo *Database) UpdateUserUploadMedia(userId string, findDto *dtos.MediaMeta, updateDto *dtos.UpdateUserUploadMediaDto) error {
-// 	mediaType, err := parseutil.ConvertContentTypeToMediaType(findDto.ContentType)
-// 	if err != nil {
-// 		return err
-// 	}
+// todo now only isconfirm update
+func (repo *Database) UpdateMediaTempConfirm(userId string, mediaTempUpdate *mediaaggregate.MediaTempUpdate) error {
+	pk := GenerateUserDataPk(userId)
+	sk := GenerateUserBoardImageDataSk(mediaTempUpdate.Prefix.String(), mediaTempUpdate.ContentType.ConvertToMediaType())
 
-// 	pk := GenerateUserDataPk(userId)
-// 	sk := GenerateUserBoardImageDataSk(findDto.Prefix, mediaType)
+	key := map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: pk},
+		"Sk": &types.AttributeValueMemberS{Value: sk},
+	}
 
-// 	key := map[string]types.AttributeValue{
-// 		"Pk": &types.AttributeValueMemberS{Value: pk},
-// 		"Sk": &types.AttributeValueMemberS{Value: sk},
-// 	}
+	update := expression.Set(expression.Name("IsConfirm"), expression.Value(mediaTempUpdate.MediaEntity.IsConfirm))
+	expr, err := GenerateUpdateExpression(update)
+	if err != nil {
+		return err
+	}
 
-// 	update := expression.Set(expression.Name("IsConfirm"), expression.Value(updateDto.IsConfirm))
-// 	expr, err := GenerateUpdateExpression(update)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return UpdateDynamoDBItem(repo.client, repo.table, key, expr)
-// }
+	return repo.UpdateDynamoDBItem(key, expr)
+}
 
 // func (repo *Database) DeleteUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
 // 	mediaType, err := parseutil.ConvertContentTypeToMediaType(dto.ContentType)

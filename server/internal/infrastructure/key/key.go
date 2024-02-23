@@ -25,9 +25,11 @@ type KmsSet struct {
 	Client    *kms.Client
 	KeyId     string
 	PublicKey *ecdsa.PublicKey
+	Mode			string
+	Domain		string
 }
 
-func NewKeyManager(ctx context.Context, mode string, keyId string) (*KmsSet, error) {
+func NewKeyManager(ctx context.Context, mode string, keyId string, domain string) (*KmsSet, error) {
 	var cfg aws.Config
 	var err error
 
@@ -65,7 +67,17 @@ func NewKeyManager(ctx context.Context, mode string, keyId string) (*KmsSet, err
 		Client:    client,
 		KeyId:     keyId,
 		PublicKey: pubEdcsaKey.(*ecdsa.PublicKey),
+		Mode:			mode,
+		Domain:		domain,
 	}, nil
+}
+
+func (kmsSet *KmsSet) GetDomain() string {
+	return kmsSet.Domain
+}
+
+func (kmsSet *KmsSet) GetMode() string {
+	return kmsSet.Mode
 }
 
 func (kmsSet *KmsSet) CreateSianature(sign string) (string, error) {

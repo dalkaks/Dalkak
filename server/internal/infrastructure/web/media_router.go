@@ -38,4 +38,19 @@ func SetupMediaRoute(group fiber.Router, eventManager core.EventManager) {
 
 		return PublishAndWaitResponse(eventManager, "get.media", user, req)
 	}))
+
+	group.Post("/confirm", WarpHandler(func(c fiber.Ctx) interface{} {
+		user, err := GetUserInfoFromContext(c, true)
+		if err != nil {
+			return err
+		}
+
+		req := new(mediadto.ConfirmMediaTempRequest)
+		err = BindAndValidate(c, req)
+		if err != nil {
+			return err
+		}
+
+		return PublishAndWaitResponse(eventManager, "post.media.confirm", user, req)
+	}))
 }

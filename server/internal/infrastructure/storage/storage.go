@@ -2,12 +2,15 @@ package storage
 
 import (
 	"context"
+	storagedto "dalkak/internal/infrastructure/storage/type"
 	responseutil "dalkak/pkg/utils/response"
+	"errors"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 type Storage struct {
@@ -59,25 +62,22 @@ func (storage *Storage) CreatePresignedURL(mediaKey string, contentType string) 
 	return presignedURL.URL, nil
 }
 
-// func (storage *Storage) GetHeadObject(key string) (*appdto.MediaHeadDto, error) {
-// 	headObjectOutput, err := storage.client.HeadObject(context.Background(), &s3.HeadObjectInput{
-// 		Bucket: aws.String(storage.bucket),
-// 		Key:    aws.String(key),
-// 	})
-// 	if err != nil {
-// 		if errors.Is(err, &types.NoSuchKey{}) || errors.Is(err, &types.NotFound{}) {
-// 			return nil, responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgStorageNoSuchKey, err)
-// 		}
-// 		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgStorageInternal, err)
-// 	}
-// 	return &appdto.MediaHeadDto{
-// 		Key:         key,
-// 		ContentType: *headObjectOutput.ContentType,
-// 		Length:      *headObjectOutput.ContentLength,
-// 		URL:         storage.convertKeyToStaticLink(key),
-// 		MetaUserId:  headObjectOutput.Metadata["userid"],
-// 	}, nil
-// }
+func (storage *Storage) GetHeadObject(key string) (*storagedto.MediaHeadDto, error) {
+	headObjectOutput, err := storage.client.HeadObject(context.Background(), &s3.HeadObjectInput{
+		Bucket: aws.String(storage.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		if errors.Is(err, &types.NoSuchKey{}) || errors.Is(err, &types.NotFound{}) {
+			return nil, responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgDataNotFound, err)
+		}
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgStorageInternal, err)
+	}
+	return &storagedto.MediaHeadDto{
+		ContentType: *headObjectOutput.ContentType,
+		Length:      *headObjectOutput.ContentLength,
+	}, nil
+}
 
 // func (storage *Storage) DeleteObject(key string) error {
 // 	_, err := storage.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
@@ -88,22 +88,4 @@ func (storage *Storage) CreatePresignedURL(mediaKey string, contentType string) 
 // 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgStorageInternal, err)
 // 	}
 // 	return nil
-// }
-
-// func (storage *Storage) generateMediaId(dto *appdto.UploadMediaDto) (string, error) {
-// 	uuid := generateutil.GenerateUUID()
-// 	key := GenerateMediaPath(dto.Prefix, dto.MediaType.String(), uuid)
-
-// 	_, err := storage.client.HeadObject(context.Background(), &s3.HeadObjectInput{
-// 		Bucket: aws.String(storage.bucket),
-// 		Key:    aws.String(key),
-// 	})
-
-// 	var noSuchKeyErr *types.NoSuchKey
-// 	var notFoundErr *types.NotFound
-// 	if err != nil && (errors.As(err, &noSuchKeyErr) || errors.As(err, &notFoundErr)) {
-// 		return uuid, nil
-// 	}
-// 	// Todo: temp 파일 체크, error handling(중복 또는 에러)
-// 	return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgStorageInternal, err)
 // }

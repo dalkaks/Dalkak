@@ -16,6 +16,7 @@ const (
 	ErrCodeForbidden    = http.StatusForbidden
 	ErrCodeNotFound     = http.StatusNotFound
 	ErrCodeTimeout      = http.StatusRequestTimeout
+	ErrCodeConflict     = http.StatusConflict
 	ErrCodeInternal     = http.StatusInternalServerError
 
 	ErrMsgRequestInvalid   = "REQUEST:INVALID_REQUEST"
@@ -23,6 +24,9 @@ const (
 	ErrMsgRequestForbidden = "REQUEST:FORBIDDEN"
 	ErrMsgRequestNotFound  = "REQUEST:NOT_FOUND"
 	ErrMsgRequestTimeout   = "REQUEST:TIMEOUT"
+
+	ErrMsgDataNotFound = "DATA:NOT_FOUND"
+	ErrMsgDataConflict = "DATA:CONFLICT"
 
 	ErrMsgTokenParseFailed      = "TOKEN:FAILED_TO_PARSE_TOKEN"
 	ErrMsgTokenExpired          = "TOKEN:EXPIRED_TOKEN"
