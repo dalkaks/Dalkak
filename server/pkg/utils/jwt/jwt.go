@@ -2,8 +2,8 @@ package jwtutil
 
 import (
 	"dalkak/internal/core"
-	responseutil "dalkak/pkg/utils/response"
 	generateutil "dalkak/pkg/utils/generate"
+	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/golang-jwt/jwt/v5"
 )

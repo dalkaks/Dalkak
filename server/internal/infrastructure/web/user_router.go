@@ -2,6 +2,7 @@ package web
 
 import (
 	"dalkak/internal/core"
+	keytype "dalkak/internal/infrastructure/key/type"
 	userdto "dalkak/pkg/dto/user"
 	responseutil "dalkak/pkg/utils/response"
 
@@ -25,7 +26,7 @@ func SetupUserRoute(group fiber.Router, keyManager core.KeyManager, eventManager
 		if refreshToken == "" {
 			return responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
 		}
-		sub, err := keyManager.ParseTokenWithPublicKey(refreshToken)
+		sub, err := keyManager.ParseTokenWithPublicKey(refreshToken, keytype.RefreshToken)
 		if err != nil {
 			return err
 		}

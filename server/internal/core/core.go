@@ -5,6 +5,7 @@ import (
 	userentity "dalkak/internal/domain/user/object/entity"
 	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
+	keytype "dalkak/internal/infrastructure/key/type"
 	storagedto "dalkak/internal/infrastructure/storage/type"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -38,7 +39,7 @@ type StorageManager interface {
 
 type KeyManager interface {
 	CreateSianature(sign string) (string, error)
-	ParseTokenWithPublicKey(token string) (string, error)
+	ParseTokenWithPublicKey(token string, tokenType keytype.TokenType) (string, error)
 	GetDomain() string
 	GetMode() string
 }
