@@ -6,6 +6,12 @@ import { CardDemo } from './components/CardDemo';
 import PsButton from './components/PsButton';
 import { Toaster } from 'sonner';
 
+export const metadata = {
+  icons: {
+    icon: '/icons/favicon.ico'
+  }
+};
+
 interface HomeProps {
   params: {
     lang: Locale;

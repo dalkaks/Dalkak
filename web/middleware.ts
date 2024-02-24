@@ -12,12 +12,16 @@ function getLocale(request: NextRequest) {
   return typeof locale === 'string' && locales.includes(locale) ? locale : 'en';
 }
 
+const PUBLIC_PATHS = ['/images', '/icons'];
+
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
   // Check if there is any supported locale in the pathname
   const { pathname } = request.nextUrl;
   console.log(pathname);
-  if (pathname.startsWith('/images')) return NextResponse.next();
+
+  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path)))
+    return NextResponse.next();
 
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
