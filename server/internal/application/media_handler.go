@@ -10,6 +10,7 @@ func (app *ApplicationImpl) RegisterMediaEventListeners() {
 	app.EventManager.Subscribe("post.media.presigned", app.handleCreateMediaTemp)
 	app.EventManager.Subscribe("get.media", app.handleGetMediaTemp)
 	app.EventManager.Subscribe("post.media.confirm", app.handleConfirmMediaTemp)
+	app.EventManager.Subscribe("delete.media", app.handleDeleteMediaTemp)
 }
 
 func (app *ApplicationImpl) handleCreateMediaTemp(event eventbus.Event) {
@@ -99,4 +100,44 @@ func (app *ApplicationImpl) handleConfirmMediaTemp(event eventbus.Event) {
 	// 리턴
 	result := mediadto.NewConfirmMediaTempResponse(mediaTempUpdate.MediaTempUrl.AccessUrl)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
+}
+
+func (app *ApplicationImpl) handleDeleteMediaTemp(event eventbus.Event) {
+	userInfo := event.UserInfo
+	if userInfo == nil {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgRequestUnauth))
+		return
+	}
+	payload, ok := event.Payload.(*mediadto.DeleteMediaTempRequest)
+	if !ok {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid))
+		return
+	}
+
+	// 미디어 조회
+	dto := mediadto.NewGetMediaTempDto(userInfo, payload.MediaType, payload.Prefix)
+	media, err := app.MediaDomain.GetMediaTemp(dto)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+	if media == nil {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgDataNotFound))
+		return
+	}
+
+	// 미디어 삭제
+	err = app.Database.DeleteMediaTemp(userInfo.GetUserId(), media)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+	err = app.Storage.DeleteObject(media.MediaTempUrl.GetUrlKey(app.AppConfig.StaticLink))
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+
+	// 리턴
+	app.SendResponse(event.ResponseChan, responseutil.NewAppData(nil, responseutil.DataCodeSuccess), nil)
 }

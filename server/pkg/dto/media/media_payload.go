@@ -54,3 +54,8 @@ func NewConfirmMediaTempResponse(accessUrl string) *ConfirmMediaTempResponse {
 		AccessUrl: accessUrl,
 	}
 }
+
+type DeleteMediaTempRequest struct {
+	MediaType string `json:"mediaType" validate:"required"`
+	Prefix    string `json:"prefix" validate:"required"`
+}

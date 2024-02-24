@@ -160,19 +160,14 @@ func (repo *Database) UpdateMediaTempConfirm(userId string, mediaTempUpdate *med
 	return repo.UpdateDynamoDBItem(key, expr)
 }
 
-// func (repo *Database) DeleteUserUploadMedia(userId string, dto *dtos.MediaMeta) error {
-// 	mediaType, err := parseutil.ConvertContentTypeToMediaType(dto.ContentType)
-// 	if err != nil {
-// 		return err
-// 	}
+func (repo *Database) DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error {
+	pk := GenerateUserDataPk(userId)
+	sk := GenerateUserBoardImageDataSk(mediaTemp.Prefix.String(), mediaTemp.ContentType.ConvertToMediaType())
 
-// 	pk := GenerateUserDataPk(userId)
-// 	sk := GenerateUserBoardImageDataSk(dto.Prefix, mediaType)
+	key := map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: pk},
+		"Sk": &types.AttributeValueMemberS{Value: sk},
+	}
 
-// 	key := map[string]types.AttributeValue{
-// 		"Pk": &types.AttributeValueMemberS{Value: pk},
-// 		"Sk": &types.AttributeValueMemberS{Value: sk},
-// 	}
-
-// 	return DeleteDynamoDBItem(repo.client, repo.table, key)
-// }
+	return repo.DeleteDynamoDBItem(key)
+}

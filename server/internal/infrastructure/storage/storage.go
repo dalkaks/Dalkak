@@ -79,13 +79,13 @@ func (storage *Storage) GetHeadObject(key string) (*storagedto.MediaHeadDto, err
 	}, nil
 }
 
-// func (storage *Storage) DeleteObject(key string) error {
-// 	_, err := storage.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
-// 		Bucket: aws.String(storage.bucket),
-// 		Key:    aws.String(key),
-// 	})
-// 	if err != nil {
-// 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgStorageInternal, err)
-// 	}
-// 	return nil
-// }
+func (storage *Storage) DeleteObject(key string) error {
+	_, err := storage.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
+		Bucket: aws.String(storage.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgStorageInternal, err)
+	}
+	return nil
+}

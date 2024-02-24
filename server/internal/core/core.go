@@ -27,13 +27,13 @@ type DatabaseManager interface {
 	CreateMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
 	FindMediaTemp(userId, mediaType, prefix string) (*dao.MediaTempDao, error)
 	UpdateMediaTempConfirm(userId string, mediaTempUpdate *mediaaggregate.MediaTempUpdate) error
-	// DeleteUserUploadMedia(userId string, dto *dtos.MediaMeta) error
+	DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
 }
 
 type StorageManager interface {
-	// DeleteObject(key string) error
 	CreatePresignedURL(mediaKey string, contentType string) (string, error)
 	GetHeadObject(key string) (*storagedto.MediaHeadDto, error)
+	DeleteObject(key string) error
 }
 
 type KeyManager interface {
