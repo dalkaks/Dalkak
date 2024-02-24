@@ -20,7 +20,6 @@ const Navigation = () => {
   }, []);
 
   useEffect(() => {
-    console.log(account);
     account.walletAddress && account.signature && login(account);
     if (account.signature && account.walletAddress) alert('로그인 되었습니다');
   }, [account]);
@@ -44,7 +43,7 @@ const Navigation = () => {
             <Link href="/mint">
               <Button>Mint</Button>
             </Link>
-            <MetaButton title="Connect" setAccount={setAccount} />
+            <MetaButton setAccount={setAccount} />
           </nav>
         </div>
       </MetaMaskProvider>

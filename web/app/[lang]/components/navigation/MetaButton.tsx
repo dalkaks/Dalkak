@@ -6,7 +6,6 @@ import React, { useEffect, useState } from 'react';
 import detectEthereumProvider from '@metamask/detect-provider';
 
 type MetaButtonProps = {
-  title: string;
   setAccount: React.Dispatch<
     React.SetStateAction<{
       walletAddress: string;
@@ -15,13 +14,14 @@ type MetaButtonProps = {
   >;
 };
 
-const MetaButton = ({ title, setAccount }: MetaButtonProps) => {
+const MetaButton = ({ setAccount }: MetaButtonProps) => {
   const [hasProvider, setHasProvider] = useState(false);
   const { sdk, connected } = useSDK();
 
   useEffect(() => {
     const getProvider = async () => {
       const provider = await detectEthereumProvider();
+      
       if (provider) {
         setHasProvider(true);
       }
@@ -31,11 +31,15 @@ const MetaButton = ({ title, setAccount }: MetaButtonProps) => {
 
   const connect = async () => {
     try {
-      const accounts = (await sdk?.connect({
+      if(!hasProvider) throw new Error('No provider found');
+      
+      const signature = (await sdk?.connectAndSign({
         msg: '안전하게 지갑 연결'
-      })) as string[];
-      const signature = await sdk?.sign({ data: '안전하게 지갑 연결' });
-      setAccount({ walletAddress: accounts?.[0], signature: signature });
+      })) as string;
+      
+      const walletAddress = window.ethereum?.selectedAddress as string;
+
+      setAccount({ walletAddress, signature });
     } catch (err) {
       console.warn(`failed to connect..`, err);
     }
@@ -48,8 +52,16 @@ const MetaButton = ({ title, setAccount }: MetaButtonProps) => {
       console.warn(`failed to disconnect..`, err);
     }
   };
+
+  const handleConnection = async () => {
+    if (connected) {
+      await disconnect();
+    } else {
+      await connect();
+    }
+  }
   return (
-    <Button disabled={!hasProvider} onClick={connected ? disconnect : connect}>
+    <Button disabled={!hasProvider} onClick={handleConnection}>
       {connected ? 'Disconnect' : 'Connect'}
     </Button>
   );

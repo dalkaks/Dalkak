@@ -6,6 +6,7 @@ import RfButton from './components/RfButton';
 import { CardWithForm } from './components/CardWithForm';
 import { CardDemo } from './components/CardDemo';
 import PsButton from './components/PsButton';
+import { Toaster } from 'sonner';
 
 interface HomeProps {
   params: {
@@ -22,6 +23,7 @@ export default async function Home({ params: { lang } }: HomeProps) {
       <PsButton title="presign"></PsButton>
       <CardWithForm />
       <CardDemo />
+      <Toaster />
     </main>
   );
 }
