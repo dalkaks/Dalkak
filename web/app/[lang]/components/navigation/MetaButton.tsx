@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useSDK } from '@metamask/sdk-react';
 import React, { useEffect, useState } from 'react';
 import detectEthereumProvider from '@metamask/detect-provider';
+import StatusDot from './StatusDot';
 
 type MetaButtonProps = {
   setAccount: React.Dispatch<
@@ -21,7 +22,7 @@ const MetaButton = ({ setAccount }: MetaButtonProps) => {
   useEffect(() => {
     const getProvider = async () => {
       const provider = await detectEthereumProvider();
-      
+
       if (provider) {
         setHasProvider(true);
       }
@@ -31,12 +32,12 @@ const MetaButton = ({ setAccount }: MetaButtonProps) => {
 
   const connect = async () => {
     try {
-      if(!hasProvider) throw new Error('No provider found');
-      
+      if (!hasProvider) throw new Error('No provider found');
+
       const signature = (await sdk?.connectAndSign({
         msg: '안전하게 지갑 연결'
       })) as string;
-      
+
       const walletAddress = window.ethereum?.selectedAddress as string;
 
       setAccount({ walletAddress, signature });
@@ -59,10 +60,11 @@ const MetaButton = ({ setAccount }: MetaButtonProps) => {
     } else {
       await connect();
     }
-  }
+  };
   return (
     <Button disabled={!hasProvider} onClick={handleConnection}>
-      {connected ? 'Disconnect' : 'Connect'}
+      <StatusDot connected={connected} />
+      <span>{connected ? 'Disconnect' : 'Connect'}</span>
     </Button>
   );
 };
