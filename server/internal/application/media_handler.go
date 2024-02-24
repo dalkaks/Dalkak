@@ -1,6 +1,7 @@
 package application
 
 import (
+	mediadomain "dalkak/internal/domain/media"
 	"dalkak/internal/infrastructure/eventbus"
 	mediadto "dalkak/pkg/dto/media"
 	responseutil "dalkak/pkg/utils/response"
@@ -59,14 +60,14 @@ func (app *ApplicationImpl) handleGetMediaTemp(event eventbus.Event) {
 
 	// 미디어 조회
 	dto := mediadto.NewGetMediaTempDto(userInfo, payload.MediaType, payload.Prefix)
-	media, err := app.MediaDomain.GetMediaTemp(dto)
+	media, err := app.MediaDomain.GetMediaTemp(dto, mediadomain.GetMediaTempOptions{CheckPublic: true})
 	if media == nil || err != nil {
 		app.SendResponse(event.ResponseChan, media, err)
 		return
 	}
 
 	// 리턴
-	result := mediadto.NewGetMediaTempResponse(media.MediaEntity.Id, media.ContentType.String(), media.MediaTempUrl.AccessUrl)
+	result := mediadto.NewGetMediaTempResponse(media.MediaEntity.Id, media.MediaResource.ContentType.String(), media.MediaTempUrl.AccessUrl)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
 }
 

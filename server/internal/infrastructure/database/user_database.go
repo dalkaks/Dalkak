@@ -87,7 +87,10 @@ func (repo *Database) FindUserByWalletAddress(walletAddress string) (*dao.UserDa
 }
 
 func (repo *Database) CreateMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error {
-	sk := GenerateUserBoardImageDataSk(mediaTemp.Prefix.String(), mediaTemp.ContentType.ConvertToMediaType())
+	prefix := mediaTemp.MediaResource.Prefix.String()
+	mediaType := mediaTemp.MediaResource.ContentType.ConvertToMediaType()
+
+	sk := GenerateUserBoardImageDataSk(prefix, mediaType)
 
 	newUploadMedia := &UserMediaData{
 		Pk:         GenerateUserDataPk(userId),
@@ -96,9 +99,9 @@ func (repo *Database) CreateMediaTemp(userId string, mediaTemp *mediaaggregate.M
 		Timestamp:  mediaTemp.MediaEntity.Timestamp,
 
 		Id:          mediaTemp.MediaEntity.Id,
-		Prefix:      mediaTemp.Prefix.String(),
-		Extension:   mediaTemp.ContentType.ConvertToExtension(),
-		ContentType: mediaTemp.ContentType.String(),
+		Prefix:      prefix,
+		Extension:   mediaTemp.MediaResource.ContentType.ConvertToExtension(),
+		ContentType: mediaTemp.MediaResource.ContentType.String(),
 		Url:         mediaTemp.MediaTempUrl.AccessUrl,
 		IsConfirm:   mediaTemp.MediaEntity.IsConfirm,
 	}
@@ -143,8 +146,11 @@ func (repo *Database) FindMediaTemp(userId, mediaType, prefix string) (*dao.Medi
 
 // todo now only isconfirm update
 func (repo *Database) UpdateMediaTempConfirm(userId string, mediaTempUpdate *mediaaggregate.MediaTempUpdate) error {
+	prefix := mediaTempUpdate.MediaResource.Prefix.String()
+	mediaType := mediaTempUpdate.MediaResource.ContentType.ConvertToMediaType()
+
 	pk := GenerateUserDataPk(userId)
-	sk := GenerateUserBoardImageDataSk(mediaTempUpdate.Prefix.String(), mediaTempUpdate.ContentType.ConvertToMediaType())
+	sk := GenerateUserBoardImageDataSk(prefix, mediaType)
 
 	key := map[string]types.AttributeValue{
 		"Pk": &types.AttributeValueMemberS{Value: pk},
@@ -161,8 +167,11 @@ func (repo *Database) UpdateMediaTempConfirm(userId string, mediaTempUpdate *med
 }
 
 func (repo *Database) DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error {
+	prefix := mediaTemp.MediaResource.Prefix.String()
+	mediaType := mediaTemp.MediaResource.ContentType.ConvertToMediaType()
+
 	pk := GenerateUserDataPk(userId)
-	sk := GenerateUserBoardImageDataSk(mediaTemp.Prefix.String(), mediaTemp.ContentType.ConvertToMediaType())
+	sk := GenerateUserBoardImageDataSk(prefix, mediaType)
 
 	key := map[string]types.AttributeValue{
 		"Pk": &types.AttributeValueMemberS{Value: pk},

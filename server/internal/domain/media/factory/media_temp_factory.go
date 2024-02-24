@@ -37,25 +37,22 @@ func NewMediaTempDaoFactory(dao *dao.MediaTempDao, staticLink string) *MediaTemp
 }
 
 func (factory *CreateMediaTempDtoFactory) CreateMediaTempAggregate() (*mediaaggregate.MediaTempAggregate, error) {
-	prefix, err := mediavalueobject.NewPrefix(factory.dto.Prefix)
-	if err != nil {
-		return nil, err
-	}
-
-	contentType, err := mediavalueobject.NewContentType(factory.dto.MediaType, factory.dto.Ext)
-	if err != nil {
-		return nil, err
-	}
-
 	media := mediaentity.NewMediaEntity()
 
-	mediaKey := mediavalueobject.GenerateMediaTempKey(factory.dto.UserInfo.GetUserId(), prefix, contentType)
+	resource, err := mediavalueobject.NewMediaResource(factory.dto.Prefix, mediavalueobject.MergeContentType(factory.dto.MediaType, factory.dto.Ext))
+	if err != nil {
+		return nil, err
+	}
+
+	mediaKey, err := mediavalueobject.GenerateMediaTempKey(factory.dto.UserInfo.GetUserId(), resource)
+	if err != nil {
+		return nil, err
+	}
 	mediaTempUrl := mediavalueobject.NewMediaTempUrl(factory.staticLink, mediaKey)
 
 	mediaTempAggregate := mediaaggregate.NewMediaTempAggregate(
 		mediaaggregate.WithMediaEntity(media),
-		mediaaggregate.WithPrefix(prefix),
-		mediaaggregate.WithContentType(contentType),
+		mediaaggregate.WithMediaResource(resource),
 		mediaaggregate.WithMediaTempUrl(mediaTempUrl),
 	)
 	return mediaTempAggregate, nil
@@ -64,22 +61,15 @@ func (factory *CreateMediaTempDtoFactory) CreateMediaTempAggregate() (*mediaaggr
 func (factory *MediaTempDaoFactory) CreateMediaTempAggregate() (*mediaaggregate.MediaTempAggregate, error) {
 	media := mediaentity.ConvertMediaEntity(factory.dao.Id, factory.dao.IsConfirm, factory.dao.Timestamp)
 
-	prefix, err := mediavalueobject.NewPrefix(factory.dao.Prefix)
+	resource, err := mediavalueobject.NewMediaResource(factory.dao.Prefix, factory.dao.ContentType)
 	if err != nil {
 		return nil, err
 	}
-
-	contentType, err := mediavalueobject.NewContentType(mediavalueobject.SplitContentType(factory.dao.ContentType))
-	if err != nil {
-		return nil, err
-	}
-
 	mediaTempUrl := mediavalueobject.NewMediaTempUrlWithOnlyAccessUrl(factory.dao.Url)
 
 	mediaTempAggregate := mediaaggregate.NewMediaTempAggregate(
 		mediaaggregate.WithMediaEntity(media),
-		mediaaggregate.WithPrefix(prefix),
-		mediaaggregate.WithContentType(contentType),
+		mediaaggregate.WithMediaResource(resource),
 		mediaaggregate.WithMediaTempUrl(mediaTempUrl),
 	)
 
