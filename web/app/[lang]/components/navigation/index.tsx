@@ -12,6 +12,7 @@ import {
   NavigationMenuList
 } from '@radix-ui/react-navigation-menu';
 import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
+import LogoTab from './LogoTab';
 
 const Navigation = () => {
   const [account, setAccount] = useState<{
@@ -42,15 +43,7 @@ const Navigation = () => {
           }
         }}
       >
-        <SideTab className="gap-5">
-          <img
-            className="h-[80%]"
-            src="/images/dalkak_logo.png"
-            alt="dalkak_logo"
-          />
-          <span className="text-2xl font-bold">Dalkak</span>
-        </SideTab>
-
+        <LogoTab />
         <NavigationMenu className="flex w-8/12 items-center justify-center gap-10">
           <NavigationMenuList>
             <NavigationMenuItem>
