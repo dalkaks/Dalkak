@@ -3,7 +3,6 @@ package web
 import (
 	"dalkak/internal/core"
 	boarddto "dalkak/pkg/dto/board"
-	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -22,7 +21,6 @@ func SetupBoardRoute(group fiber.Router, eventManager core.EventManager) {
 			return err
 		}
 
-		// return PublishAndWaitResponse(eventManager, "post.board", user, req)
-		return responseutil.NewAppData(user)
+		return PublishAndWaitResponse(eventManager, "post.board", user, req)
 	}))
 }
