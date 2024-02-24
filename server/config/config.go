@@ -16,6 +16,11 @@ type AppConfig struct {
 	KmsKeyId   string `json:"kmsKeyId"`
 }
 
+type LambdaConfig struct {
+	DevDomain  string `json:"devDomain"`
+	ProdDomain string `json:"prodDomain"`
+}
+
 func LoadConfig[T any](ctx context.Context, mode string, parameterName string) (*T, error) {
 	var cfg aws.Config
 	var err error

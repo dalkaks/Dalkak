@@ -16,11 +16,21 @@ build-prod:
 run:
 	@echo "Running $(PROJECT_NAME)..."
 	@go run -ldflags "-X main.Mode=$(MODE)" ./cmd/api/.
+	
+run-infra:
+	@echo "Running infra dynamodb..."
+	@./scripts/run-dynamodb-local.sh
+
+stop-infra:
+	@echo "Stopping infra dynamodb..."
+	@./scripts/stop-dynamodb-local.sh
 
 run-local: MODE = LOCAL
 run-local:
 	@echo "Running $(PROJECT_NAME)..."
 	@go run -ldflags "-X main.Mode=$(MODE)" ./cmd/api/.
+
+	
 
 test:
 	@echo "Testing $(PROJECT_NAME)..."
