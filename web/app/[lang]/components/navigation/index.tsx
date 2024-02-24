@@ -4,7 +4,14 @@ import { MetaMaskProvider } from '@metamask/sdk-react';
 import React, { useEffect, useState } from 'react';
 import MetaButton from './MetaButton';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import SideTab from './containers/SideTab';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList
+} from '@radix-ui/react-navigation-menu';
+import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 
 const Navigation = () => {
   const [account, setAccount] = useState<{
@@ -25,7 +32,7 @@ const Navigation = () => {
   }, [account]);
 
   return (
-    <div className="container flex-row">
+    <div className="container sticky top-0 flex h-20 bg-white shadow-md">
       <MetaMaskProvider
         debug={true}
         sdkOptions={{
@@ -35,17 +42,35 @@ const Navigation = () => {
           }
         }}
       >
-        <div className="container fixed flex justify-center ">
-          <nav>
-            <Link href="/">
-              <Button>Home</Button>
-            </Link>
-            <Link href="/mint">
-              <Button>Mint</Button>
-            </Link>
-            <MetaButton setAccount={setAccount} />
-          </nav>
-        </div>
+        <SideTab className="gap-5">
+          <img
+            className="h-[80%]"
+            src="/images/dalkak_logo.png"
+            alt="dalkak_logo"
+          />
+          <span className="text-2xl font-bold">Dalkak</span>
+        </SideTab>
+
+        <NavigationMenu className="flex w-8/12 items-center justify-center gap-10">
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <Link href="/">
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  Home
+                </NavigationMenuLink>
+              </Link>
+              <Link href="/mint">
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  Mint
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
+
+        <SideTab>
+          <MetaButton setAccount={setAccount} />
+        </SideTab>
       </MetaMaskProvider>
     </div>
   );
