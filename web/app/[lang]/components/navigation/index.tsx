@@ -13,6 +13,7 @@ import {
 } from '@radix-ui/react-navigation-menu';
 import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 import LogoTab from './LogoTab';
+import WalletInfo from './wallet/WalletInfo';
 
 const Navigation = () => {
   const [account, setAccount] = useState<{
@@ -44,15 +45,15 @@ const Navigation = () => {
         }}
       >
         <LogoTab />
-        <NavigationMenu className="flex w-8/12 items-center justify-center gap-10">
+        <NavigationMenu className="flex w-7/12 items-center justify-center gap-10">
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/">
+              <Link href="/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Home
                 </NavigationMenuLink>
               </Link>
-              <Link href="/mint">
+              <Link href="/mint" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Mint
                 </NavigationMenuLink>
@@ -61,7 +62,8 @@ const Navigation = () => {
           </NavigationMenuList>
         </NavigationMenu>
 
-        <SideTab>
+        <SideTab className="w-3/12 gap-5">
+          <WalletInfo />
           <MetaButton setAccount={setAccount} />
         </SideTab>
       </MetaMaskProvider>
