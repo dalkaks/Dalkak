@@ -53,4 +53,19 @@ func SetupMediaRoute(group fiber.Router, eventManager core.EventManager) {
 
 		return PublishAndWaitResponse(eventManager, "post.media.confirm", user, req)
 	}))
+
+	group.Delete("/", WarpHandler(func(c fiber.Ctx) interface{} {
+		user, err := GetUserInfoFromContext(c, true)
+		if err != nil {
+			return err
+		}
+
+		req := new(mediadto.DeleteMediaTempRequest)
+		err = BindAndValidate(c, req)
+		if err != nil {
+			return err
+		}
+
+		return PublishAndWaitResponse(eventManager, "delete.media", user, req)
+	}))
 }

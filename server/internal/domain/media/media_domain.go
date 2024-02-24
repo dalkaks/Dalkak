@@ -12,7 +12,7 @@ import (
 
 type MediaDomainService interface {
 	CreateMediaTemp(dto *mediadto.CreateMediaTempDto) (*mediaaggregate.MediaTempAggregate, error)
-	GetMediaTemp(dto *mediadto.GetMediaTempDto) (*mediaaggregate.MediaTempAggregate, error)
+	GetMediaTemp(dto *mediadto.GetMediaTempDto, options ...GetMediaTempOptions) (*mediaaggregate.MediaTempAggregate, error)
 	ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error)
 }
 
@@ -39,7 +39,7 @@ func (service *MediaDomainServiceImpl) CreateMediaTemp(dto *mediadto.CreateMedia
 		return nil, err
 	}
 
-	uploadUrl, err := service.Storage.CreatePresignedURL(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink), mediaTemp.ContentType.String())
+	uploadUrl, err := service.Storage.CreatePresignedURL(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink), mediaTemp.MediaResource.ContentType.String())
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,11 @@ func (service *MediaDomainServiceImpl) CreateMediaTemp(dto *mediadto.CreateMedia
 	return mediaTemp, nil
 }
 
-func (service *MediaDomainServiceImpl) GetMediaTemp(dto *mediadto.GetMediaTempDto) (*mediaaggregate.MediaTempAggregate, error) {
+type GetMediaTempOptions struct {
+	CheckPublic bool
+}
+
+func (service *MediaDomainServiceImpl) GetMediaTemp(dto *mediadto.GetMediaTempDto, options ...GetMediaTempOptions) (*mediaaggregate.MediaTempAggregate, error) {
 	prefix, err := mediavalueobject.NewPrefix(dto.Prefix)
 	if err != nil {
 		return nil, err
@@ -65,7 +69,11 @@ func (service *MediaDomainServiceImpl) GetMediaTemp(dto *mediadto.GetMediaTempDt
 		return nil, err
 	}
 
-	return mediaTemp.CheckPublic(), nil
+	if len(options) > 0 && options[0].CheckPublic {
+		return mediaTemp.CheckPublic(), nil
+	}
+
+	return mediaTemp, nil
 }
 
 func (service *MediaDomainServiceImpl) ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error) {

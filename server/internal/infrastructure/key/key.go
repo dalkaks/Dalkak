@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"crypto/x509"
+	keytype "dalkak/internal/infrastructure/key/type"
 	responseutil "dalkak/pkg/utils/response"
 	timeutil "dalkak/pkg/utils/time"
 	"encoding/asn1"
@@ -96,7 +97,7 @@ func (kmsSet *KmsSet) CreateSianature(sign string) (string, error) {
 	return signature, nil
 }
 
-func (kmsSet *KmsSet) ParseTokenWithPublicKey(tokenString string) (string, error) {
+func (kmsSet *KmsSet) ParseTokenWithPublicKey(tokenString string, tokenType keytype.TokenType) (string, error) {
 	err := kmsSet.verifyTokenSignature(tokenString)
 	if err != nil {
 		return "", err
@@ -110,6 +111,17 @@ func (kmsSet *KmsSet) ParseTokenWithPublicKey(tokenString string) (string, error
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return "", responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
+	}
+
+	// todo tid check
+	if tokenType == keytype.RefreshToken {
+		if _, ok := claims["tid"].(string); !ok {
+			return "", responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
+		}
+	} else {
+		if _, ok := claims["iat"].(float64); !ok {
+			return "", responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
+		}
 	}
 
 	if exp, ok := claims["exp"].(float64); ok {

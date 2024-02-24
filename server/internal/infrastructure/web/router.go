@@ -3,6 +3,7 @@ package web
 import (
 	"dalkak/internal/core"
 	"dalkak/internal/infrastructure/eventbus"
+	keytype "dalkak/internal/infrastructure/key/type"
 	appdto "dalkak/pkg/dto/app"
 	responseutil "dalkak/pkg/utils/response"
 	"strings"
@@ -153,7 +154,7 @@ func getAuthUserMiddleware(c fiber.Ctx, keyManager core.KeyManager) error {
 	}
 
 	token := headerParts[1]
-	sub, err := keyManager.ParseTokenWithPublicKey(token)
+	sub, err := keyManager.ParseTokenWithPublicKey(token, keytype.AccessToken)
 	if err != nil {
 		responseutil.WriteToResponse(c, err)
 		return err

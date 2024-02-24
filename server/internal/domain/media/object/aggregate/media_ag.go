@@ -7,11 +7,10 @@ import (
 )
 
 type MediaTempAggregate struct {
-	MediaEntity  *mediaentity.MediaEntity
-	Prefix       mediavalueobject.Prefix
-	ContentType  mediavalueobject.ContentType
-	MediaTempUrl *mediavalueobject.MediaTempUrl
-	Length       *mediavalueobject.Length
+	MediaEntity   *mediaentity.MediaEntity
+	MediaResource *mediavalueobject.MediaResource
+	MediaTempUrl  *mediavalueobject.MediaTempUrl
+	Length        *mediavalueobject.Length
 }
 
 type MediaTempAggregateOption func(*MediaTempAggregate)
@@ -22,15 +21,9 @@ func WithMediaEntity(mediaEntity *mediaentity.MediaEntity) MediaTempAggregateOpt
 	}
 }
 
-func WithPrefix(prefix mediavalueobject.Prefix) MediaTempAggregateOption {
+func WithMediaResource(mediaResource *mediavalueobject.MediaResource) MediaTempAggregateOption {
 	return func(aggregate *MediaTempAggregate) {
-		aggregate.Prefix = prefix
-	}
-}
-
-func WithContentType(contentType mediavalueobject.ContentType) MediaTempAggregateOption {
-	return func(aggregate *MediaTempAggregate) {
-		aggregate.ContentType = contentType
+		aggregate.MediaResource = mediaResource
 	}
 }
 
@@ -74,7 +67,7 @@ func (m *MediaTempAggregate) SetUploadUrl(uploadUrl string) {
 }
 
 func (m *MediaTempAggregate) ConfirmMediaTemp(Id string, contentTypeStr string, lengthInt int64) (*MediaTempUpdate, error) {
-	contentType, err := mediavalueobject.NewContentType(mediavalueobject.SplitContentType(contentTypeStr))
+	_, err := mediavalueobject.NewContentType(contentTypeStr)
 	if err != nil {
 		return nil, err
 	}
@@ -94,15 +87,13 @@ func (m *MediaTempAggregate) ConfirmMediaTemp(Id string, contentTypeStr string, 
 			IsConfirm: true,
 			Timestamp: m.MediaEntity.Timestamp,
 		},
-		Prefix:       m.Prefix,
-		ContentType:  contentType,
-		MediaTempUrl: m.MediaTempUrl,
+		MediaResource: *m.MediaResource,
+		MediaTempUrl:  m.MediaTempUrl,
 	}, nil
 }
 
 type MediaTempUpdate struct {
-	MediaEntity  *mediaentity.MediaEntity
-	Prefix       mediavalueobject.Prefix
-	ContentType  mediavalueobject.ContentType
-	MediaTempUrl *mediavalueobject.MediaTempUrl
+	MediaEntity   *mediaentity.MediaEntity
+	MediaResource mediavalueobject.MediaResource
+	MediaTempUrl  *mediavalueobject.MediaTempUrl
 }

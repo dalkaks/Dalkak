@@ -5,6 +5,7 @@ import (
 	userentity "dalkak/internal/domain/user/object/entity"
 	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
+	keytype "dalkak/internal/infrastructure/key/type"
 	storagedto "dalkak/internal/infrastructure/storage/type"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -27,18 +28,18 @@ type DatabaseManager interface {
 	CreateMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
 	FindMediaTemp(userId, mediaType, prefix string) (*dao.MediaTempDao, error)
 	UpdateMediaTempConfirm(userId string, mediaTempUpdate *mediaaggregate.MediaTempUpdate) error
-	// DeleteUserUploadMedia(userId string, dto *dtos.MediaMeta) error
+	DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
 }
 
 type StorageManager interface {
-	// DeleteObject(key string) error
 	CreatePresignedURL(mediaKey string, contentType string) (string, error)
 	GetHeadObject(key string) (*storagedto.MediaHeadDto, error)
+	DeleteObject(key string) error
 }
 
 type KeyManager interface {
 	CreateSianature(sign string) (string, error)
-	ParseTokenWithPublicKey(token string) (string, error)
+	ParseTokenWithPublicKey(token string, tokenType keytype.TokenType) (string, error)
 	GetDomain() string
 	GetMode() string
 }

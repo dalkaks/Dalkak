@@ -1,6 +1,9 @@
 package mediavalueobject
 
-import parseutil "dalkak/pkg/utils/parse"
+import (
+	parseutil "dalkak/pkg/utils/parse"
+	responseutil "dalkak/pkg/utils/response"
+)
 
 type MediaTempUrl struct {
 	AccessUrl string  `json:"accessUrl"`
@@ -12,7 +15,7 @@ func NewMediaTempUrl(staticLink, key string, uploadUrl ...string) *MediaTempUrl 
 	if len(uploadUrl) > 0 {
 		uploadUrlPtr = &uploadUrl[0]
 	}
-	
+
 	return &MediaTempUrl{
 		AccessUrl: parseutil.ConvertKeyToStaticLink(staticLink, key),
 		UploadUrl: uploadUrlPtr,
@@ -25,10 +28,14 @@ func NewMediaTempUrlWithOnlyAccessUrl(accessUrl string) *MediaTempUrl {
 	}
 }
 
-func GenerateMediaTempKey(userId string, prefix Prefix, contentType ContentType) string {
-	mediaTypeStr := contentType.ConvertToMediaType()
-	extensionStr := contentType.ConvertToExtension()
-	return "temp/" + userId + "/" + prefix.String() + "/" + mediaTypeStr + "/" + mediaTypeStr + "." + extensionStr
+func GenerateMediaTempKey(userId string, resource *MediaResource) (string, error) {
+	if resource == nil {
+		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+	}
+
+	mediaTypeStr := resource.ContentType.ConvertToMediaType()
+	extensionStr := resource.ContentType.ConvertToExtension()
+	return "temp/" + userId + "/" + resource.Prefix.String() + "/" + mediaTypeStr + "/" + mediaTypeStr + "." + extensionStr, nil
 }
 
 func (mu *MediaTempUrl) GetUrlKey(staticLink string) string {
