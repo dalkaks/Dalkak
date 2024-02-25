@@ -24,9 +24,15 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 	// 트랜잭션 시작
 
-	// 보드 생성	// 보드 조회 (중복 확인 및 결제 상태에 있는 보드 있는지 확인)
+	// 보드 생성
+	dto := boarddto.NewCreateBoardDto(userInfo, payload.Title, payload.Content, payload.ImageId, payload.VideoId, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
+	newBoard, err := app.BoardDomain.CreateBoard(dto)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
 
-	// 오더 생성 
+	// 오더 생성
 
 	// 미디어 변경
 
@@ -34,7 +40,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 	// 트랜잭션	// 보드 저장 // 오더 저장	// 미디어 변경
 
-	// 리턴 // redirect 고려
-	result := payload
+	// 리턴 // todo update
+	result := boarddto.NewCreateBoardResponse(payload.Title, newBoard, "", 0, 0, 0)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }

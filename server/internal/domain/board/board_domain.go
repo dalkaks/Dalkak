@@ -27,5 +27,6 @@ func NewBoardDomainService(appConfig *config.AppConfig, database BoardRepository
 }
 
 func (service *BoardDomainServiceImpl) CreateBoard(dto *boarddto.CreateBoardDto) (string, error) {
+	// 보드 조회 (중복 확인 및 결제 상태에 있는 보드 있는지 확인)
 	return "", nil
 }

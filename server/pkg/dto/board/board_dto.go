@@ -15,3 +15,16 @@ type CreateBoardDto struct {
 	BackgroundColor string
 	Attributes      blockchaintype.NftAttribute
 }
+
+func NewCreateBoardDto(userInfo *appdto.UserInfo, title, content, imageId, videoId, externalLink, backgroundColor string, attributes blockchaintype.NftAttribute) *CreateBoardDto {
+	return &CreateBoardDto{
+		UserInfo:        userInfo,
+		Title:           title,
+		Content:         content,
+		ImageId:         imageId,
+		VideoId:         videoId,
+		ExternalLink:    externalLink,
+		BackgroundColor: backgroundColor,
+		Attributes:      attributes,
+	}
+}
