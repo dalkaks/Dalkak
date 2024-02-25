@@ -1,13 +1,12 @@
-package blockchaintype
+package boardvalueobject
 
+// image, video는 media로 분리
 type NftMetadata struct {
 	Name            string         `json:"name" validate:"required"`
 	Description     string         `json:"description" validate:"required"`
-	Image           string         `json:"image" validate:"required"`
 	ExternalUrl     string         `json:"externalUrl"`
 	Attributes      []NftAttribute `json:"attributes"`
 	BackgroundColor string         `json:"backgroundColor"`
-	AnimationUrl    string         `json:"animationUrl"`
 }
 
 /**
@@ -34,16 +33,13 @@ type NftAttribute struct {
 	DisplayType string      `json:"displayType,omitempty"`
 }
 
-
 // todo param validation
-func NewNftMetadata(name, description, image, externalUrl, backgroundColor, animationUrl string, attributes []NftAttribute) *NftMetadata {
+func NewNftMetadata(name, description, externalUrl, backgroundColor string, attributes []NftAttribute) *NftMetadata {
 	return &NftMetadata{
 		Name:            name,
 		Description:     description,
-		Image:           image,
 		ExternalUrl:     externalUrl,
 		Attributes:      attributes,
 		BackgroundColor: backgroundColor,
-		AnimationUrl:    animationUrl,
 	}
 }

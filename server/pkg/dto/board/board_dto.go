@@ -1,28 +1,24 @@
 package boarddto
 
 import (
-	blockchaintype "dalkak/internal/infrastructure/blockchain/type"
+	boardvalueobject "dalkak/internal/domain/board/object/valueobject"
 	appdto "dalkak/pkg/dto/app"
 )
 
 type CreateBoardDto struct {
 	UserInfo        *appdto.UserInfo
-	Title           string
-	Content         string
-	ImageId         string
-	VideoId         string
+	Name            string
+	Description     string
 	ExternalLink    string
 	BackgroundColor string
-	Attributes      blockchaintype.NftAttribute
+	Attributes      []boardvalueobject.NftAttribute
 }
 
-func NewCreateBoardDto(userInfo *appdto.UserInfo, title, content, imageId, videoId, externalLink, backgroundColor string, attributes blockchaintype.NftAttribute) *CreateBoardDto {
+func NewCreateBoardDto(userInfo *appdto.UserInfo, name, description, externalLink, backgroundColor string, attributes []boardvalueobject.NftAttribute) *CreateBoardDto {
 	return &CreateBoardDto{
 		UserInfo:        userInfo,
-		Title:           title,
-		Content:         content,
-		ImageId:         imageId,
-		VideoId:         videoId,
+		Name:            name,
+		Description:     description,
 		ExternalLink:    externalLink,
 		BackgroundColor: backgroundColor,
 		Attributes:      attributes,

@@ -24,8 +24,10 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 	// 트랜잭션 시작
 
+	// 미디어 변경
+
 	// 보드 생성
-	dto := boarddto.NewCreateBoardDto(userInfo, payload.Title, payload.Content, payload.ImageId, payload.VideoId, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
+	dto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
 	newBoard, err := app.BoardDomain.CreateBoard(dto)
 	if err != nil {
 		app.SendResponse(event.ResponseChan, nil, err)
@@ -34,13 +36,11 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 	// 오더 생성
 
-	// 미디어 변경
-
 	// 스토리지 이동
 
-	// 트랜잭션	// 보드 저장 // 오더 저장	// 미디어 변경
+	// 트랜잭션 // 보드 저장 // 오더 저장	// 미디어 변경
 
 	// 리턴 // todo update
-	result := boarddto.NewCreateBoardResponse(payload.Title, newBoard, "", 0, 0, 0)
+	result := boarddto.NewCreateBoardResponse("", newBoard.BoardEntity.Status, "", 0, 0, 0)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }
