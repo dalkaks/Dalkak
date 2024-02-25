@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	responseutil "dalkak/pkg/utils/response"
+	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -81,11 +82,23 @@ func (db *Database) PutDynamoDBItem(data interface{}) error {
 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
+	createExpr, err := GenerateCreateExpression()
+	if err != nil {
+		return err
+	}
+
 	_, err = db.client.PutItem(context.Background(), &dynamodb.PutItemInput{
-		TableName: aws.String(db.table),
-		Item:      av,
+		TableName:                 aws.String(db.table),
+		Item:                      av,
+		ExpressionAttributeNames:  createExpr.Names(),
+		ExpressionAttributeValues: createExpr.Values(),
+		ConditionExpression:       createExpr.Condition(),
 	})
 	if err != nil {
+		var cfe *types.ConditionalCheckFailedException
+		if errors.As(err, &cfe) {
+			return responseutil.NewAppError(responseutil.ErrCodeConflict, responseutil.ErrMsgDataConflict, err)
+		}
 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
@@ -99,6 +112,7 @@ func (db *Database) UpdateDynamoDBItem(key map[string]types.AttributeValue, expr
 		UpdateExpression:          expr.Update(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
+		ConditionExpression:       expr.Condition(),
 		ReturnValues:              types.ReturnValueNone,
 	}
 
@@ -137,8 +151,21 @@ func GenerateQueryExpression(keyCond expression.KeyConditionBuilder, filt *expre
 	return expr, nil
 }
 
+func GenerateCreateExpression() (expression.Expression, error) {
+	condition := expression.AttributeNotExists(expression.Name("Pk")).And(expression.AttributeNotExists(expression.Name("Sk")))
+	builder := expression.NewBuilder().WithCondition(condition)
+
+	expr, err := builder.Build()
+	if err != nil {
+		return expression.Expression{}, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	return expr, nil
+}
+
 func GenerateUpdateExpression(update expression.UpdateBuilder) (expression.Expression, error) {
-	builder := expression.NewBuilder().WithUpdate(update)
+	condition := expression.AttributeExists(expression.Name("Pk")).And(expression.AttributeExists(expression.Name("Sk")))
+	builder := expression.NewBuilder().WithUpdate(update).WithCondition(condition)
 
 	expr, err := builder.Build()
 	if err != nil {
