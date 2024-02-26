@@ -9,7 +9,7 @@ import (
 type MediaTempAggregate struct {
 	MediaEntity   *mediaentity.MediaEntity
 	MediaResource *mediavalueobject.MediaResource
-	MediaTempUrl  *mediavalueobject.MediaTempUrl
+	MediaUrl      *mediavalueobject.MediaUrl
 	Length        *mediavalueobject.Length
 }
 
@@ -27,9 +27,9 @@ func WithMediaResource(mediaResource *mediavalueobject.MediaResource) MediaTempA
 	}
 }
 
-func WithMediaTempUrl(mediaTempUrl *mediavalueobject.MediaTempUrl) MediaTempAggregateOption {
+func WithMediaUrl(mediaUrl *mediavalueobject.MediaUrl) MediaTempAggregateOption {
 	return func(aggregate *MediaTempAggregate) {
-		aggregate.MediaTempUrl = mediaTempUrl
+		aggregate.MediaUrl = mediaUrl
 	}
 }
 
@@ -59,10 +59,10 @@ func (m *MediaTempAggregate) CheckConfirm() bool {
 }
 
 func (m *MediaTempAggregate) SetUploadUrl(uploadUrl string) {
-	if m.MediaTempUrl != nil {
-		m.MediaTempUrl.UploadUrl = &uploadUrl
+	if m.MediaUrl != nil {
+		m.MediaUrl.UploadUrl = &uploadUrl
 	} else {
-		m.MediaTempUrl = &mediavalueobject.MediaTempUrl{UploadUrl: &uploadUrl}
+		m.MediaUrl = &mediavalueobject.MediaUrl{UploadUrl: &uploadUrl}
 	}
 }
 
@@ -88,12 +88,12 @@ func (m *MediaTempAggregate) ConfirmMediaTemp(Id string, contentTypeStr string, 
 			Timestamp: m.MediaEntity.Timestamp,
 		},
 		MediaResource: *m.MediaResource,
-		MediaTempUrl:  m.MediaTempUrl,
+		MediaUrl:      m.MediaUrl,
 	}, nil
 }
 
 type MediaTempUpdate struct {
 	MediaEntity   *mediaentity.MediaEntity
 	MediaResource mediavalueobject.MediaResource
-	MediaTempUrl  *mediavalueobject.MediaTempUrl
+	MediaUrl      *mediavalueobject.MediaUrl
 }

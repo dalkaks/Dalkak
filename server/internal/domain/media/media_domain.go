@@ -14,6 +14,7 @@ type MediaDomainService interface {
 	CreateMediaTemp(dto *mediadto.CreateMediaTempDto) (*mediaaggregate.MediaTempAggregate, error)
 	GetMediaTemp(dto *mediadto.GetMediaTempDto, options ...GetMediaTempOptions) (*mediaaggregate.MediaTempAggregate, error)
 	ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error)
+	CreateMediaNft(dto *mediadto.CreateMediaNftDto) (*mediaaggregate.MediaNftAggregate, error)
 }
 
 type MediaDomainServiceImpl struct {
@@ -39,7 +40,7 @@ func (service *MediaDomainServiceImpl) CreateMediaTemp(dto *mediadto.CreateMedia
 		return nil, err
 	}
 
-	uploadUrl, err := service.Storage.CreatePresignedURL(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink), mediaTemp.MediaResource.ContentType.String())
+	uploadUrl, err := service.Storage.CreatePresignedURL(mediaTemp.MediaUrl.GetUrlKey(service.StaticLink), mediaTemp.MediaResource.ContentType.String())
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +90,7 @@ func (service *MediaDomainServiceImpl) ConfirmMediaTemp(dto *mediadto.ConfirmMed
 		return nil, responseutil.NewAppError(responseutil.ErrCodeConflict, responseutil.ErrMsgDataConflict)
 	}
 
-	mediaHead, err := service.Storage.GetHeadObject(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink))
+	mediaHead, err := service.Storage.GetHeadObject(mediaTemp.MediaUrl.GetUrlKey(service.StaticLink))
 	if err != nil {
 		return nil, err
 	}
@@ -102,4 +103,31 @@ func (service *MediaDomainServiceImpl) ConfirmMediaTemp(dto *mediadto.ConfirmMed
 		return nil, err
 	}
 	return mediaTempUpdate, nil
+}
+
+func (service *MediaDomainServiceImpl) CreateMediaNft(dto *mediadto.CreateMediaNftDto) (*mediaaggregate.MediaNftAggregate, error) {
+	mediaImage := &mediaaggregate.MediaTempAggregate{}
+	mediaVideo := &mediaaggregate.MediaTempAggregate{}
+	err := error(nil)
+
+	if dto.ImageId != nil {
+		mediaImage, err = service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, "image", dto.Prefix))
+		if err != nil {
+			return nil, err
+		}
+	}
+	if dto.VideoId != nil {
+		mediaVideo, err = service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, "video", dto.Prefix))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	factory := mediafactory.NewCreateMediaNftDtoFactory(dto, mediaImage, mediaVideo)
+	mediaNft, err := factory.CreateMediaNftAggregate()
+	if err != nil {
+		return nil, err
+	}
+
+	return mediaNft, nil
 }

@@ -5,25 +5,25 @@ import (
 	responseutil "dalkak/pkg/utils/response"
 )
 
-type MediaTempUrl struct {
+type MediaUrl struct {
 	AccessUrl string  `json:"accessUrl"`
 	UploadUrl *string `json:"uploadUrl,omitempty"`
 }
 
-func NewMediaTempUrl(staticLink, key string, uploadUrl ...string) *MediaTempUrl {
+func NewMediaUrl(staticLink, key string, uploadUrl ...string) *MediaUrl {
 	var uploadUrlPtr *string
 	if len(uploadUrl) > 0 {
 		uploadUrlPtr = &uploadUrl[0]
 	}
 
-	return &MediaTempUrl{
+	return &MediaUrl{
 		AccessUrl: parseutil.ConvertKeyToStaticLink(staticLink, key),
 		UploadUrl: uploadUrlPtr,
 	}
 }
 
-func NewMediaTempUrlWithOnlyAccessUrl(accessUrl string) *MediaTempUrl {
-	return &MediaTempUrl{
+func NewMediaUrlWithOnlyAccessUrl(accessUrl string) *MediaUrl {
+	return &MediaUrl{
 		AccessUrl: accessUrl,
 	}
 }
@@ -38,6 +38,6 @@ func GenerateMediaTempKey(userId string, resource *MediaResource) (string, error
 	return "temp/" + userId + "/" + resource.Prefix.String() + "/" + mediaTypeStr + "/" + mediaTypeStr + "." + extensionStr, nil
 }
 
-func (mu *MediaTempUrl) GetUrlKey(staticLink string) string {
+func (mu *MediaUrl) GetUrlKey(staticLink string) string {
 	return parseutil.ConvertStaticLinkToKey(staticLink, mu.AccessUrl)
 }

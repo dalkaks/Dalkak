@@ -11,12 +11,24 @@ type MediaEntity struct {
 	Timestamp   int64       `json:"timestamp"`
 }
 
-func NewMediaEntity() *MediaEntity {
-	return &MediaEntity{
-		Id:          generateutil.GenerateUUID(),
-		IsConfirm:   false,
-		Timestamp:   timeutil.GetTimestamp(),
-	}
+type MediaEntityOption func(*MediaEntity)
+
+func WithID(id string) MediaEntityOption {
+    return func(me *MediaEntity) {
+        me.Id = id
+    }
+}
+
+func NewMediaEntity(options ...MediaEntityOption) *MediaEntity {
+    me := &MediaEntity{
+        Id:          generateutil.GenerateUUID(),
+        IsConfirm:   false,
+        Timestamp:   timeutil.GetTimestamp(),
+    }
+    for _, option := range options {
+        option(me)
+    }
+    return me
 }
 
 func ConvertMediaEntity(Id string, IsConfirm bool, Timestamp int64) *MediaEntity {
