@@ -51,7 +51,7 @@ func NewMediaResource(prefixStr string, contentTypeStr string) (*MediaResource, 
 
 func NewPrefix(prefixStr string) (MediaPrefix, error) {
 	prefix := MediaPrefix(prefixStr)
-	if !prefix.IsAllowedPrefix() {
+	if !isAllowedPrefix(prefix) {
 		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
 	return prefix, nil
@@ -62,8 +62,9 @@ func NewContentType(contentTypeStr string) (MediaContentType, error) {
 	if mediaType == "" || extension == "" {
 		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
+	
 	contentType := MediaContentType(mediaType + "/" + extension)
-	if !contentType.IsAllowedContentType() {
+	if !isAllowedContentType(contentType) {
 		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
 	return contentType, nil
@@ -73,7 +74,7 @@ func (prefix MediaPrefix) String() string {
 	return string(prefix)
 }
 
-func (prefix MediaPrefix) IsAllowedPrefix() bool {
+func isAllowedPrefix(prefix MediaPrefix) bool {
 	_, ok := AllowedPrefixes[prefix.String()]
 	return ok
 }
@@ -82,7 +83,7 @@ func (contentType MediaContentType) String() string {
 	return string(contentType)
 }
 
-func (contentType MediaContentType) IsAllowedContentType() bool {
+func isAllowedContentType(contentType MediaContentType) bool {
 	mediaType, extension := SplitContentType(contentType.String())
 	if mediaType == "" || extension == "" {
 		return false
