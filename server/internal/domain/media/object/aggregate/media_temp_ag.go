@@ -7,25 +7,13 @@ import (
 )
 
 type MediaTempAggregate struct {
-	MediaEntity   *mediaentity.MediaEntity
-	MediaResource *mediavalueobject.MediaResource
+	MediaEntity   mediaentity.MediaEntity
+	MediaResource mediavalueobject.MediaResource
 	MediaUrl      *mediavalueobject.MediaUrl
 	Length        *mediavalueobject.Length
 }
 
 type MediaTempAggregateOption func(*MediaTempAggregate)
-
-func WithMediaEntity(mediaEntity *mediaentity.MediaEntity) MediaTempAggregateOption {
-	return func(aggregate *MediaTempAggregate) {
-		aggregate.MediaEntity = mediaEntity
-	}
-}
-
-func WithMediaResource(mediaResource *mediavalueobject.MediaResource) MediaTempAggregateOption {
-	return func(aggregate *MediaTempAggregate) {
-		aggregate.MediaResource = mediaResource
-	}
-}
 
 func WithMediaUrl(mediaUrl *mediavalueobject.MediaUrl) MediaTempAggregateOption {
 	return func(aggregate *MediaTempAggregate) {
@@ -39,12 +27,20 @@ func WithLength(length mediavalueobject.Length) MediaTempAggregateOption {
 	}
 }
 
-func NewMediaTempAggregate(options ...MediaTempAggregateOption) *MediaTempAggregate {
-	aggregate := &MediaTempAggregate{}
+func NewMediaTempAggregate(media *mediaentity.MediaEntity, resource *mediavalueobject.MediaResource, options ...MediaTempAggregateOption) (*MediaTempAggregate, error) {
+	if media == nil || resource == nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+	}
+
+	aggregate := &MediaTempAggregate{
+		MediaEntity:   *media,
+		MediaResource: *resource,
+	}
+	
 	for _, option := range options {
 		option(aggregate)
 	}
-	return aggregate
+	return aggregate, nil
 }
 
 func (m *MediaTempAggregate) CheckPublic() *MediaTempAggregate {
@@ -89,7 +85,7 @@ func (m *MediaTempAggregate) ConfirmMediaTemp(Id string, contentTypeStr string, 
 			IsConfirm: m.MediaEntity.IsConfirm,
 			Timestamp: m.MediaEntity.Timestamp,
 		},
-		MediaResource: *m.MediaResource,
+		MediaResource: m.MediaResource,
 		MediaUrl:      m.MediaUrl,
 	}, nil
 }

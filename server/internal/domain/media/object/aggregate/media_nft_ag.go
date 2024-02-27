@@ -3,10 +3,11 @@ package mediaaggregate
 import (
 	mediaentity "dalkak/internal/domain/media/object/entity"
 	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
+	responseutil "dalkak/pkg/utils/response"
 )
 
 type MediaNftAggregate struct {
-	MediaEntity        *mediaentity.MediaEntity
+	MediaEntity        mediaentity.MediaEntity
 	MediaImageResource *mediavalueobject.MediaResource
 	MediaImageUrl      *mediavalueobject.MediaUrl
 	MediaVideoResource *mediavalueobject.MediaResource
@@ -14,12 +15,6 @@ type MediaNftAggregate struct {
 }
 
 type MediaNftAggregateOption func(*MediaNftAggregate)
-
-func WithMediaNftEntity(mediaEntity *mediaentity.MediaEntity) MediaNftAggregateOption {
-	return func(aggregate *MediaNftAggregate) {
-		aggregate.MediaEntity = mediaEntity
-	}
-}
 
 func WithMediaNftImageResource(mediaResource *mediavalueobject.MediaResource) MediaNftAggregateOption {
 	return func(aggregate *MediaNftAggregate) {
@@ -45,10 +40,17 @@ func WithMediaNftVideoUrl(mediaUrl *mediavalueobject.MediaUrl) MediaNftAggregate
 	}
 }
 
-func NewMediaNftAggregate(options ...MediaNftAggregateOption) *MediaNftAggregate {
-	aggregate := &MediaNftAggregate{}
+func NewMediaNftAggregate(media *mediaentity.MediaEntity, options ...MediaNftAggregateOption) (*MediaNftAggregate, error) {
+	if media == nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+	}
+
+	aggregate := &MediaNftAggregate{
+		MediaEntity: *media,
+	}
+
 	for _, option := range options {
 		option(aggregate)
 	}
-	return aggregate
+	return aggregate, nil
 }

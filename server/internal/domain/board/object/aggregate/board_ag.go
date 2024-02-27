@@ -3,31 +3,28 @@ package boardaggregate
 import (
 	boardentity "dalkak/internal/domain/board/object/entity"
 	boardvalueobject "dalkak/internal/domain/board/object/valueobject"
+	responseutil "dalkak/pkg/utils/response"
 )
 
 type BoardAggregate struct {
-	BoardEntity   *boardentity.BoardEntity
-	BoardMetadata *boardvalueobject.NftMetadata
+	BoardEntity   boardentity.BoardEntity
+	BoardMetadata boardvalueobject.NftMetadata
 }
 
 type BoardAggregateOption func(*BoardAggregate)
 
-func WithBoardEntity(boardEntity *boardentity.BoardEntity) BoardAggregateOption {
-	return func(aggregate *BoardAggregate) {
-		aggregate.BoardEntity = boardEntity
+func NewBoardAggregate(board *boardentity.BoardEntity, metadata *boardvalueobject.NftMetadata, options ...BoardAggregateOption) (*BoardAggregate, error) {
+	if board == nil || metadata == nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
-}
 
-func WithBoardMetadata(boardMetadata *boardvalueobject.NftMetadata) BoardAggregateOption {
-	return func(aggregate *BoardAggregate) {
-		aggregate.BoardMetadata = boardMetadata
+	aggregate := &BoardAggregate{
+		BoardEntity:   *board,
+		BoardMetadata: *metadata,
 	}
-}
 
-func NewBoardAggregate(options ...BoardAggregateOption) *BoardAggregate {
-	aggregate := &BoardAggregate{}
 	for _, option := range options {
 		option(aggregate)
 	}
-	return aggregate
+	return aggregate, nil
 }

@@ -11,14 +11,14 @@ type MediaNftAggregateFactory interface {
 }
 
 type CreateMediaNftDtoFactory struct {
-	dto *mediadto.CreateMediaNftDto
+	dto        mediadto.CreateMediaNftDto
 	mediaImage *mediaaggregate.MediaTempAggregate
 	mediaVideo *mediaaggregate.MediaTempAggregate
 }
 
 func NewCreateMediaNftDtoFactory(dto *mediadto.CreateMediaNftDto, mediaImage *mediaaggregate.MediaTempAggregate, mediaVideo *mediaaggregate.MediaTempAggregate) MediaNftAggregateFactory {
 	return &CreateMediaNftDtoFactory{
-		dto: dto,
+		dto:        *dto,
 		mediaImage: mediaImage,
 		mediaVideo: mediaVideo,
 	}
@@ -26,13 +26,25 @@ func NewCreateMediaNftDtoFactory(dto *mediadto.CreateMediaNftDto, mediaImage *me
 
 func (factory *CreateMediaNftDtoFactory) CreateMediaNftAggregate() (*mediaaggregate.MediaNftAggregate, error) {
 	media := mediaentity.NewMediaEntity(mediaentity.WithID(factory.dto.PrefixId))
-	
-	mediaNftAggregate := mediaaggregate.NewMediaNftAggregate(
-		mediaaggregate.WithMediaNftEntity(media),
-		mediaaggregate.WithMediaNftImageResource(factory.mediaImage.MediaResource),
-		mediaaggregate.WithMediaNftImageUrl(factory.mediaImage.MediaUrl),
-		mediaaggregate.WithMediaNftVideoResource(factory.mediaVideo.MediaResource),
-		mediaaggregate.WithMediaNftVideoUrl(factory.mediaVideo.MediaUrl),
-	)
+
+	var options []mediaaggregate.MediaNftAggregateOption
+	if factory.mediaImage != nil {
+		options = append(options, mediaaggregate.WithMediaNftImageResource(&factory.mediaImage.MediaResource))
+		if factory.mediaImage.MediaUrl != nil {
+			options = append(options, mediaaggregate.WithMediaNftImageUrl(factory.mediaImage.MediaUrl))
+		}
+	}
+
+	if factory.mediaVideo != nil {
+		options = append(options, mediaaggregate.WithMediaNftVideoResource(&factory.mediaVideo.MediaResource))
+		if factory.mediaVideo.MediaUrl != nil {
+			options = append(options, mediaaggregate.WithMediaNftVideoUrl(factory.mediaVideo.MediaUrl))
+		}
+	}
+
+	mediaNftAggregate, err := mediaaggregate.NewMediaNftAggregate(media, options...)
+	if err != nil {
+		return nil, err
+	}
 	return mediaNftAggregate, nil
 }

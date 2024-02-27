@@ -27,9 +27,9 @@ func (factory *CreateBoardDtoFactory) CreateBoardAggregate() (*boardaggregate.Bo
 	board := boardentity.NewBoardEntity(factory.boardType, factory.dto.UserInfo.GetUserId())
 	boardMetadata := boardvalueobject.NewNftMetadata(factory.dto.Name, factory.dto.Description, factory.dto.ExternalLink, factory.dto.BackgroundColor, factory.dto.Attributes)
 
-	boardAggregate := boardaggregate.NewBoardAggregate(
-		boardaggregate.WithBoardEntity(board),
-		boardaggregate.WithBoardMetadata(boardMetadata),
-	)
+	boardAggregate, err := boardaggregate.NewBoardAggregate(board,	boardMetadata)
+	if err != nil {
+		return nil, err
+	}
 	return boardAggregate, nil
 }
