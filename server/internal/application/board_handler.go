@@ -1,6 +1,9 @@
 package application
 
 import (
+	boardaggregate "dalkak/internal/domain/board/object/aggregate"
+	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
+	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	ordervalueobject "dalkak/internal/domain/order/object/valueobject"
 	"dalkak/internal/infrastructure/eventbus"
 	boarddto "dalkak/pkg/dto/board"
@@ -25,38 +28,54 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		return
 	}
 
-	// 트랜잭션 시작
+	type TransactionResult struct {
+		newBoard *boardaggregate.BoardAggregate
+		mediaNft *mediaaggregate.MediaNftAggregate
+		newOrder *orderaggregate.OrderAggregate
+	}
 
-	// 보드 생성
-	boardCreateDto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
-	newBoard, err := app.BoardDomain.CreateBoard(boardCreateDto)
+	txResult, err := ExecuteTransaction[*TransactionResult](app, func(app *ApplicationImpl, txId string) (*TransactionResult, error) {
+		// 보드 생성
+		boardCreateDto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
+		newBoard, err := app.BoardDomain.CreateBoard(boardCreateDto)
+		if err != nil {
+			return nil, err
+		}
+
+		// 미디어 변경
+		mediaNftCreateDto := mediadto.NewCreateMediaNftDto(userInfo, "board", newBoard.BoardEntity.Id, &payload.ImageId, &payload.VideoId)
+		mediaNft, err := app.MediaDomain.CreateMediaNft(mediaNftCreateDto)
+		if err != nil {
+			return nil, err
+		}
+
+		// 오더 생성
+		// todo pay price
+		orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(ordervalueobject.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil, 0, 0, 0)
+		newOrder, err := app.OrderDomain.CreateOrder(orderCreateDto)
+		if err != nil {
+			return nil, err
+		}
+
+		// 스토리지 이동
+
+		// 트랜잭션 // 보드 저장 // 오더 저장	// 미디어 변경
+		return &TransactionResult{newBoard, mediaNft, newOrder}, nil
+	})
+
 	if err != nil {
 		app.SendResponse(event.ResponseChan, nil, err)
 		return
 	}
-
-	// 미디어 변경
-	mediaNftCreateDto := mediadto.NewCreateMediaNftDto(userInfo, "board", newBoard.BoardEntity.Id, &payload.ImageId, &payload.VideoId)
-	mediaNft, err := app.MediaDomain.CreateMediaNft(mediaNftCreateDto)
-	if err != nil {
-		app.SendResponse(event.ResponseChan, nil, err)
-		return
-	}
-
-	// 오더 생성
-	// todo pay price
-	orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(ordervalueobject.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil, 0, 0, 0)
-	newOrder, err := app.OrderDomain.CreateOrder(orderCreateDto)
-	if err != nil {
-		app.SendResponse(event.ResponseChan, nil, err)
-		return
-	}
-
-	// 스토리지 이동
-
-	// 트랜잭션 // 보드 저장 // 오더 저장	// 미디어 변경
 
 	// 리턴 // todo update
-	result := boarddto.NewCreateBoardResponse(mediaNft.MediaEntity.Id, newBoard.BoardEntity.Status, "", newOrder.OrderPrice.OriginPrice, newOrder.OrderPrice.DiscountPrice, newOrder.OrderPrice.PaymentPrice)
+	result := boarddto.NewCreateBoardResponse(
+		txResult.mediaNft.MediaEntity.Id,
+		txResult.newBoard.BoardEntity.Status,
+		"",
+		txResult.newOrder.OrderPrice.OriginPrice,
+		txResult.newOrder.OrderPrice.DiscountPrice,
+		txResult.newOrder.OrderPrice.PaymentPrice,
+	)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }

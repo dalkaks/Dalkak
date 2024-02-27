@@ -22,6 +22,8 @@ type DatabaseManager interface {
 	GetClient() *dynamodb.Client
 	GetTable() string
 
+	GetTransactionID() (*dao.TransactionDao, error)
+
 	CreateUser(user *userentity.UserEntity) error
 	FindUserByWalletAddress(walletAddress string) (*dao.UserDao, error)
 

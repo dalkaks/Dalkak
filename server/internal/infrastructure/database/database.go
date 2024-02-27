@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"dalkak/internal/infrastructure/database/dao"
 	responseutil "dalkak/pkg/utils/response"
 	"errors"
 
@@ -49,6 +50,28 @@ func (db *Database) GetClient() *dynamodb.Client {
 
 func (db *Database) GetTable() string {
 	return db.table
+}
+
+func (db *Database) GetTransactionID() (*dao.TransactionDao, error) {
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String(db.table),
+		Key: map[string]types.AttributeValue{
+			"Pk": &types.AttributeValueMemberS{Value: "Server#Transaction"},
+			"Sk": &types.AttributeValueMemberS{Value: "Server#Transaction"},
+		},
+	}
+
+	result, err := db.client.GetItem(context.Background(), input)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	var transaction dao.TransactionDao
+	err = attributevalue.UnmarshalMap(result.Item, &transaction)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+	return &transaction, nil
 }
 
 func (db *Database) QuerySingleItem(expr expression.Expression, dest interface{}) error {
