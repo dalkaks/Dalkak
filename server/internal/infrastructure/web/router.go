@@ -153,14 +153,14 @@ func getAuthUserMiddleware(c fiber.Ctx, keyManager core.KeyManager) error {
 	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
 		err := responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
 		responseutil.WriteToResponse(c, err)
-		return err
+		return nil
 	}
 
 	token := headerParts[1]
 	sub, err := keyManager.ParseTokenWithPublicKey(token, keytype.AccessToken)
 	if err != nil {
 		responseutil.WriteToResponse(c, err)
-		return err
+		return nil
 	}
 
 	c.Locals("user", appdto.UserInfo{WalletAddress: sub})
