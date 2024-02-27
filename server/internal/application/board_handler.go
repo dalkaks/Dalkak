@@ -1,6 +1,7 @@
 package application
 
 import (
+	ordervalueobject "dalkak/internal/domain/order/object/valueobject"
 	"dalkak/internal/infrastructure/eventbus"
 	boarddto "dalkak/pkg/dto/board"
 	mediadto "dalkak/pkg/dto/media"
@@ -44,7 +45,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 	// 오더 생성
 	// todo pay price
-	orderCreateDto := orderdto.NewCreateOrderDto(userInfo, "board", newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil, 0, 0, 0)
+	orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(ordervalueobject.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil, 0, 0, 0)
 	newOrder, err := app.OrderDomain.CreateOrder(orderCreateDto)
 	if err != nil {
 		app.SendResponse(event.ResponseChan, nil, err)
