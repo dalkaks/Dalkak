@@ -27,7 +27,7 @@ func (factory *CreateOrderDtoFactory) CreateOrderAggregate() (*orderaggregate.Or
 	if err != nil {
 		return nil, err
 	}
-	price, err := ordervalueobject.NewOrderPrice(factory.dto.OriginPrice, factory.dto.DiscountPrice, factory.dto.PaymentPrice)
+	price, err := ordervalueobject.NewOrderPrice(category)
 	if err != nil {
 		return nil, err
 	}

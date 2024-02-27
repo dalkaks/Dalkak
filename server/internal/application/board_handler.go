@@ -51,7 +51,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 		// 오더 생성
 		// todo pay price
-		orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(ordervalueobject.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil, 0, 0, 0)
+		orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(ordervalueobject.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil)
 		newOrder, err := app.OrderDomain.CreateOrder(orderCreateDto)
 		if err != nil {
 			return nil, err
@@ -72,7 +72,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 	result := boarddto.NewCreateBoardResponse(
 		txResult.mediaNft.MediaEntity.Id,
 		txResult.newBoard.BoardEntity.Status,
-		"",
+		txResult.newOrder.OrderEntity.Name,
 		txResult.newOrder.OrderPrice.OriginPrice,
 		txResult.newOrder.OrderPrice.DiscountPrice,
 		txResult.newOrder.OrderPrice.PaymentPrice,
