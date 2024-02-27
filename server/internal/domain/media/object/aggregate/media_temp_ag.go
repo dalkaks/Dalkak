@@ -81,10 +81,12 @@ func (m *MediaTempAggregate) ConfirmMediaTemp(Id string, contentTypeStr string, 
 		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
 
+	m.MediaEntity.SetConfirm()
+
 	return &MediaTempUpdate{
 		MediaEntity: &mediaentity.MediaEntity{
 			Id:        m.MediaEntity.Id,
-			IsConfirm: true,
+			IsConfirm: m.MediaEntity.IsConfirm,
 			Timestamp: m.MediaEntity.Timestamp,
 		},
 		MediaResource: *m.MediaResource,

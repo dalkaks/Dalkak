@@ -47,6 +47,11 @@ func (media *MediaEntity) CheckConfirm() bool {
 	return media.IsConfirm
 }
 
+func (media *MediaEntity) SetConfirm() {
+	media.IsConfirm = true
+	media.Timestamp = timeutil.GetTimestamp()
+}
+
 func (media *MediaEntity) CheckId(id string) bool {
 	return media.Id == id	
 }

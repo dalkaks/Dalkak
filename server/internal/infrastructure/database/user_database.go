@@ -157,7 +157,8 @@ func (repo *Database) UpdateMediaTempConfirm(userId string, mediaTempUpdate *med
 		"Sk": &types.AttributeValueMemberS{Value: sk},
 	}
 
-	update := expression.Set(expression.Name("IsConfirm"), expression.Value(mediaTempUpdate.MediaEntity.IsConfirm))
+	update := expression.Set(expression.Name("IsConfirm"), expression.Value(mediaTempUpdate.MediaEntity.IsConfirm)).
+		Set(expression.Name("Timestamp"), expression.Value(mediaTempUpdate.MediaEntity.Timestamp))
 	expr, err := GenerateUpdateExpression(update)
 	if err != nil {
 		return err
