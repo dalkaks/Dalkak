@@ -34,7 +34,7 @@ const (
 	BoardCustomNft  BoardType = "customNft"
 )
 
-func NewBoardEntity(boardType BoardType, userId string) (*BoardEntity) {
+func NewBoardEntity(boardType BoardType, userId string) *BoardEntity {
 	return &BoardEntity{
 		Id:        generateutil.GenerateUUID(),
 		UserId:    userId,
@@ -42,4 +42,12 @@ func NewBoardEntity(boardType BoardType, userId string) (*BoardEntity) {
 		Status:    BoardCreated,
 		Type:      boardType,
 	}
+}
+
+func (bs BoardStatus) String() string {
+	return string(bs)
+}
+
+func (bt BoardType) String() string {
+	return string(bt)
 }
