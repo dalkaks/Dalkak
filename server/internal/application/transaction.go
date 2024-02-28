@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type RetryableFunc[T any] func(app *ApplicationImpl, txId string) (T, error)
+type RetryableFunc[T any] func(txId string) (T, error)
 
 func ExecuteTransaction[T any](app *ApplicationImpl, fn RetryableFunc[T]) (T, error) {
 	const maxRetry = 3
@@ -16,7 +16,7 @@ func ExecuteTransaction[T any](app *ApplicationImpl, fn RetryableFunc[T]) (T, er
 			return *new(T), err
 		}
 
-		result, err := fn(app, transacionItem.Id)
+		result, err := fn(transacionItem.Id)
 		if err == nil {
 			return result, nil
 		}

@@ -34,7 +34,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		newOrder *orderaggregate.OrderAggregate
 	}
 
-	txResult, err := ExecuteTransaction[*TransactionResult](app, func(app *ApplicationImpl, txId string) (*TransactionResult, error) {
+	txResult, err := ExecuteTransaction[*TransactionResult](app, func(txId string) (*TransactionResult, error) {
 		// 보드 생성
 		boardCreateDto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
 		newBoard, err := app.BoardDomain.CreateBoard(boardCreateDto)
