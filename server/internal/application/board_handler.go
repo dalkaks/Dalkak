@@ -50,7 +50,6 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		}
 
 		// 오더 생성
-		// todo pay price
 		orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(ordervalueobject.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil)
 		newOrder, err := app.OrderDomain.CreateOrder(orderCreateDto)
 		if err != nil {
@@ -69,13 +68,6 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 	}
 
 	// 리턴 // todo update
-	result := boarddto.NewCreateBoardResponse(
-		txResult.mediaNft.MediaEntity.Id,
-		txResult.newBoard.BoardEntity.Status,
-		txResult.newOrder.OrderEntity.Name,
-		txResult.newOrder.OrderPrice.OriginPrice,
-		txResult.newOrder.OrderPrice.DiscountPrice,
-		txResult.newOrder.OrderPrice.PaymentPrice,
-	)
+	result := boarddto.NewCreateBoardResponse(txResult.newBoard, txResult.newOrder)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }
