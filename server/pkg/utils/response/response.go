@@ -35,6 +35,12 @@ const (
 	ErrMsgMetaMaskInvalidSignature = "METAMASK:INVALID_SIGNATURE"
 	ErrMsgMetaMaskNotMatchAddress  = "METAMASK:INVALID_ADDRESS"
 
+	ErrMsgBoardNameInvalid            = "BOARD:INVALID_NAME"
+	ErrMsgBoardDescriptionInvalid     = "BOARD:INVALID_DESCRIPTION"
+	ErrMsgBoardExternalUrlInvalid     = "BOARD:INVALID_EXTERNAL_URL"
+	ErrMsgBoardBackgroundColorInvalid = "BOARD:INVALID_BACKGROUND_COLOR"
+	ErrMsgBoardAttributesInvalid      = "BOARD:INVALID_ATTRIBUTES"
+
 	ErrMsgServerInternal  = "SERVER:INTERNAL_ERROR"
 	ErrMsgDBInternal      = "DB:INTERNAL_ERROR"
 	ErrMsgStorageInternal = "STORAGE:INTERNAL_ERROR"

@@ -43,7 +43,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		}
 
 		// 미디어 변경
-		mediaNftCreateDto := mediadto.NewCreateMediaNftDto(userInfo, "board", newBoard.BoardEntity.Id, &payload.ImageId, &payload.VideoId)
+		mediaNftCreateDto := mediadto.NewCreateMediaNftDto(userInfo, "board", newBoard.BoardEntity.Id, payload.ImageId, payload.VideoId)
 		mediaNft, err := app.MediaDomain.CreateMediaNft(mediaNftCreateDto)
 		if err != nil {
 			return nil, err

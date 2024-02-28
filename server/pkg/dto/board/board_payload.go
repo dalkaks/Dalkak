@@ -8,11 +8,11 @@ import (
 type CreateBoardRequest struct {
 	Name            string                          `json:"name" validate:"required"`
 	Description     string                          `json:"description" validate:"required"`
-	ImageId         string                          `json:"imageId"`
-	VideoId         string                          `json:"videoId"`
-	ExternalLink    string                          `json:"externalLink"`
-	BackgroundColor string                          `json:"backgroundColor"`
-	Attributes      []boardvalueobject.NftAttribute `json:"attributes"`
+	ImageId         *string                          `json:"imageId"`
+	VideoId         *string                          `json:"videoId"`
+	ExternalLink    *string                          `json:"externalLink"`
+	BackgroundColor *string                          `json:"backgroundColor"`
+	Attributes      *[]boardvalueobject.NftAttribute `json:"attributes"`
 }
 
 type CreateBoardResponse struct {
