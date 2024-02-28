@@ -13,6 +13,8 @@ const (
 	maxMetadataAttributesLength  = 10
 	maxMetadataAttributesValue   = 1e8
 	maxMetadataAttributesPercent = 100
+	maxAttributeTraitTypeLength  = 30
+	maxAttributeValueTypeLength  = 30
 )
 
 // image, video는 media로 분리
@@ -131,6 +133,12 @@ func validateNftAttribute(attr *NftAttribute) error {
 		if attr.DisplayType != nil {
 			return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgBoardAttributesInvalid)
 		}
+		if attr.TraitType != nil && (len(*attr.TraitType) == 0 || len(*attr.TraitType) > maxAttributeTraitTypeLength) {
+			return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgBoardAttributesInvalid)
+		}
+		if attr.Value == "" || len(attr.Value.(string)) > maxAttributeValueTypeLength {
+			return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgBoardAttributesInvalid)
+		}
 
 	case float64, float32, int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8:
 		if attr.TraitType == nil || *attr.TraitType == "" {
@@ -178,7 +186,7 @@ func validateDisplayTypeForNumber(displayType *string, number float64) error {
 }
 
 func validateNumberRange(number float64, max float64) error {
-	if number <= 0 || number > max {
+	if number < 0 || number > max {
 		return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgBoardAttributesInvalid)
 	}
 	return nil
