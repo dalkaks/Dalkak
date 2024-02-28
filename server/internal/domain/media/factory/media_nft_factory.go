@@ -25,7 +25,7 @@ func NewCreateMediaNftDtoFactory(dto *mediadto.CreateMediaNftDto, mediaImage *me
 }
 
 func (factory *CreateMediaNftDtoFactory) CreateMediaNftAggregate() (*mediaaggregate.MediaNftAggregate, error) {
-	media := mediaentity.NewMediaEntity(mediaentity.WithID(factory.dto.PrefixId))
+	media := mediaentity.ConvertMediaEntity(factory.dto.PrefixId, true, factory.dto.Timestamp)
 
 	var options []mediaaggregate.MediaNftAggregateOption
 	if factory.mediaImage != nil {

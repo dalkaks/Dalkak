@@ -49,19 +49,21 @@ func NewConfirmMediaTempDto(userInfo *appdto.UserInfo, id string, mediaType, pre
 }
 
 type CreateMediaNftDto struct {
-	UserInfo *appdto.UserInfo
-	Prefix   string
-	PrefixId string
-	ImageId  *string
-	VideoId  *string
+	UserInfo  *appdto.UserInfo
+	Timestamp int64
+	Prefix    string
+	PrefixId  string
+	ImageId   *string
+	VideoId   *string
 }
 
-func NewCreateMediaNftDto(userInfo *appdto.UserInfo, prefix, prefixId string, imageId, videoId *string) *CreateMediaNftDto {
+func NewCreateMediaNftDto(userInfo *appdto.UserInfo, timestamp int64, prefix, prefixId string, imageId, videoId *string) *CreateMediaNftDto {
 	return &CreateMediaNftDto{
-		UserInfo: userInfo,
-		Prefix:   prefix,
-		PrefixId: prefixId,
-		ImageId:  imageId,
-		VideoId:  videoId,
+		UserInfo:  userInfo,
+		Timestamp: timestamp,
+		Prefix:    prefix,
+		PrefixId:  prefixId,
+		ImageId:   imageId,
+		VideoId:   videoId,
 	}
 }

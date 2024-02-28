@@ -6,36 +6,30 @@ import (
 )
 
 type MediaEntity struct {
-	Id          string      `json:"id"`
-	IsConfirm   bool        `json:"isConfirm"`
-	Timestamp   int64       `json:"timestamp"`
+	Id        string `json:"id"`
+	IsConfirm bool   `json:"isConfirm"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 type MediaEntityOption func(*MediaEntity)
 
-func WithID(id string) MediaEntityOption {
-    return func(me *MediaEntity) {
-        me.Id = id
-    }
-}
-
 func NewMediaEntity(options ...MediaEntityOption) *MediaEntity {
-    me := &MediaEntity{
-        Id:          generateutil.GenerateUUID(),
-        IsConfirm:   false,
-        Timestamp:   timeutil.GetTimestamp(),
-    }
-    for _, option := range options {
-        option(me)
-    }
-    return me
+	me := &MediaEntity{
+		Id:        generateutil.GenerateUUID(),
+		IsConfirm: false,
+		Timestamp: timeutil.GetTimestamp(),
+	}
+	for _, option := range options {
+		option(me)
+	}
+	return me
 }
 
 func ConvertMediaEntity(Id string, IsConfirm bool, Timestamp int64) *MediaEntity {
 	return &MediaEntity{
-		Id:          Id,
-		IsConfirm:   IsConfirm,
-		Timestamp:   Timestamp,
+		Id:        Id,
+		IsConfirm: IsConfirm,
+		Timestamp: Timestamp,
 	}
 }
 
@@ -53,5 +47,5 @@ func (media *MediaEntity) SetConfirm() {
 }
 
 func (media *MediaEntity) CheckId(id string) bool {
-	return media.Id == id	
+	return media.Id == id
 }
