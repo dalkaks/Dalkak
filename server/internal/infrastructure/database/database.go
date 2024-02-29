@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"dalkak/internal/infrastructure/database/dao"
+	cryptoutil "dalkak/pkg/utils/crypto"
 	responseutil "dalkak/pkg/utils/response"
 	"encoding/base64"
 	"encoding/json"
@@ -19,7 +20,7 @@ import (
 type Database struct {
 	client   *dynamodb.Client
 	table    string
-	queryKey string
+	queryKey []byte
 }
 
 const (
@@ -48,7 +49,9 @@ func NewDB(ctx context.Context, mode, queryKey string) (*Database, error) {
 		table = "dalkak_dev"
 	}
 
-	return &Database{client: dbClient, table: table, queryKey: queryKey}, nil
+	queryKeyByte := []byte(queryKey)
+
+	return &Database{client: dbClient, table: table, queryKey: queryKeyByte}, nil
 }
 
 func (db *Database) GetClient() *dynamodb.Client {
@@ -110,11 +113,11 @@ func (db *Database) QueryItems(expr expression.Expression, index *string, pageDa
 	var exclusiveStartKey map[string]types.AttributeValue
 
 	if pageDao != nil && pageDao.ExclusiveStartKey != nil {
-		decodedKey, err := decodeExclusiveStartKey(*pageDao.ExclusiveStartKey)
+		decryptedKey, err := db.decryptExclusiveStartKey(*pageDao.ExclusiveStartKey)
 		if err != nil {
 			return nil, err
 		}
-		exclusiveStartKey = decodedKey
+		exclusiveStartKey = decryptedKey
 	}
 
 	var items []map[string]types.AttributeValue
@@ -158,11 +161,11 @@ func (db *Database) QueryItems(expr expression.Expression, index *string, pageDa
 
 	var nextPageToken *string
 	if len(exclusiveStartKey) > 0 {
-		encodedKey, err := encodeExclusiveStartKey(exclusiveStartKey)
+		encryptedKey, err := db.encryptExclusiveStartKey(exclusiveStartKey)
 		if err != nil {
 			return nil, err
 		}
-		nextPageToken = &encodedKey
+		nextPageToken = &encryptedKey
 	}
 
 	return &dao.ResponsePageDao{
@@ -246,27 +249,38 @@ func (db *Database) WriteTransaction(builder *TransactionBuilder) error {
 	return nil
 }
 
-func encodeExclusiveStartKey(exclusiveStartKey map[string]types.AttributeValue) (string, error) {
-	jsonBytes, err := json.Marshal(exclusiveStartKey)
+func (db *Database) encryptExclusiveStartKey(exclusiveStartKey map[string]types.AttributeValue) (string, error) {
+	byteKey, err := json.Marshal(exclusiveStartKey)
 	if err != nil {
 		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
-	encodedString := base64.URLEncoding.EncodeToString(jsonBytes)
+	encryptKey, err := cryptoutil.EncryptAES(db.queryKey, byteKey)
+	if err != nil {
+		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	encodedString := base64.URLEncoding.EncodeToString(encryptKey)
 	return encodedString, nil
 }
 
-func decodeExclusiveStartKey(encodedKey string) (map[string]types.AttributeValue, error) {
+func (db *Database) decryptExclusiveStartKey(encodedKey string) (map[string]types.AttributeValue, error) {
 	decodedBytes, err := base64.URLEncoding.DecodeString(encodedKey)
 	if err != nil {
 		return nil, err
 	}
 
-	var exclusiveStartKey map[string]types.AttributeValue
-	err = json.Unmarshal(decodedBytes, &exclusiveStartKey)
+	encryptKey := []byte(decodedBytes)
+	decryptKey, err := cryptoutil.DecryptAES(db.queryKey, encryptKey)
 	if err != nil {
-		return nil, err
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
-	return exclusiveStartKey, nil
+	var decodedKey map[string]types.AttributeValue
+	err = json.Unmarshal(decryptKey, &decodedKey)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	return decodedKey, nil
 }
