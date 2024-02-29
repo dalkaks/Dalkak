@@ -142,8 +142,8 @@ func (db *Database) QueryItems(expr expression.Expression, index *string, pageDa
 		items = append(items, result.Items...)
 		count += len(result.Items)
 
+		exclusiveStartKey = result.LastEvaluatedKey
 		if pageDao != nil && len(result.Items) < pageDao.Limit && result.LastEvaluatedKey != nil {
-			exclusiveStartKey = result.LastEvaluatedKey
 			continue
 		}
 
@@ -246,22 +246,17 @@ func (db *Database) WriteTransaction(builder *TransactionBuilder) error {
 }
 
 func encodeExclusiveStartKey(exclusiveStartKey map[string]types.AttributeValue) (string, error) {
-	keyBytes, err := attributevalue.MarshalMap(exclusiveStartKey)
+	jsonBytes, err := json.Marshal(exclusiveStartKey)
 	if err != nil {
 		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
-	jsonBytes, err := json.Marshal(keyBytes)
-	if err != nil {
-		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
-	}
-
-	encodedString := base64.StdEncoding.EncodeToString(jsonBytes)
+	encodedString := base64.URLEncoding.EncodeToString(jsonBytes)
 	return encodedString, nil
 }
 
 func decodeExclusiveStartKey(encodedKey string) (map[string]types.AttributeValue, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(encodedKey)
+	decodedBytes, err := base64.URLEncoding.DecodeString(encodedKey)
 	if err != nil {
 		return nil, err
 	}
