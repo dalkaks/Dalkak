@@ -133,6 +133,9 @@ func waitForResponse(responseChan chan appdto.Response, timeout time.Duration) i
 	select {
 	case resp := <-responseChan:
 		if resp.Error != nil {
+			if appError, ok := resp.Error.(*responseutil.AppError); ok {
+				return appError
+			}
 			return responseutil.NewAppError(responseutil.ErrCodeInternal, resp.Error.Error())
 		} else if appData, ok := resp.Data.(*responseutil.AppData); ok {
 			return appData
