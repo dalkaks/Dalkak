@@ -91,7 +91,7 @@ func TestNewNftMetadata(t *testing.T) {
 			name            string
 			description     string
 			externalUrl     *string
-			attributes      *[]NftAttribute
+			attributes      []*NftAttribute
 			backgroundColor *string
 			expected        bool
 		}{

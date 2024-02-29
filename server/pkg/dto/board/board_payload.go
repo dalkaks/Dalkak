@@ -14,7 +14,7 @@ type CreateBoardRequest struct {
 	VideoId         *string                          `json:"videoId"`
 	ExternalLink    *string                          `json:"externalLink"`
 	BackgroundColor *string                          `json:"backgroundColor"`
-	Attributes      *[]boardvalueobject.NftAttribute `json:"attributes"`
+	Attributes      []*boardvalueobject.NftAttribute `json:"attributes"`
 }
 
 type CreateBoardResponse struct {

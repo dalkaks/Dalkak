@@ -26,7 +26,7 @@ type BoardData struct {
 	NftMetaDesc   string
 	NftMetaExtUrl *string
 	NftMetaBgCol  *string
-	NftMetaAttrib *[]boardvalueobject.NftAttribute
+	NftMetaAttrib []*boardvalueobject.NftAttribute
 
 	NftImageExt *string
 	NftVideoExt *string

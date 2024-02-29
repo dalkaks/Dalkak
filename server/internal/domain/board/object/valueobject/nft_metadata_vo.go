@@ -22,7 +22,7 @@ type NftMetadata struct {
 	Name            string          `json:"name" validate:"required"`
 	Description     string          `json:"description" validate:"required"`
 	ExternalUrl     *string         `json:"externalUrl"`
-	Attributes      *[]NftAttribute `json:"attributes"`
+	Attributes      []*NftAttribute `json:"attributes"`
 	BackgroundColor *string         `json:"backgroundColor"`
 }
 
@@ -51,7 +51,7 @@ type NftAttribute struct {
 	DisplayType *string     `json:"displayType,omitempty"`
 }
 
-func NewNftMetadata(name, description string, externalUrl, backgroundColor *string, attributes *[]NftAttribute) (*NftMetadata, error) {
+func NewNftMetadata(name, description string, externalUrl, backgroundColor *string, attributes []*NftAttribute) (*NftMetadata, error) {
 	if err := validateMetadataName(name); err != nil {
 		return nil, err
 	}
@@ -69,11 +69,11 @@ func NewNftMetadata(name, description string, externalUrl, backgroundColor *stri
 		}
 	}
 	if attributes != nil {
-		if len(*attributes) > maxMetadataAttributesLength {
+		if len(attributes) > maxMetadataAttributesLength {
 			return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgBoardAttributesInvalid)
 		}
-		for _, attr := range *attributes {
-			if err := validateNftAttribute(&attr); err != nil {
+		for _, attr := range attributes {
+			if err := validateNftAttribute(attr); err != nil {
 				return nil, err
 			}
 		}

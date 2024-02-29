@@ -11,10 +11,10 @@ type CreateBoardDto struct {
 	Description     string
 	ExternalLink    *string
 	BackgroundColor *string
-	Attributes      *[]boardvalueobject.NftAttribute
+	Attributes      []*boardvalueobject.NftAttribute
 }
 
-func NewCreateBoardDto(userInfo *appdto.UserInfo, name, description string, externalLink, backgroundColor *string, attributes *[]boardvalueobject.NftAttribute) *CreateBoardDto {
+func NewCreateBoardDto(userInfo *appdto.UserInfo, name, description string, externalLink, backgroundColor *string, attributes []*boardvalueobject.NftAttribute) *CreateBoardDto {
 	return &CreateBoardDto{
 		UserInfo:        userInfo,
 		Name:            name,
