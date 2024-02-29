@@ -230,6 +230,21 @@ func (db *Database) DeleteDynamoDBItem(key map[string]types.AttributeValue) erro
 	return nil
 }
 
+func (db *Database) WriteTransaction(builder *TransactionBuilder) error {
+	_, err := db.client.TransactWriteItems(context.Background(), &dynamodb.TransactWriteItemsInput{
+		TransactItems: builder.Build(),
+	})
+	if err != nil {
+		var tce *types.TransactionCanceledException
+		if errors.As(err, &tce) {
+			return responseutil.NewAppError(responseutil.ErrCodeServiceDown, responseutil.ErrMsgDbInternalTrans, err)
+		}
+		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	return nil
+}
+
 func encodeExclusiveStartKey(exclusiveStartKey map[string]types.AttributeValue) (string, error) {
 	keyBytes, err := attributevalue.MarshalMap(exclusiveStartKey)
 	if err != nil {

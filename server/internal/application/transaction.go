@@ -1,38 +1,44 @@
 package application
 
 import (
+	"dalkak/internal/infrastructure/database/dao"
 	responseutil "dalkak/pkg/utils/response"
 	"time"
 )
 
 type RetryableFunc[T any] func(txId string) (T, error)
 
-func ExecuteTransaction[T any](app *ApplicationImpl, fn RetryableFunc[T]) (T, error) {
+func ExecuteTransaction[T any](app *ApplicationImpl, fn RetryableFunc[T]) (result T, err error) {
 	const maxRetry = 3
 
 	for attempt := 1; attempt <= maxRetry; attempt++ {
-		transacionItem, err := app.Database.GetTransactionID()
+		var transacionItem *dao.TransactionDao
+		transacionItem, err = app.Database.GetTransactionID()
 		if err != nil {
-			return *new(T), err
+			return
 		}
 
-		result, err := fn(transacionItem.Id)
+		result, err = fn(transacionItem.Id)
 		if err == nil {
-			return result, nil
+			return
 		}
 
 		if !isTransactionError(err) {
-			return *new(T), err
+			return
 		}
 
-		time.Sleep(time.Duration(attempt) * time.Second)
+		if attempt < maxRetry {
+			time.Sleep(time.Duration(attempt) * time.Second)
+		}
 	}
-
-	// todo log and alarm
-	return *new(T), responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal)
+	return
 }
 
 func isTransactionError(err error) bool {
-	// todo is transaction error
+	if appError, ok := err.(*responseutil.AppError); ok {
+		if appError.Code == responseutil.ErrCodeServiceDown {
+			return true
+		}
+	}
 	return false
 }

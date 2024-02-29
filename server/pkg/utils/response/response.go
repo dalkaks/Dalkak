@@ -18,6 +18,7 @@ const (
 	ErrCodeTimeout      = http.StatusRequestTimeout
 	ErrCodeConflict     = http.StatusConflict
 	ErrCodeInternal     = http.StatusInternalServerError
+	ErrCodeServiceDown  = http.StatusServiceUnavailable
 
 	ErrMsgRequestInvalid   = "REQUEST:INVALID_REQUEST"
 	ErrMsgRequestUnauth    = "REQUEST:UNAUTHORIZED"
@@ -43,6 +44,7 @@ const (
 
 	ErrMsgServerInternal  = "SERVER:INTERNAL_ERROR"
 	ErrMsgDBInternal      = "DB:INTERNAL_ERROR"
+	ErrMsgDbInternalTrans = "DB:INTERNAL_TRANSACTION_ERROR"
 	ErrMsgStorageInternal = "STORAGE:INTERNAL_ERROR"
 )
 

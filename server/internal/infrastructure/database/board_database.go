@@ -59,7 +59,10 @@ func (repo *Database) CreateBoard(board *boardaggregate.BoardAggregate, nftImage
 		NftVideoExt: nftVideoExt,
 	}
 
-	err := repo.PutDynamoDBItem(newBoard)
+	builder := NewTransactionBuilder(repo.table)
+	builder.AddPutItem(newBoard)
+
+	err := repo.WriteTransaction(builder)
 	if err != nil {
 		return err
 	}
