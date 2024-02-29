@@ -36,7 +36,7 @@ type BoardData struct {
 	NftVideoExt *string
 }
 
-func (repo *Database) CreateBoard(board *boardaggregate.BoardAggregate, nftImageExt, nftVideoExt *string) error {
+func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggregate, nftImageExt, nftVideoExt *string) error {
 	pk := GenerateBoardDataPk(board.BoardEntity.Id)
 	newBoard := &BoardData{
 		Pk:         pk,
@@ -59,7 +59,7 @@ func (repo *Database) CreateBoard(board *boardaggregate.BoardAggregate, nftImage
 		NftVideoExt: nftVideoExt,
 	}
 
-	builder := NewTransactionBuilder(repo.table)
+	builder := NewTransactionBuilder(repo.table, txId)
 	builder.AddPutItem(newBoard)
 
 	err := repo.WriteTransaction(builder)

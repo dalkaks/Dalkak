@@ -34,7 +34,7 @@ type DatabaseManager interface {
 	UpdateMediaTempConfirm(userId string, mediaTempUpdate *mediaaggregate.MediaTempUpdate) error
 	DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
 
-	CreateBoard(board *boardaggregate.BoardAggregate, nftImageExt, nftVideoExt *string) error
+	CreateBoard(txId string, board *boardaggregate.BoardAggregate, nftImageExt, nftVideoExt *string) error
 	FindBoardByUserId(userId string, status *boardentity.BoardStatus, pageDao *dao.RequestPageDao) ([]*dao.BoardDao, *dao.ResponsePageDao, error)
 }
 
