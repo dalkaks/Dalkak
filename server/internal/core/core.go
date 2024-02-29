@@ -2,6 +2,7 @@ package core
 
 import (
 	boardaggregate "dalkak/internal/domain/board/object/aggregate"
+	boardentity "dalkak/internal/domain/board/object/entity"
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	userentity "dalkak/internal/domain/user/object/entity"
 	"dalkak/internal/infrastructure/database/dao"
@@ -34,6 +35,7 @@ type DatabaseManager interface {
 	DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
 
 	CreateBoard(board *boardaggregate.BoardAggregate, nftImageExt, nftVideoExt *string) error
+	FindBoardByUserId(userId string, status *boardentity.BoardStatus, pageDao *dao.RequestPageDao) ([]*dao.BoardDao, *dao.ResponsePageDao, error)
 }
 
 type StorageManager interface {

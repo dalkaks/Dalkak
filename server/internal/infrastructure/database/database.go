@@ -4,6 +4,8 @@ import (
 	"context"
 	"dalkak/internal/infrastructure/database/dao"
 	responseutil "dalkak/pkg/utils/response"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -18,6 +20,10 @@ type Database struct {
 	client *dynamodb.Client
 	table  string
 }
+
+const (
+	UserIdEntityTypeIndex = "UserId-EntityType-index"
+)
 
 func NewDB(ctx context.Context, mode string) (*Database, error) {
 	var cfg aws.Config
@@ -97,6 +103,71 @@ func (db *Database) QuerySingleItem(expr expression.Expression, dest interface{}
 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 	return nil
+}
+
+func (db *Database) QueryItems(expr expression.Expression, index *string, pageDao *dao.RequestPageDao, dest interface{}) (*dao.ResponsePageDao, error) {
+	var exclusiveStartKey map[string]types.AttributeValue
+
+	if pageDao != nil && pageDao.ExclusiveStartKey != nil {
+		decodedKey, err := decodeExclusiveStartKey(*pageDao.ExclusiveStartKey)
+		if err != nil {
+			return nil, err
+		}
+		exclusiveStartKey = decodedKey
+	}
+
+	var items []map[string]types.AttributeValue
+	var count int
+
+	for {
+		input := &dynamodb.QueryInput{
+			TableName:                 aws.String(db.table),
+			IndexName:                 index,
+			KeyConditionExpression:    expr.KeyCondition(),
+			FilterExpression:          expr.Filter(),
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			ExclusiveStartKey:         exclusiveStartKey,
+		}
+
+		if pageDao != nil {
+			input.Limit = aws.Int32(int32(pageDao.Limit))
+		}
+
+		result, err := db.client.Query(context.Background(), input)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, result.Items...)
+		count += len(result.Items)
+
+		if pageDao != nil && len(result.Items) < pageDao.Limit && result.LastEvaluatedKey != nil {
+			exclusiveStartKey = result.LastEvaluatedKey
+			continue
+		}
+
+		break
+	}
+
+	err := attributevalue.UnmarshalListOfMaps(items, dest)
+	if err != nil {
+		return nil, err
+	}
+
+	var nextPageToken *string
+	if len(exclusiveStartKey) > 0 {
+		encodedKey, err := encodeExclusiveStartKey(exclusiveStartKey)
+		if err != nil {
+			return nil, err
+		}
+		nextPageToken = &encodedKey
+	}
+
+	return &dao.ResponsePageDao{
+		Count:             count,
+		ExclusiveStartKey: nextPageToken,
+	}, nil
 }
 
 func (db *Database) PutDynamoDBItem(data interface{}) error {
@@ -196,4 +267,34 @@ func GenerateUpdateExpression(update expression.UpdateBuilder) (expression.Expre
 	}
 
 	return expr, nil
+}
+
+func encodeExclusiveStartKey(exclusiveStartKey map[string]types.AttributeValue) (string, error) {
+	keyBytes, err := attributevalue.MarshalMap(exclusiveStartKey)
+	if err != nil {
+		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	jsonBytes, err := json.Marshal(keyBytes)
+	if err != nil {
+		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	encodedString := base64.StdEncoding.EncodeToString(jsonBytes)
+	return encodedString, nil
+}
+
+func decodeExclusiveStartKey(encodedKey string) (map[string]types.AttributeValue, error) {
+	decodedBytes, err := base64.StdEncoding.DecodeString(encodedKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var exclusiveStartKey map[string]types.AttributeValue
+	err = json.Unmarshal(decodedBytes, &exclusiveStartKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return exclusiveStartKey, nil
 }
