@@ -34,7 +34,7 @@ const Navigation = () => {
   }, [account]);
 
   return (
-    <div className="container sticky top-0 flex h-20 bg-white shadow-md">
+    <div className="container sticky top-0 z-10 flex h-20 w-full bg-white shadow-md">
       <MetaMaskProvider
         debug={true}
         sdkOptions={{
