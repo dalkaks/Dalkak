@@ -17,15 +17,16 @@ import (
 )
 
 type Database struct {
-	client *dynamodb.Client
-	table  string
+	client   *dynamodb.Client
+	table    string
+	queryKey string
 }
 
 const (
 	UserIdEntityTypeIndex = "UserId-EntityType-index"
 )
 
-func NewDB(ctx context.Context, mode string) (*Database, error) {
+func NewDB(ctx context.Context, mode, queryKey string) (*Database, error) {
 	var cfg aws.Config
 	var err error
 
@@ -47,7 +48,7 @@ func NewDB(ctx context.Context, mode string) (*Database, error) {
 		table = "dalkak_dev"
 	}
 
-	return &Database{client: dbClient, table: table}, nil
+	return &Database{client: dbClient, table: table, queryKey: queryKey}, nil
 }
 
 func (db *Database) GetClient() *dynamodb.Client {
