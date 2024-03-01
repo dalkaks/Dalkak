@@ -42,6 +42,7 @@ type DatabaseManager interface {
 
 type StorageManager interface {
 	CreatePresignedURL(mediaKey string, contentType string) (string, error)
+	CopyObject(srcURL, destURL string) error
 	GetHeadObject(key string) (*storagedto.MediaHeadDto, error)
 	DeleteObject(key string) error
 }

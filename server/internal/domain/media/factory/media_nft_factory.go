@@ -33,22 +33,22 @@ func (factory *CreateMediaNftDtoFactory) CreateMediaNftAggregate() (*mediaaggreg
 	if factory.mediaImage != nil {
 		options = append(options, mediaaggregate.WithMediaNftImageResource(&factory.mediaImage.MediaResource))
 		if factory.mediaImage.MediaUrl != nil {
-			err := factory.mediaImage.MediaUrl.ConvertMediaTempToFormalUrl(factory.staticLink, factory.dto.PrefixId)
+			newImageUrl, err := factory.mediaImage.MediaUrl.ConvertMediaTempToFormalUrl(factory.staticLink, factory.dto.PrefixId)
 			if err != nil {
 				return nil, err
 			}
-			options = append(options, mediaaggregate.WithMediaNftImageUrl(factory.mediaImage.MediaUrl))
+			options = append(options, mediaaggregate.WithMediaNftImageUrl(newImageUrl))
 		}
 	}
 
 	if factory.mediaVideo != nil {
 		options = append(options, mediaaggregate.WithMediaNftVideoResource(&factory.mediaVideo.MediaResource))
 		if factory.mediaVideo.MediaUrl != nil {
-			err := factory.mediaVideo.MediaUrl.ConvertMediaTempToFormalUrl(factory.staticLink, factory.dto.PrefixId)
+			newVideoUrl, err := factory.mediaVideo.MediaUrl.ConvertMediaTempToFormalUrl(factory.staticLink, factory.dto.PrefixId)
 			if err != nil {
 				return nil, err
 			}
-			options = append(options, mediaaggregate.WithMediaNftVideoUrl(factory.mediaVideo.MediaUrl))
+			options = append(options, mediaaggregate.WithMediaNftVideoUrl(newVideoUrl))
 		}
 	}
 

@@ -44,7 +44,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 		// 미디어 변경
 		mediaNftCreateDto := mediadto.NewCreateMediaNftDto(userInfo, newBoard.BoardEntity.Timestamp, "board", newBoard.BoardEntity.Id, payload.ImageId, payload.VideoId)
-		mediaNft, _, _, err := app.MediaDomain.CreateMediaNft(mediaNftCreateDto)
+		mediaNft, tempImage, tempVideo, err := app.MediaDomain.CreateMediaNft(mediaNftCreateDto)
 		if err != nil {
 			return nil, err
 		}
@@ -63,6 +63,16 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		}
 
 		// 스토리지 이동
+		if tempImage != nil {
+			go func() {
+				app.Storage.CopyObject(tempImage.MediaUrl.AccessUrl, mediaNft.MediaImageUrl.AccessUrl)
+			}()
+		}
+		if tempVideo != nil {
+			go func() {
+				app.Storage.CopyObject(tempVideo.MediaUrl.AccessUrl, mediaNft.MediaVideoUrl.AccessUrl)
+			}()
+		}
 
 		return &TransactionResult{newBoard, mediaNft, newOrder}, nil
 	})

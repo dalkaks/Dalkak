@@ -106,8 +106,7 @@ func (service *MediaDomainServiceImpl) ConfirmMediaTemp(dto *mediadto.ConfirmMed
 }
 
 func (service *MediaDomainServiceImpl) CreateMediaNft(dto *mediadto.CreateMediaNftDto) (*mediaaggregate.MediaNftAggregate, *mediaaggregate.MediaTempAggregate, *mediaaggregate.MediaTempAggregate, error) {
-	mediaImage := &mediaaggregate.MediaTempAggregate{}
-	mediaVideo := &mediaaggregate.MediaTempAggregate{}
+	var mediaImage, mediaVideo *mediaaggregate.MediaTempAggregate
 	err := error(nil)
 
 	if dto.ImageId != nil {

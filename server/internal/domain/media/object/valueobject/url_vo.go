@@ -41,15 +41,16 @@ func GenerateMediaTempKey(userId string, resource *MediaResource) (string, error
 }
 
 // temp/{userId}/{prefix}/{mediaType}/{contentType} -> {prefix}/{id}/{mediaType}/{contentType}
-func (mu *MediaUrl) ConvertMediaTempToFormalUrl(staticLink, id string) error {
+func (mu *MediaUrl) ConvertMediaTempToFormalUrl(staticLink, id string) (*MediaUrl, error) {
 	tempKey := parseutil.ConvertStaticLinkToKey(staticLink, mu.AccessUrl)
 	parts := strings.Split(tempKey, "/")
 	if len(parts) < 5 {
-		return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
 
-	mu.AccessUrl = parseutil.ConvertKeyToStaticLink(staticLink, fmt.Sprintf("%s/%s/%s/%s", parts[2], id, parts[3], parts[4]))
-	return nil
+	return &MediaUrl{
+		AccessUrl: parseutil.ConvertKeyToStaticLink(staticLink, fmt.Sprintf("%s/%s/%s/%s", parts[2], id, parts[3], parts[4])),
+	}, nil
 }
 
 func (mu *MediaUrl) GetUrlKey(staticLink string) string {
