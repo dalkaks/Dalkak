@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -150,7 +151,6 @@ func (db *Database) QueryItems(expr expression.Expression, index *string, pageDa
 		if pageDao != nil && len(result.Items) < pageDao.Limit && result.LastEvaluatedKey != nil {
 			continue
 		}
-
 		break
 	}
 
@@ -276,11 +276,21 @@ func (db *Database) decryptExclusiveStartKey(encodedKey string) (map[string]type
 		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
-	var decodedKey map[string]types.AttributeValue
-	err = json.Unmarshal(decryptKey, &decodedKey)
+	var tempMap map[string]map[string]interface{}
+	err = json.Unmarshal(decryptKey, &tempMap)
 	if err != nil {
 		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
+	decodedKey := make(map[string]types.AttributeValue)
+	for k, v := range tempMap {
+		if val, ok := v["Value"].(string); ok {
+			decodedKey[k] = &types.AttributeValueMemberS{Value: val}
+		} else if val, ok := v["Value"].(float64); ok {
+			decodedKey[k] = &types.AttributeValueMemberN{Value: strconv.FormatFloat(val, 'f', -1, 64)}
+		} else {
+			return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+		}
+	}
 	return decodedKey, nil
 }
