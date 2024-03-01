@@ -8,7 +8,7 @@ import (
 
 type RetryableFunc[T any] func(txId string) (T, error)
 
-func ExecuteTransaction[T any](app *ApplicationImpl, fn RetryableFunc[T]) (result T, err error) {
+func ExecuteOptimisticTransactionWithRetry[T any](app *ApplicationImpl, fn RetryableFunc[T]) (result T, err error) {
 	const maxRetry = 3
 
 	for attempt := 1; attempt <= maxRetry; attempt++ {

@@ -34,7 +34,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		newOrder *orderaggregate.OrderAggregate
 	}
 
-	txResult, err := ExecuteTransaction(app, func(txId string) (*TransactionResult, error) {
+	txResult, err := ExecuteOptimisticTransactionWithRetry(app, func(txId string) (*TransactionResult, error) {
 		// 보드 생성
 		boardCreateDto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
 		newBoard, err := app.BoardDomain.CreateBoard(boardCreateDto)
@@ -55,17 +55,17 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		if err != nil {
 			return nil, err
 		}
-
-		// 스토리지 이동
-
+		
 		// 트랜잭션 // 보드 저장 // 오더 저장	// 미디어 변경
 		err = app.Database.CreateBoard(txId, newBoard, nil, nil)
 		if err != nil {
 			return nil, err
 		}
-
+		
 		return &TransactionResult{newBoard, mediaNft, newOrder}, nil
 	})
+	
+	// 스토리지 이동
 
 	if err != nil {
 		app.SendResponse(event.ResponseChan, nil, err)
