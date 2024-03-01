@@ -7,6 +7,7 @@ import (
 	boardaggregate "dalkak/internal/domain/board/object/aggregate"
 	boardentity "dalkak/internal/domain/board/object/entity"
 	boarddto "dalkak/pkg/dto/board"
+	responseutil "dalkak/pkg/utils/response"
 )
 
 type BoardDomainService interface {
@@ -30,7 +31,15 @@ func NewBoardDomainService(appConfig *config.AppConfig, database BoardRepository
 }
 
 func (service *BoardDomainServiceImpl) CreateBoard(dto *boarddto.CreateBoardDto) (*boardaggregate.BoardAggregate, error) {
-	// 보드 조회 (중복 확인 및 결제 상태에 있는 보드 있는지 확인)
+	createStatus := boardentity.BoardCreated
+	existCreatedBoard, _, err := service.Database.FindBoardByUserId(dto.UserInfo.GetUserId(), &createStatus, nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(existCreatedBoard) > 0 {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeConflict, responseutil.ErrMsgBoardExistCreatedStatusBoard)
+	}
+
 	factory := boardfactory.NewCreateBoardDtoFactory(dto, boardentity.BoardDefaultNft)
 	board, err := factory.CreateBoardAggregate()
 	if err != nil {
