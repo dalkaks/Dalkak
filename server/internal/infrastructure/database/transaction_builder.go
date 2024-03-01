@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
@@ -86,4 +87,27 @@ func (builder *TransactionBuilder) AddPutItem(item interface{}) error {
 		},
 	})
 	return nil
+}
+
+func (builder *TransactionBuilder) AddUpdateItem(key map[string]types.AttributeValue, expr expression.Expression) {
+	builder.TransactItems = append(builder.TransactItems, types.TransactWriteItem{
+		Update: &types.Update{
+			TableName:                           aws.String(builder.tableName),
+			Key:                                 key,
+			UpdateExpression:                    expr.Update(),
+			ExpressionAttributeNames:            expr.Names(),
+			ExpressionAttributeValues:           expr.Values(),
+			ConditionExpression:                 expr.Condition(),
+			ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
+		},
+	})
+}
+
+func (builder *TransactionBuilder) AddDeleteItem(key map[string]types.AttributeValue) {
+	builder.TransactItems = append(builder.TransactItems, types.TransactWriteItem{
+		Delete: &types.Delete{
+			TableName: aws.String(builder.tableName),
+			Key:       key,
+		},
+	})
 }

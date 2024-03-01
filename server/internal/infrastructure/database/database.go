@@ -211,7 +211,7 @@ func (db *Database) UpdateDynamoDBItem(key map[string]types.AttributeValue, expr
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		ConditionExpression:       expr.Condition(),
-		ReturnValues:              types.ReturnValueNone,
+		ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
 	}
 
 	_, err := db.client.UpdateItem(context.Background(), input)
