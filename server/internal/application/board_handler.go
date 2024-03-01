@@ -36,7 +36,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 	txResult, err := ExecuteOptimisticTransactionWithRetry(app, func(txId string) (*TransactionResult, error) {
 		// 보드 생성
-		boardCreateDto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
+		boardCreateDto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.CategoryType, payload.Network, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
 		newBoard, err := app.BoardDomain.CreateBoard(boardCreateDto)
 		if err != nil {
 			return nil, err

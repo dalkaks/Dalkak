@@ -10,7 +10,6 @@ type BoardEntity struct {
 	UserId    string      `json:"userId"`
 	Timestamp int64       `json:"timestamp"`
 	Status    BoardStatus `json:"status"`
-	Type      BoardType   `json:"type"`
 }
 
 type BoardStatus string
@@ -27,27 +26,15 @@ const (
 	BoardDeleted         BoardStatus = "deleted"
 )
 
-type BoardType string
-
-const (
-	BoardDefaultNft BoardType = "defaultNft"
-	BoardCustomNft  BoardType = "customNft"
-)
-
-func NewBoardEntity(boardType BoardType, userId string) *BoardEntity {
+func NewBoardEntity(userId string) *BoardEntity {
 	return &BoardEntity{
 		Id:        generateutil.GenerateUUID(),
 		UserId:    userId,
 		Timestamp: timeutil.GetTimestamp(),
 		Status:    BoardCreated,
-		Type:      boardType,
 	}
 }
 
 func (bs BoardStatus) String() string {
 	return string(bs)
-}
-
-func (bt BoardType) String() string {
-	return string(bt)
 }

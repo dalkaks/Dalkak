@@ -8,18 +8,20 @@ import (
 
 type BoardAggregate struct {
 	BoardEntity   boardentity.BoardEntity
+	BoardCategory boardvalueobject.BoardCategory
 	BoardMetadata boardvalueobject.NftMetadata
 }
 
 type BoardAggregateOption func(*BoardAggregate)
 
-func NewBoardAggregate(board *boardentity.BoardEntity, metadata *boardvalueobject.NftMetadata, options ...BoardAggregateOption) (*BoardAggregate, error) {
+func NewBoardAggregate(board *boardentity.BoardEntity, category *boardvalueobject.BoardCategory, metadata *boardvalueobject.NftMetadata, options ...BoardAggregateOption) (*BoardAggregate, error) {
 	if board == nil || metadata == nil {
 		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
 
 	aggregate := &BoardAggregate{
 		BoardEntity:   *board,
+		BoardCategory: *category,
 		BoardMetadata: *metadata,
 	}
 

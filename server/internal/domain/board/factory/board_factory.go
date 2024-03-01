@@ -12,25 +12,29 @@ type BoardAggregateFactory interface {
 }
 
 type CreateBoardDtoFactory struct {
-	dto       *boarddto.CreateBoardDto
-	boardType boardentity.BoardType
+	dto *boarddto.CreateBoardDto
 }
 
-func NewCreateBoardDtoFactory(dto *boarddto.CreateBoardDto, boardType boardentity.BoardType) *CreateBoardDtoFactory {
+func NewCreateBoardDtoFactory(dto *boarddto.CreateBoardDto) *CreateBoardDtoFactory {
 	return &CreateBoardDtoFactory{
-		dto:       dto,
-		boardType: boardType,
+		dto: dto,
 	}
 }
 
 func (factory *CreateBoardDtoFactory) CreateBoardAggregate() (*boardaggregate.BoardAggregate, error) {
-	board := boardentity.NewBoardEntity(factory.boardType, factory.dto.UserInfo.GetUserId())
+	board := boardentity.NewBoardEntity(factory.dto.UserInfo.GetUserId())
+
+	boardCategory, err := boardvalueobject.NewBoardCategory(factory.dto.CategoryType, factory.dto.Network)
+	if err != nil {
+		return nil, err
+	}
+
 	boardMetadata, err := boardvalueobject.NewNftMetadata(factory.dto.Name, factory.dto.Description, factory.dto.ExternalLink, factory.dto.BackgroundColor, factory.dto.Attributes)
 	if err != nil {
 		return nil, err
 	}
 
-	boardAggregate, err := boardaggregate.NewBoardAggregate(board,	boardMetadata)
+	boardAggregate, err := boardaggregate.NewBoardAggregate(board, boardCategory, boardMetadata)
 	if err != nil {
 		return nil, err
 	}

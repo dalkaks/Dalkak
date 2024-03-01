@@ -10,6 +10,8 @@ import (
 type CreateBoardRequest struct {
 	Name            string                           `json:"name" validate:"required"`
 	Description     string                           `json:"description" validate:"required"`
+	CategoryType    string                           `json:"categoryType" validate:"required"`
+	Network         string                           `json:"network" validate:"required"`
 	ImageId         *string                          `json:"imageId" validate:"required"`
 	VideoId         *string                          `json:"videoId"`
 	ExternalLink    *string                          `json:"externalLink"`

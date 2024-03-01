@@ -40,7 +40,7 @@ func (service *BoardDomainServiceImpl) CreateBoard(dto *boarddto.CreateBoardDto)
 		return nil, responseutil.NewAppError(responseutil.ErrCodeConflict, responseutil.ErrMsgBoardExistCreatedStatusBoard)
 	}
 
-	factory := boardfactory.NewCreateBoardDtoFactory(dto, boardentity.BoardDefaultNft)
+	factory := boardfactory.NewCreateBoardDtoFactory(dto)
 	board, err := factory.CreateBoardAggregate()
 	if err != nil {
 		return nil, err

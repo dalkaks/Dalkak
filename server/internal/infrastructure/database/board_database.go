@@ -26,7 +26,10 @@ type BoardData struct {
 	Id     string
 	Status string
 	UserId string
-	Type   string
+
+	Type    string
+	TypeId  string
+	Network string
 
 	NftMetaName   string
 	NftMetaDesc   string
@@ -63,7 +66,10 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 		Id:     board.BoardEntity.Id,
 		Status: board.BoardEntity.Status.String(),
 		UserId: board.BoardEntity.UserId,
-		Type:   board.BoardEntity.Type.String(),
+
+		Type:    board.BoardCategory.GetCategoryType(),
+		TypeId:  board.BoardCategory.GetCategoryId(),
+		Network: board.BoardCategory.GetNetwork(),
 
 		NftMetaName:   board.BoardMetadata.Name,
 		NftMetaDesc:   board.BoardMetadata.Description,
@@ -78,7 +84,7 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 
 	orderData := CreateOrderData(order)
 	builder.AddPutItem(orderData)
-	
+
 	err := repo.WriteTransaction(builder)
 	if err != nil {
 		return err
