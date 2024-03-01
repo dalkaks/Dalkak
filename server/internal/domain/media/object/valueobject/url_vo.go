@@ -3,6 +3,8 @@ package mediavalueobject
 import (
 	parseutil "dalkak/pkg/utils/parse"
 	responseutil "dalkak/pkg/utils/response"
+	"fmt"
+	"strings"
 )
 
 type MediaUrl struct {
@@ -36,6 +38,18 @@ func GenerateMediaTempKey(userId string, resource *MediaResource) (string, error
 	mediaTypeStr := resource.GetMediaType()
 	extensionStr := resource.GetExtension()
 	return "temp/" + userId + "/" + resource.Prefix.String() + "/" + mediaTypeStr + "/" + mediaTypeStr + "." + extensionStr, nil
+}
+
+// temp/{userId}/{prefix}/{mediaType}/{contentType} -> {prefix}/{id}/{mediaType}/{contentType}
+func (mu *MediaUrl) ConvertMediaTempToFormalUrl(staticLink, id string) error {
+	tempKey := parseutil.ConvertStaticLinkToKey(staticLink, mu.AccessUrl)
+	parts := strings.Split(tempKey, "/")
+	if len(parts) < 5 {
+		return responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+	}
+
+	mu.AccessUrl = parseutil.ConvertKeyToStaticLink(staticLink, fmt.Sprintf("%s/%s/%s/%s", parts[2], id, parts[3], parts[4]))
+	return nil
 }
 
 func (mu *MediaUrl) GetUrlKey(staticLink string) string {
