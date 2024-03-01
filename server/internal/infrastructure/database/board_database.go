@@ -4,6 +4,7 @@ import (
 	boardaggregate "dalkak/internal/domain/board/object/aggregate"
 	boardentity "dalkak/internal/domain/board/object/entity"
 	boardvalueobject "dalkak/internal/domain/board/object/valueobject"
+	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	"dalkak/internal/infrastructure/database/dao"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
@@ -36,7 +37,7 @@ type BoardData struct {
 	NftVideoExt *string
 }
 
-func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggregate, nftImageExt, nftVideoExt *string) error {
+func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate, nftImageExt, nftVideoExt *string) error {
 	pk := GenerateBoardDataPk(board.BoardEntity.Id)
 	newBoard := &BoardData{
 		Pk:         pk,
@@ -59,8 +60,11 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 		NftVideoExt: nftVideoExt,
 	}
 
+	orderData := CreateOrderData(order)
+
 	builder := NewTransactionBuilder(repo.table, txId)
 	builder.AddPutItem(newBoard)
+	builder.AddPutItem(orderData)
 
 	err := repo.WriteTransaction(builder)
 	if err != nil {

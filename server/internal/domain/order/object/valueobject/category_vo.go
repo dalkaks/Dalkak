@@ -33,3 +33,7 @@ func NewOrderCategoryType(categoryTypeStr string) (OrderCategoryType, error) {
 		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
 }
+
+func (oct OrderCategoryType) String() string {
+	return string(oct)
+}

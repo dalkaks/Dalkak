@@ -57,7 +57,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		}
 		
 		// 트랜잭션 // 보드 저장 // 오더 저장	// 미디어 변경
-		err = app.Database.CreateBoard(txId, newBoard, nil, nil)
+		err = app.Database.CreateBoard(txId, newBoard, newOrder, nil, nil)
 		if err != nil {
 			return nil, err
 		}

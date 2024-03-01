@@ -49,3 +49,7 @@ func NewOrderEntity(userId, name string, options ...OrderEntityOption) *OrderEnt
 	}
 	return oe
 }
+
+func (os OrderStatus) String() string {
+	return string(os)
+}

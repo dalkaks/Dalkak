@@ -4,6 +4,7 @@ import (
 	boardaggregate "dalkak/internal/domain/board/object/aggregate"
 	boardentity "dalkak/internal/domain/board/object/entity"
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
+	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	userentity "dalkak/internal/domain/user/object/entity"
 	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
@@ -34,7 +35,7 @@ type DatabaseManager interface {
 	UpdateMediaTempConfirm(userId string, mediaTempUpdate *mediaaggregate.MediaTempUpdate) error
 	DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
 
-	CreateBoard(txId string, board *boardaggregate.BoardAggregate, nftImageExt, nftVideoExt *string) error
+	CreateBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate, nftImageExt, nftVideoExt *string) error
 	FindBoardByUserId(userId string, status *boardentity.BoardStatus, pageDao *dao.RequestPageDao) ([]*dao.BoardDao, *dao.ResponsePageDao, error)
 }
 
