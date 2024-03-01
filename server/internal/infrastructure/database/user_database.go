@@ -2,6 +2,7 @@ package database
 
 import (
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
+	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
 	userentity "dalkak/internal/domain/user/object/entity"
 	"dalkak/internal/infrastructure/database/dao"
 	responseutil "dalkak/pkg/utils/response"
@@ -168,8 +169,13 @@ func (repo *Database) UpdateMediaTempConfirm(userId string, mediaTempUpdate *med
 }
 
 func (repo *Database) DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error {
-	prefix := mediaTemp.MediaResource.Prefix.String()
-	mediaType := mediaTemp.MediaResource.ContentType.ConvertToMediaType()
+	key := CreateDeleteMediaData(userId, &mediaTemp.MediaResource)
+	return repo.DeleteDynamoDBItem(key)
+}
+
+func CreateDeleteMediaData(userId string, mediaResource *mediavalueobject.MediaResource) map[string]types.AttributeValue {
+	prefix := mediaResource.Prefix.String()
+	mediaType := mediaResource.GetMediaType()
 
 	pk := GenerateUserDataPk(userId)
 	sk := GenerateUserBoardImageDataSk(prefix, mediaType)
@@ -179,5 +185,5 @@ func (repo *Database) DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.M
 		"Sk": &types.AttributeValueMemberS{Value: sk},
 	}
 
-	return repo.DeleteDynamoDBItem(key)
+	return key
 }

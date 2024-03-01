@@ -39,14 +39,19 @@ type BoardData struct {
 }
 
 func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate, imageResource, videoResource *mediavalueobject.MediaResource) error {
+	builder := NewTransactionBuilder(repo.table, txId)
 	pk := GenerateBoardDataPk(board.BoardEntity.Id)
 
 	var nftImageExt, nftVideoExt string
 	if imageResource != nil {
 		nftImageExt = imageResource.GetExtension()
+		deleteMediaData := CreateDeleteMediaData(board.BoardEntity.UserId, imageResource)
+		builder.AddDeleteItem(deleteMediaData)
 	}
 	if videoResource != nil {
 		nftVideoExt = videoResource.GetExtension()
+		deleteMediaData := CreateDeleteMediaData(board.BoardEntity.UserId, videoResource)
+		builder.AddDeleteItem(deleteMediaData)
 	}
 
 	newBoard := &BoardData{
@@ -69,13 +74,11 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 		NftImageExt: &nftImageExt,
 		NftVideoExt: &nftVideoExt,
 	}
+	builder.AddPutItem(newBoard)
 
 	orderData := CreateOrderData(order)
-
-	builder := NewTransactionBuilder(repo.table, txId)
-	builder.AddPutItem(newBoard)
 	builder.AddPutItem(orderData)
-
+	
 	err := repo.WriteTransaction(builder)
 	if err != nil {
 		return err
