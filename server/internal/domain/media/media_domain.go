@@ -111,13 +111,13 @@ func (service *MediaDomainServiceImpl) CreateMediaNft(dto *mediadto.CreateMediaN
 	err := error(nil)
 
 	if dto.ImageId != nil {
-		mediaImage, err = service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, "image", dto.Prefix))
+		mediaImage, err = service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, "image", dto.Prefix), GetMediaTempOptions{CheckPublic: true})
 		if err != nil {
 			return nil, err
 		}
 	}
 	if dto.VideoId != nil {
-		mediaVideo, err = service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, "video", dto.Prefix))
+		mediaVideo, err = service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, "video", dto.Prefix), GetMediaTempOptions{CheckPublic: true})
 		if err != nil {
 			return nil, err
 		}
