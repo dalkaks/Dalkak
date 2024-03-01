@@ -133,6 +133,9 @@ func waitForResponse(responseChan chan appdto.Response, timeout time.Duration) i
 	select {
 	case resp := <-responseChan:
 		if resp.Error != nil {
+			if appError, ok := resp.Error.(*responseutil.AppError); ok {
+				return appError
+			}
 			return responseutil.NewAppError(responseutil.ErrCodeInternal, resp.Error.Error())
 		} else if appData, ok := resp.Data.(*responseutil.AppData); ok {
 			return appData
@@ -153,14 +156,14 @@ func getAuthUserMiddleware(c fiber.Ctx, keyManager core.KeyManager) error {
 	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
 		err := responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgTokenParseFailed)
 		responseutil.WriteToResponse(c, err)
-		return err
+		return nil
 	}
 
 	token := headerParts[1]
 	sub, err := keyManager.ParseTokenWithPublicKey(token, keytype.AccessToken)
 	if err != nil {
 		responseutil.WriteToResponse(c, err)
-		return err
+		return nil
 	}
 
 	c.Locals("user", appdto.UserInfo{WalletAddress: sub})

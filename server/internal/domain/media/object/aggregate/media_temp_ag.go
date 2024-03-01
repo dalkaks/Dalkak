@@ -7,29 +7,17 @@ import (
 )
 
 type MediaTempAggregate struct {
-	MediaEntity   *mediaentity.MediaEntity
-	MediaResource *mediavalueobject.MediaResource
-	MediaTempUrl  *mediavalueobject.MediaTempUrl
+	MediaEntity   mediaentity.MediaEntity
+	MediaResource mediavalueobject.MediaResource
+	MediaUrl      *mediavalueobject.MediaUrl
 	Length        *mediavalueobject.Length
 }
 
 type MediaTempAggregateOption func(*MediaTempAggregate)
 
-func WithMediaEntity(mediaEntity *mediaentity.MediaEntity) MediaTempAggregateOption {
+func WithMediaUrl(mediaUrl *mediavalueobject.MediaUrl) MediaTempAggregateOption {
 	return func(aggregate *MediaTempAggregate) {
-		aggregate.MediaEntity = mediaEntity
-	}
-}
-
-func WithMediaResource(mediaResource *mediavalueobject.MediaResource) MediaTempAggregateOption {
-	return func(aggregate *MediaTempAggregate) {
-		aggregate.MediaResource = mediaResource
-	}
-}
-
-func WithMediaTempUrl(mediaTempUrl *mediavalueobject.MediaTempUrl) MediaTempAggregateOption {
-	return func(aggregate *MediaTempAggregate) {
-		aggregate.MediaTempUrl = mediaTempUrl
+		aggregate.MediaUrl = mediaUrl
 	}
 }
 
@@ -39,12 +27,20 @@ func WithLength(length mediavalueobject.Length) MediaTempAggregateOption {
 	}
 }
 
-func NewMediaTempAggregate(options ...MediaTempAggregateOption) *MediaTempAggregate {
-	aggregate := &MediaTempAggregate{}
+func NewMediaTempAggregate(media *mediaentity.MediaEntity, resource *mediavalueobject.MediaResource, options ...MediaTempAggregateOption) (*MediaTempAggregate, error) {
+	if media == nil || resource == nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+	}
+
+	aggregate := &MediaTempAggregate{
+		MediaEntity:   *media,
+		MediaResource: *resource,
+	}
+	
 	for _, option := range options {
 		option(aggregate)
 	}
-	return aggregate
+	return aggregate, nil
 }
 
 func (m *MediaTempAggregate) CheckPublic() *MediaTempAggregate {
@@ -59,10 +55,10 @@ func (m *MediaTempAggregate) CheckConfirm() bool {
 }
 
 func (m *MediaTempAggregate) SetUploadUrl(uploadUrl string) {
-	if m.MediaTempUrl != nil {
-		m.MediaTempUrl.UploadUrl = &uploadUrl
+	if m.MediaUrl != nil {
+		m.MediaUrl.UploadUrl = &uploadUrl
 	} else {
-		m.MediaTempUrl = &mediavalueobject.MediaTempUrl{UploadUrl: &uploadUrl}
+		m.MediaUrl = &mediavalueobject.MediaUrl{UploadUrl: &uploadUrl}
 	}
 }
 
@@ -81,19 +77,21 @@ func (m *MediaTempAggregate) ConfirmMediaTemp(Id string, contentTypeStr string, 
 		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
 
+	m.MediaEntity.SetConfirm()
+
 	return &MediaTempUpdate{
 		MediaEntity: &mediaentity.MediaEntity{
 			Id:        m.MediaEntity.Id,
-			IsConfirm: true,
+			IsConfirm: m.MediaEntity.IsConfirm,
 			Timestamp: m.MediaEntity.Timestamp,
 		},
-		MediaResource: *m.MediaResource,
-		MediaTempUrl:  m.MediaTempUrl,
+		MediaResource: m.MediaResource,
+		MediaUrl:      m.MediaUrl,
 	}, nil
 }
 
 type MediaTempUpdate struct {
 	MediaEntity   *mediaentity.MediaEntity
 	MediaResource mediavalueobject.MediaResource
-	MediaTempUrl  *mediavalueobject.MediaTempUrl
+	MediaUrl      *mediavalueobject.MediaUrl
 }

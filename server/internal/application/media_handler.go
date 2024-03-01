@@ -42,7 +42,7 @@ func (app *ApplicationImpl) handleCreateMediaTemp(event eventbus.Event) {
 	}
 
 	// 리턴
-	result := mediadto.NewCreateMediaTempResponse(newMedia.MediaEntity.Id, newMedia.MediaTempUrl.AccessUrl, *newMedia.MediaTempUrl.UploadUrl)
+	result := mediadto.NewCreateMediaTempResponse(newMedia.MediaEntity.Id, newMedia.MediaUrl.AccessUrl, *newMedia.MediaUrl.UploadUrl)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
 }
 
@@ -67,7 +67,7 @@ func (app *ApplicationImpl) handleGetMediaTemp(event eventbus.Event) {
 	}
 
 	// 리턴
-	result := mediadto.NewGetMediaTempResponse(media.MediaEntity.Id, media.MediaResource.ContentType.String(), media.MediaTempUrl.AccessUrl)
+	result := mediadto.NewGetMediaTempResponse(media.MediaEntity.Id, media.MediaResource.ContentType.String(), media.MediaUrl.AccessUrl)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
 }
 
@@ -99,7 +99,7 @@ func (app *ApplicationImpl) handleConfirmMediaTemp(event eventbus.Event) {
 	}
 
 	// 리턴
-	result := mediadto.NewConfirmMediaTempResponse(mediaTempUpdate.MediaTempUrl.AccessUrl)
+	result := mediadto.NewConfirmMediaTempResponse(mediaTempUpdate.MediaUrl.AccessUrl)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
 }
 
@@ -133,7 +133,7 @@ func (app *ApplicationImpl) handleDeleteMediaTemp(event eventbus.Event) {
 		app.SendResponse(event.ResponseChan, nil, err)
 		return
 	}
-	err = app.Storage.DeleteObject(media.MediaTempUrl.GetUrlKey(app.AppConfig.StaticLink))
+	err = app.Storage.DeleteObject(media.MediaUrl.GetUrlKey(app.AppConfig.StaticLink))
 	if err != nil {
 		app.SendResponse(event.ResponseChan, nil, err)
 		return

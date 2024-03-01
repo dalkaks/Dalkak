@@ -2,7 +2,13 @@ package database
 
 import (
 	"context"
+	"dalkak/internal/infrastructure/database/dao"
+	cryptoutil "dalkak/pkg/utils/crypto"
 	responseutil "dalkak/pkg/utils/response"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -13,11 +19,16 @@ import (
 )
 
 type Database struct {
-	client *dynamodb.Client
-	table  string
+	client   *dynamodb.Client
+	table    string
+	queryKey []byte
 }
 
-func NewDB(ctx context.Context, mode string) (*Database, error) {
+const (
+	UserIdEntityTypeIndex = "UserId-EntityType-index"
+)
+
+func NewDB(ctx context.Context, mode, queryKey string) (*Database, error) {
 	var cfg aws.Config
 	var err error
 
@@ -39,7 +50,9 @@ func NewDB(ctx context.Context, mode string) (*Database, error) {
 		table = "dalkak_dev"
 	}
 
-	return &Database{client: dbClient, table: table}, nil
+	queryKeyByte := []byte(queryKey)
+
+	return &Database{client: dbClient, table: table, queryKey: queryKeyByte}, nil
 }
 
 func (db *Database) GetClient() *dynamodb.Client {
@@ -48,6 +61,28 @@ func (db *Database) GetClient() *dynamodb.Client {
 
 func (db *Database) GetTable() string {
 	return db.table
+}
+
+func (db *Database) GetTransactionID() (*dao.TransactionDao, error) {
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String(db.table),
+		Key: map[string]types.AttributeValue{
+			"Pk": &types.AttributeValueMemberS{Value: "Server#Transaction"},
+			"Sk": &types.AttributeValueMemberS{Value: "Server#Transaction"},
+		},
+	}
+
+	result, err := db.client.GetItem(context.Background(), input)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	var transaction dao.TransactionDao
+	err = attributevalue.UnmarshalMap(result.Item, &transaction)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+	return &transaction, nil
 }
 
 func (db *Database) QuerySingleItem(expr expression.Expression, dest interface{}) error {
@@ -75,17 +110,93 @@ func (db *Database) QuerySingleItem(expr expression.Expression, dest interface{}
 	return nil
 }
 
+func (db *Database) QueryItems(expr expression.Expression, index *string, pageDao *dao.RequestPageDao, dest interface{}) (*dao.ResponsePageDao, error) {
+	var exclusiveStartKey map[string]types.AttributeValue
+
+	if pageDao != nil && pageDao.ExclusiveStartKey != nil {
+		decryptedKey, err := db.decryptExclusiveStartKey(*pageDao.ExclusiveStartKey)
+		if err != nil {
+			return nil, err
+		}
+		exclusiveStartKey = decryptedKey
+	}
+
+	var items []map[string]types.AttributeValue
+	var count int
+
+	for {
+		input := &dynamodb.QueryInput{
+			TableName:                 aws.String(db.table),
+			IndexName:                 index,
+			KeyConditionExpression:    expr.KeyCondition(),
+			FilterExpression:          expr.Filter(),
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			ExclusiveStartKey:         exclusiveStartKey,
+		}
+
+		if pageDao != nil {
+			input.Limit = aws.Int32(int32(pageDao.Limit))
+		}
+
+		result, err := db.client.Query(context.Background(), input)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, result.Items...)
+		count += len(result.Items)
+
+		exclusiveStartKey = result.LastEvaluatedKey
+		if pageDao != nil && len(result.Items) < pageDao.Limit && result.LastEvaluatedKey != nil {
+			continue
+		}
+		break
+	}
+
+	err := attributevalue.UnmarshalListOfMaps(items, dest)
+	if err != nil {
+		return nil, err
+	}
+
+	var nextPageToken *string
+	if len(exclusiveStartKey) > 0 {
+		encryptedKey, err := db.encryptExclusiveStartKey(exclusiveStartKey)
+		if err != nil {
+			return nil, err
+		}
+		nextPageToken = &encryptedKey
+	}
+
+	return &dao.ResponsePageDao{
+		Count:             count,
+		ExclusiveStartKey: nextPageToken,
+	}, nil
+}
+
 func (db *Database) PutDynamoDBItem(data interface{}) error {
 	av, err := attributevalue.MarshalMap(data)
 	if err != nil {
 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
+	createExpr, err := GenerateCreateExpression()
+	if err != nil {
+		return err
+	}
+
 	_, err = db.client.PutItem(context.Background(), &dynamodb.PutItemInput{
-		TableName: aws.String(db.table),
-		Item:      av,
+		TableName:                 aws.String(db.table),
+		Item:                      av,
+		ExpressionAttributeNames:  createExpr.Names(),
+		ExpressionAttributeValues: createExpr.Values(),
+		ConditionExpression:       createExpr.Condition(),
 	})
 	if err != nil {
+		var cfe *types.ConditionalCheckFailedException
+		if errors.As(err, &cfe) {
+			return responseutil.NewAppError(responseutil.ErrCodeConflict, responseutil.ErrMsgDataConflict, err)
+		}
 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
@@ -99,7 +210,8 @@ func (db *Database) UpdateDynamoDBItem(key map[string]types.AttributeValue, expr
 		UpdateExpression:          expr.Update(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
-		ReturnValues:              types.ReturnValueNone,
+		ConditionExpression:       expr.Condition(),
+		ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
 	}
 
 	_, err := db.client.UpdateItem(context.Background(), input)
@@ -122,28 +234,63 @@ func (db *Database) DeleteDynamoDBItem(key map[string]types.AttributeValue) erro
 	return nil
 }
 
-func GenerateQueryExpression(keyCond expression.KeyConditionBuilder, filt *expression.ConditionBuilder) (expression.Expression, error) {
-	builder := expression.NewBuilder().WithKeyCondition(keyCond)
-
-	if filt != nil {
-		builder = builder.WithFilter(*filt)
-	}
-
-	expr, err := builder.Build()
+func (db *Database) WriteTransaction(builder *TransactionBuilder) error {
+	_, err := db.client.TransactWriteItems(context.Background(), &dynamodb.TransactWriteItemsInput{
+		TransactItems: builder.Build(),
+	})
 	if err != nil {
-		return expression.Expression{}, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+		var tce *types.TransactionCanceledException
+		if errors.As(err, &tce) {
+			return responseutil.NewAppError(responseutil.ErrCodeServiceDown, responseutil.ErrMsgDbInternalTrans, err)
+		}
+		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
-	return expr, nil
+	return nil
 }
 
-func GenerateUpdateExpression(update expression.UpdateBuilder) (expression.Expression, error) {
-	builder := expression.NewBuilder().WithUpdate(update)
-
-	expr, err := builder.Build()
+func (db *Database) encryptExclusiveStartKey(exclusiveStartKey map[string]types.AttributeValue) (string, error) {
+	byteKey, err := json.Marshal(exclusiveStartKey)
 	if err != nil {
-		return expression.Expression{}, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
 	}
 
-	return expr, nil
+	encryptKey, err := cryptoutil.EncryptAES(db.queryKey, byteKey)
+	if err != nil {
+		return "", responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	encodedString := base64.URLEncoding.EncodeToString(encryptKey)
+	return encodedString, nil
+}
+
+func (db *Database) decryptExclusiveStartKey(encodedKey string) (map[string]types.AttributeValue, error) {
+	decodedBytes, err := base64.URLEncoding.DecodeString(encodedKey)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptKey := []byte(decodedBytes)
+	decryptKey, err := cryptoutil.DecryptAES(db.queryKey, encryptKey)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	var tempMap map[string]map[string]interface{}
+	err = json.Unmarshal(decryptKey, &tempMap)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	decodedKey := make(map[string]types.AttributeValue)
+	for k, v := range tempMap {
+		if val, ok := v["Value"].(string); ok {
+			decodedKey[k] = &types.AttributeValueMemberS{Value: val}
+		} else if val, ok := v["Value"].(float64); ok {
+			decodedKey[k] = &types.AttributeValueMemberN{Value: strconv.FormatFloat(val, 'f', -1, 64)}
+		} else {
+			return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+		}
+	}
+	return decodedKey, nil
 }

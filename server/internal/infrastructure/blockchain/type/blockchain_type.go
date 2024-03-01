@@ -1,12 +1,5 @@
 package blockchaintype
 
-type ContractMetadata struct {
-	Name        string `json:"name" validate:"required"`
-	Description string `json:"description" validate:"required"`
-	Image       string `json:"image" validate:"required"`
-	ExternalUrl string `json:"externalUrl"`
-}
-
 type NftMetadata struct {
 	Name            string         `json:"name" validate:"required"`
 	Description     string         `json:"description" validate:"required"`
@@ -39,4 +32,18 @@ type NftAttribute struct {
 	TraitType   string      `json:"traitType,omitempty"`
 	Value       interface{} `json:"value" validate:"required"`
 	DisplayType string      `json:"displayType,omitempty"`
+}
+
+
+// todo param validation
+func NewNftMetadata(name, description, image, externalUrl, backgroundColor, animationUrl string, attributes []NftAttribute) *NftMetadata {
+	return &NftMetadata{
+		Name:            name,
+		Description:     description,
+		Image:           image,
+		ExternalUrl:     externalUrl,
+		Attributes:      attributes,
+		BackgroundColor: backgroundColor,
+		AnimationUrl:    animationUrl,
+	}
 }

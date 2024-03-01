@@ -43,7 +43,7 @@ func initInfra(ctx context.Context, mode string, appConfig *config.AppConfig) (*
 		return nil, err
 	}
 
-	db, err := database.NewDB(ctx, mode)
+	db, err := database.NewDB(ctx, mode, appConfig.QueryKey)
 	if err != nil {
 		return nil, err
 	}
