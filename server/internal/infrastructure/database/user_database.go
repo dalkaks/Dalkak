@@ -100,7 +100,7 @@ func (repo *Database) CreateMediaTemp(userId string, mediaTemp *mediaaggregate.M
 
 		Id:          mediaTemp.MediaEntity.Id,
 		Prefix:      prefix,
-		Extension:   mediaTemp.MediaResource.ContentType.ConvertToExtension(),
+		Extension:   mediaTemp.MediaResource.GetExtension(),
 		ContentType: mediaTemp.MediaResource.ContentType.String(),
 		Url:         mediaTemp.MediaUrl.AccessUrl,
 		IsConfirm:   mediaTemp.MediaEntity.IsConfirm,

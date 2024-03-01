@@ -33,8 +33,8 @@ func GenerateMediaTempKey(userId string, resource *MediaResource) (string, error
 		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
 
-	mediaTypeStr := resource.ContentType.ConvertToMediaType()
-	extensionStr := resource.ContentType.ConvertToExtension()
+	mediaTypeStr := resource.GetMediaType()
+	extensionStr := resource.GetExtension()
 	return "temp/" + userId + "/" + resource.Prefix.String() + "/" + mediaTypeStr + "/" + mediaTypeStr + "." + extensionStr, nil
 }
 

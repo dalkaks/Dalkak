@@ -55,16 +55,16 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// 트랜잭션 // 보드 저장 // 오더 저장	// 미디어 변경
-		err = app.Database.CreateBoard(txId, newBoard, newOrder, nil, nil)
+		err = app.Database.CreateBoard(txId, newBoard, newOrder, mediaNft.MediaImageResource, mediaNft.MediaVideoResource)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		return &TransactionResult{newBoard, mediaNft, newOrder}, nil
 	})
-	
+
 	// 스토리지 이동
 
 	if err != nil {

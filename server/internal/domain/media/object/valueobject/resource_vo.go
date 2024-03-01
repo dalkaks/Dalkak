@@ -49,6 +49,14 @@ func NewMediaResource(prefixStr string, contentTypeStr string) (*MediaResource, 
 	}, nil
 }
 
+func (mr *MediaResource) GetExtension() string {
+	return mr.ContentType.ConvertToExtension()
+}
+
+func (mr *MediaResource) GetMediaType() string {
+	return mr.ContentType.ConvertToMediaType()
+}
+
 func NewPrefix(prefixStr string) (MediaPrefix, error) {
 	prefix := MediaPrefix(prefixStr)
 	if !isAllowedPrefix(prefix) {
@@ -62,7 +70,7 @@ func NewContentType(contentTypeStr string) (MediaContentType, error) {
 	if mediaType == "" || extension == "" {
 		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
-	
+
 	contentType := MediaContentType(mediaType + "/" + extension)
 	if !isAllowedContentType(contentType) {
 		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)

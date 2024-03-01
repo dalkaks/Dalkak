@@ -4,6 +4,7 @@ import (
 	boardaggregate "dalkak/internal/domain/board/object/aggregate"
 	boardentity "dalkak/internal/domain/board/object/entity"
 	boardvalueobject "dalkak/internal/domain/board/object/valueobject"
+	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	"dalkak/internal/infrastructure/database/dao"
 
@@ -37,8 +38,17 @@ type BoardData struct {
 	NftVideoExt *string
 }
 
-func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate, nftImageExt, nftVideoExt *string) error {
+func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate, imageResource, videoResource *mediavalueobject.MediaResource) error {
 	pk := GenerateBoardDataPk(board.BoardEntity.Id)
+
+	var nftImageExt, nftVideoExt string
+	if imageResource != nil {
+		nftImageExt = imageResource.GetExtension()
+	}
+	if videoResource != nil {
+		nftVideoExt = videoResource.GetExtension()
+	}
+
 	newBoard := &BoardData{
 		Pk:         pk,
 		Sk:         pk,
@@ -56,8 +66,8 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 		NftMetaBgCol:  board.BoardMetadata.BackgroundColor,
 		NftMetaAttrib: board.BoardMetadata.Attributes,
 
-		NftImageExt: nftImageExt,
-		NftVideoExt: nftVideoExt,
+		NftImageExt: &nftImageExt,
+		NftVideoExt: &nftVideoExt,
 	}
 
 	orderData := CreateOrderData(order)
