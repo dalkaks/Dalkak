@@ -14,6 +14,7 @@ import (
 
 func (app *ApplicationImpl) RegisterBoardEventListeners() {
 	app.EventManager.Subscribe("post.board", app.handleCreateBoard)
+	app.EventManager.Subscribe("get.board.list.processing", app.handleGetBoardListProcessing)
 }
 
 func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
@@ -84,4 +85,28 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 	// 리턴 // todo update
 	result := boarddto.NewCreateBoardResponse(txResult.newBoard, txResult.newOrder)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
+}
+
+func (app *ApplicationImpl) handleGetBoardListProcessing(event eventbus.Event) {
+	userInfo := event.UserInfo
+	if userInfo == nil {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgRequestUnauth))
+		return
+	}
+	payload, ok := event.Payload.(*boarddto.GetBoardListProcessingRequest)
+	if !ok {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid))
+		return
+	}
+
+	// 보드 리스트 조회
+	boards, page, err := app.BoardDomain.GetBoardListProcessing(userInfo, payload)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+
+	// 리턴
+	result := boarddto.NewGetBoardListProcessingResponse(boards, nil, page)
+	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
 }

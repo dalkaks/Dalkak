@@ -2,6 +2,7 @@ package boardentity
 
 import (
 	generateutil "dalkak/pkg/utils/generate"
+	responseutil "dalkak/pkg/utils/response"
 	timeutil "dalkak/pkg/utils/time"
 )
 
@@ -23,7 +24,6 @@ const (
 	NFTUploaded          BoardStatus = "nftUpload"
 	NFTUploadFailed      BoardStatus = "nftUploadFailed"
 	BoardPosted          BoardStatus = "posted"
-	BoardDeleted         BoardStatus = "deleted"
 )
 
 func NewBoardEntity(userId string) *BoardEntity {
@@ -35,6 +35,42 @@ func NewBoardEntity(userId string) *BoardEntity {
 	}
 }
 
+func ConvertBoardEntity(id, userId string, timestamp int64, statusStr string) (*BoardEntity, error) {
+	status, err := NewBoardStatus(statusStr)
+	if err != nil {
+		return nil, err
+	}
+	return &BoardEntity{
+		Id:        id,
+		UserId:    userId,
+		Timestamp: timestamp,
+		Status:    status,
+	}, nil
+}
+
 func (bs BoardStatus) String() string {
 	return string(bs)
+}
+
+func NewBoardStatus(statusStr string) (BoardStatus, error) {
+	switch statusStr {
+	case string(BoardCreated):
+		return BoardCreated, nil
+	case string(PaymentStatusPaid):
+		return PaymentStatusPaid, nil
+	case string(PaymentStatusFailed):
+		return PaymentStatusFailed, nil
+	case string(ContractUploaded):
+		return ContractUploaded, nil
+	case string(ContractUploadFailed):
+		return ContractUploadFailed, nil
+	case string(NFTUploaded):
+		return NFTUploaded, nil
+	case string(NFTUploadFailed):
+		return NFTUploadFailed, nil
+	case string(BoardPosted):
+		return BoardPosted, nil
+	default:
+		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+	}
 }

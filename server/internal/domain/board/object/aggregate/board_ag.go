@@ -12,9 +12,7 @@ type BoardAggregate struct {
 	BoardMetadata boardvalueobject.NftMetadata
 }
 
-type BoardAggregateOption func(*BoardAggregate)
-
-func NewBoardAggregate(board *boardentity.BoardEntity, category *boardvalueobject.BoardCategory, metadata *boardvalueobject.NftMetadata, options ...BoardAggregateOption) (*BoardAggregate, error) {
+func NewBoardAggregate(board *boardentity.BoardEntity, category *boardvalueobject.BoardCategory, metadata *boardvalueobject.NftMetadata) (*BoardAggregate, error) {
 	if board == nil || metadata == nil {
 		return nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
 	}
@@ -25,8 +23,5 @@ func NewBoardAggregate(board *boardentity.BoardEntity, category *boardvalueobjec
 		BoardMetadata: *metadata,
 	}
 
-	for _, option := range options {
-		option(aggregate)
-	}
 	return aggregate, nil
 }

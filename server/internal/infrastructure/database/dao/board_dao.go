@@ -6,8 +6,11 @@ type BoardDao struct {
 	Id        string
 	Status    string
 	UserId    string
-	Type      string
 	Timestamp int64
+
+	Type    string
+	TypeId  string
+	Network string
 
 	NftMetaName   string
 	NftMetaDesc   string
@@ -17,4 +20,12 @@ type BoardDao struct {
 
 	NftImageExt *string
 	NftVideoExt *string
+}
+
+type BoardFindFilter struct {
+	UserId         string
+	StatusIncluded *string
+	StatusExcluded *string
+	CategoryType   *string
+	CategoryId     *string
 }

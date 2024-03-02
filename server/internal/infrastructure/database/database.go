@@ -25,7 +25,8 @@ type Database struct {
 }
 
 const (
-	UserIdEntityTypeIndex = "UserId-EntityType-index"
+	UserIdEntityTypeIndex    = "UserId-EntityType-index"
+	EntityTypeTimestampIndex = "EntityType-Timestamp-index"
 )
 
 func NewDB(ctx context.Context, mode, queryKey string) (*Database, error) {
@@ -113,7 +114,7 @@ func (db *Database) QuerySingleItem(expr expression.Expression, dest interface{}
 func (db *Database) QueryItems(expr expression.Expression, index *string, pageDao *dao.RequestPageDao, dest interface{}) (*dao.ResponsePageDao, error) {
 	var exclusiveStartKey map[string]types.AttributeValue
 
-	if pageDao != nil && pageDao.ExclusiveStartKey != nil {
+	if pageDao != nil && pageDao.ExclusiveStartKey != nil && *pageDao.ExclusiveStartKey != "" {
 		decryptedKey, err := db.decryptExclusiveStartKey(*pageDao.ExclusiveStartKey)
 		if err != nil {
 			return nil, err
@@ -205,12 +206,12 @@ func (db *Database) PutDynamoDBItem(data interface{}) error {
 
 func (db *Database) UpdateDynamoDBItem(key map[string]types.AttributeValue, expr expression.Expression) error {
 	input := &dynamodb.UpdateItemInput{
-		TableName:                 aws.String(db.table),
-		Key:                       key,
-		UpdateExpression:          expr.Update(),
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		ConditionExpression:       expr.Condition(),
+		TableName:                           aws.String(db.table),
+		Key:                                 key,
+		UpdateExpression:                    expr.Update(),
+		ExpressionAttributeNames:            expr.Names(),
+		ExpressionAttributeValues:           expr.Values(),
+		ConditionExpression:                 expr.Condition(),
 		ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
 	}
 
