@@ -30,6 +30,11 @@ func NewMediaUrlWithOnlyAccessUrl(accessUrl string) *MediaUrl {
 	}
 }
 
+func ConvertMediaUrl(staticLink, prefix, id, mediaType, extensionStr string) *MediaUrl {
+	accessUrl := parseutil.ConvertKeyToStaticLink(staticLink, fmt.Sprintf("%s/%s/%s/%s.%s", prefix, id, mediaType, mediaType, extensionStr))
+	return NewMediaUrlWithOnlyAccessUrl(accessUrl)
+}
+
 func GenerateMediaTempKey(userId string, resource *MediaResource) (string, error) {
 	if resource == nil {
 		return "", responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)

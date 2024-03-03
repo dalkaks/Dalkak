@@ -14,7 +14,8 @@ import (
 
 type BoardDomainService interface {
 	CreateBoard(dto *boarddto.CreateBoardDto) (*boardaggregate.BoardAggregate, error)
-	GetBoardListProcessing(userInfo *appdto.UserInfo, payload *boarddto.GetBoardListProcessingRequest) ([]*boardaggregate.BoardAggregate, *dao.ResponsePageDao, error)
+	ConvertBoardDaos(daos []*dao.BoardDao) ([]*boardaggregate.BoardAggregate, error)
+	GetBoardListProcessingFilter(userInfo *appdto.UserInfo, payload *boarddto.GetBoardListProcessingRequest) *dao.BoardFindFilter
 }
 
 type BoardDomainServiceImpl struct {
@@ -56,33 +57,25 @@ func (service *BoardDomainServiceImpl) CreateBoard(dto *boarddto.CreateBoardDto)
 	return board, nil
 }
 
-func (service *BoardDomainServiceImpl) GetBoardListProcessing(userInfo *appdto.UserInfo, payload *boarddto.GetBoardListProcessingRequest) ([]*boardaggregate.BoardAggregate, *dao.ResponsePageDao, error) {
-	// todo remove hard coding
+func (service *BoardDomainServiceImpl) ConvertBoardDaos(daos []*dao.BoardDao) ([]*boardaggregate.BoardAggregate, error) {
+
+	factory := boardfactory.NewCreateBoardFactory()
+	boards, err := factory.CreateBoardAggregatesFromDaos(daos)
+	if err != nil {
+		return nil, err
+	}
+
+	return boards, nil
+}
+
+func (service *BoardDomainServiceImpl) GetBoardListProcessingFilter(userInfo *appdto.UserInfo, payload *boarddto.GetBoardListProcessingRequest) *dao.BoardFindFilter {
 	categoryId := "default"
 	statusExcluded := string(boardentity.BoardPosted)
 
-	boardDaos, page, err := service.Database.FindBoardByUserId(
-		&dao.BoardFindFilter{
-			UserId:         userInfo.GetUserId(),
-			StatusExcluded: &statusExcluded,
-			CategoryType:   &payload.CategoryType,
-			CategoryId:     &categoryId,
-		}, &dao.RequestPageDao{
-			Limit:             payload.Limit,
-			ExclusiveStartKey: &payload.ExclusiveStartKey,
-		})
-	if err != nil {
-		return nil, nil, err
+	return &dao.BoardFindFilter{
+		UserId:         userInfo.GetUserId(),
+		StatusExcluded: &statusExcluded,
+		CategoryType:   &payload.CategoryType,
+		CategoryId:     &categoryId,
 	}
-	if len(boardDaos) == 0 {
-		return []*boardaggregate.BoardAggregate{}, page, nil
-	}
-
-	factory := boardfactory.NewCreateBoardFactory()
-	boards, err := factory.CreateBoardAggregatesFromDaos(boardDaos)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return boards, page, nil
 }

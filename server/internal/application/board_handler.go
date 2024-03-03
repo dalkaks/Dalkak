@@ -5,6 +5,7 @@ import (
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	ordervalueobject "dalkak/internal/domain/order/object/valueobject"
+	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
 	boarddto "dalkak/pkg/dto/board"
 	mediadto "dalkak/pkg/dto/media"
@@ -100,13 +101,33 @@ func (app *ApplicationImpl) handleGetBoardListProcessing(event eventbus.Event) {
 	}
 
 	// 보드 리스트 조회
-	boards, page, err := app.BoardDomain.GetBoardListProcessing(userInfo, payload)
+	getBoardFilter := app.BoardDomain.GetBoardListProcessingFilter(userInfo, payload)
+	boardDaos, page, err := app.Database.FindBoardByUserId(getBoardFilter, &dao.RequestPageDao{Limit: payload.Limit, ExclusiveStartKey: &payload.ExclusiveStartKey})
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+	if len(boardDaos) == 0 {
+		result := boarddto.NewGetBoardListProcessingResponse(nil, nil, page)
+		app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
+		return
+	}
+
+	// 보드 리스트 변환
+	boards, err := app.BoardDomain.ConvertBoardDaos(boardDaos)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+
+	// 보드 리스트 미디어 변환
+	medias, err := app.MediaDomain.ConvertBoardDaosToMediaNft(boardDaos)
 	if err != nil {
 		app.SendResponse(event.ResponseChan, nil, err)
 		return
 	}
 
 	// 리턴
-	result := boarddto.NewGetBoardListProcessingResponse(boards, nil, page)
+	result := boarddto.NewGetBoardListProcessingResponse(boards, medias, page)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
 }

@@ -36,7 +36,7 @@ func NewMediaTempAggregate(media *mediaentity.MediaEntity, resource *mediavalueo
 		MediaEntity:   *media,
 		MediaResource: *resource,
 	}
-	
+
 	for _, option := range options {
 		option(aggregate)
 	}
