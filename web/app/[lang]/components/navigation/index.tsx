@@ -14,6 +14,7 @@ import {
 import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 import LogoTab from './LogoTab';
 import WalletInfo from './wallet/WalletInfo';
+import { useMediaQuery } from 'react-responsive';
 
 const Navigation = () => {
   const [account, setAccount] = useState<{
@@ -27,6 +28,9 @@ const Navigation = () => {
   useEffect(() => {
     setHref(window.location.href);
   }, []);
+  const isDesktopAndTablet = useMediaQuery({
+    query: '(min-width: 640px)'
+  });
 
   useEffect(() => {
     account.walletAddress && account.signature && login(account);
@@ -34,7 +38,7 @@ const Navigation = () => {
   }, [account]);
 
   return (
-    <div className="container sticky top-0 z-10 flex h-20 w-full bg-white shadow-md">
+    <div className="container sticky top-0 z-10 flex h-20 w-full justify-evenly bg-white shadow-md">
       <MetaMaskProvider
         debug={true}
         sdkOptions={{
@@ -62,8 +66,8 @@ const Navigation = () => {
           </NavigationMenuList>
         </NavigationMenu>
 
-        <SideTab className="w-3/12 gap-5">
-          <WalletInfo />
+        <SideTab className="w-2/12 gap-2 sm:w-3/12 sm:gap-5">
+          {isDesktopAndTablet && <WalletInfo />}
           <MetaButton setAccount={setAccount} />
         </SideTab>
       </MetaMaskProvider>

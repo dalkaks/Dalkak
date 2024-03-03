@@ -5,6 +5,8 @@ import { useSDK } from '@metamask/sdk-react';
 import React, { useEffect, useState } from 'react';
 import detectEthereumProvider from '@metamask/detect-provider';
 import StatusDot from './StatusDot';
+import { useMediaQuery } from 'react-responsive';
+import WalletInfo from './wallet/WalletInfo';
 
 type MetaButtonProps = {
   setAccount: React.Dispatch<
@@ -18,6 +20,9 @@ type MetaButtonProps = {
 const MetaButton = ({ setAccount }: MetaButtonProps) => {
   const [hasProvider, setHasProvider] = useState(false);
   const { sdk, connected } = useSDK();
+  const isDesktopAndTablet = useMediaQuery({
+    query: '(min-width: 640px)'
+  });
 
   useEffect(() => {
     const getProvider = async () => {
@@ -64,7 +69,10 @@ const MetaButton = ({ setAccount }: MetaButtonProps) => {
   return (
     <Button disabled={!hasProvider} onClick={handleConnection}>
       <StatusDot connected={connected} />
-      <span>{connected ? 'Disconnect' : 'Connect'}</span>
+      {isDesktopAndTablet && (
+        <span>{connected ? 'Disconnect' : 'Connect'}</span>
+      )}
+      {!isDesktopAndTablet && <WalletInfo />}
     </Button>
   );
 };
