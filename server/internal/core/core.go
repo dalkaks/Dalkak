@@ -1,7 +1,10 @@
 package core
 
 import (
+	boardaggregate "dalkak/internal/domain/board/object/aggregate"
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
+	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
+	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	userentity "dalkak/internal/domain/user/object/entity"
 	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
@@ -22,6 +25,8 @@ type DatabaseManager interface {
 	GetClient() *dynamodb.Client
 	GetTable() string
 
+	GetTransactionID() (*dao.TransactionDao, error)
+
 	CreateUser(user *userentity.UserEntity) error
 	FindUserByWalletAddress(walletAddress string) (*dao.UserDao, error)
 
@@ -29,10 +34,14 @@ type DatabaseManager interface {
 	FindMediaTemp(userId, mediaType, prefix string) (*dao.MediaTempDao, error)
 	UpdateMediaTempConfirm(userId string, mediaTempUpdate *mediaaggregate.MediaTempUpdate) error
 	DeleteMediaTemp(userId string, mediaTemp *mediaaggregate.MediaTempAggregate) error
+
+	CreateBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate, imageResource, videoResource *mediavalueobject.MediaResource) error
+	FindBoardByUserId(dao *dao.BoardFindFilter, pageDao *dao.RequestPageDao) ([]*dao.BoardDao, *dao.ResponsePageDao, error)
 }
 
 type StorageManager interface {
 	CreatePresignedURL(mediaKey string, contentType string) (string, error)
+	CopyObject(srcURL, destURL string) error
 	GetHeadObject(key string) (*storagedto.MediaHeadDto, error)
 	DeleteObject(key string) error
 }

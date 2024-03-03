@@ -48,13 +48,16 @@ func (factory *CreateMediaTempDtoFactory) CreateMediaTempAggregate() (*mediaaggr
 	if err != nil {
 		return nil, err
 	}
-	mediaTempUrl := mediavalueobject.NewMediaTempUrl(factory.staticLink, mediaKey)
+	mediaTempUrl := mediavalueobject.NewMediaUrl(factory.staticLink, mediaKey)
 
-	mediaTempAggregate := mediaaggregate.NewMediaTempAggregate(
-		mediaaggregate.WithMediaEntity(media),
-		mediaaggregate.WithMediaResource(resource),
-		mediaaggregate.WithMediaTempUrl(mediaTempUrl),
+	mediaTempAggregate, err := mediaaggregate.NewMediaTempAggregate(
+		media,
+		resource,
+		mediaaggregate.WithMediaUrl(mediaTempUrl),
 	)
+	if err != nil {
+		return nil, err
+	}
 	return mediaTempAggregate, nil
 }
 
@@ -65,13 +68,15 @@ func (factory *MediaTempDaoFactory) CreateMediaTempAggregate() (*mediaaggregate.
 	if err != nil {
 		return nil, err
 	}
-	mediaTempUrl := mediavalueobject.NewMediaTempUrlWithOnlyAccessUrl(factory.dao.Url)
+	mediaTempUrl := mediavalueobject.NewMediaUrlWithOnlyAccessUrl(factory.dao.Url)
 
-	mediaTempAggregate := mediaaggregate.NewMediaTempAggregate(
-		mediaaggregate.WithMediaEntity(media),
-		mediaaggregate.WithMediaResource(resource),
-		mediaaggregate.WithMediaTempUrl(mediaTempUrl),
+	mediaTempAggregate, err := mediaaggregate.NewMediaTempAggregate(
+		media,
+		resource,
+		mediaaggregate.WithMediaUrl(mediaTempUrl),
 	)
-
+	if err != nil {
+		return nil, err
+	}
 	return mediaTempAggregate, nil
 }

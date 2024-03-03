@@ -14,6 +14,7 @@ type AppConfig struct {
 	Domain     string `json:"domain"`
 	StaticLink string `json:"staticLink"`
 	KmsKeyId   string `json:"kmsKeyId"`
+	QueryKey   string `json:"queryKey"`
 }
 
 type LambdaConfig struct {

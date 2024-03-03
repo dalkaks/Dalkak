@@ -24,3 +24,4 @@ schema.json
 go.work
 
 .env
+node_modules

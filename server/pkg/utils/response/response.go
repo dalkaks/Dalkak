@@ -18,6 +18,7 @@ const (
 	ErrCodeTimeout      = http.StatusRequestTimeout
 	ErrCodeConflict     = http.StatusConflict
 	ErrCodeInternal     = http.StatusInternalServerError
+	ErrCodeServiceDown  = http.StatusServiceUnavailable
 
 	ErrMsgRequestInvalid   = "REQUEST:INVALID_REQUEST"
 	ErrMsgRequestUnauth    = "REQUEST:UNAUTHORIZED"
@@ -35,8 +36,16 @@ const (
 	ErrMsgMetaMaskInvalidSignature = "METAMASK:INVALID_SIGNATURE"
 	ErrMsgMetaMaskNotMatchAddress  = "METAMASK:INVALID_ADDRESS"
 
+	ErrMsgBoardNameInvalid             = "BOARD:INVALID_NAME"
+	ErrMsgBoardDescriptionInvalid      = "BOARD:INVALID_DESCRIPTION"
+	ErrMsgBoardExternalUrlInvalid      = "BOARD:INVALID_EXTERNAL_URL"
+	ErrMsgBoardBackgroundColorInvalid  = "BOARD:INVALID_BACKGROUND_COLOR"
+	ErrMsgBoardAttributesInvalid       = "BOARD:INVALID_ATTRIBUTES"
+	ErrMsgBoardExistCreatedStatusBoard = "BOARD:EXIST_CREATED_STATUS_BOARD"
+
 	ErrMsgServerInternal  = "SERVER:INTERNAL_ERROR"
 	ErrMsgDBInternal      = "DB:INTERNAL_ERROR"
+	ErrMsgDbInternalTrans = "DB:INTERNAL_TRANSACTION_ERROR"
 	ErrMsgStorageInternal = "STORAGE:INTERNAL_ERROR"
 )
 

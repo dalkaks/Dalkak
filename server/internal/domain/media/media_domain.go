@@ -6,6 +6,7 @@ import (
 	mediafactory "dalkak/internal/domain/media/factory"
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
+	"dalkak/internal/infrastructure/database/dao"
 	mediadto "dalkak/pkg/dto/media"
 	responseutil "dalkak/pkg/utils/response"
 )
@@ -14,6 +15,8 @@ type MediaDomainService interface {
 	CreateMediaTemp(dto *mediadto.CreateMediaTempDto) (*mediaaggregate.MediaTempAggregate, error)
 	GetMediaTemp(dto *mediadto.GetMediaTempDto, options ...GetMediaTempOptions) (*mediaaggregate.MediaTempAggregate, error)
 	ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error)
+	CreateMediaNft(dto *mediadto.CreateMediaNftDto) (*mediaaggregate.MediaNftAggregate, *mediaaggregate.MediaTempAggregate, *mediaaggregate.MediaTempAggregate, error)
+	ConvertBoardDaosToMediaNft(daos []*dao.BoardDao) ([]*mediaaggregate.MediaNftAggregate, error)
 }
 
 type MediaDomainServiceImpl struct {
@@ -39,7 +42,7 @@ func (service *MediaDomainServiceImpl) CreateMediaTemp(dto *mediadto.CreateMedia
 		return nil, err
 	}
 
-	uploadUrl, err := service.Storage.CreatePresignedURL(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink), mediaTemp.MediaResource.ContentType.String())
+	uploadUrl, err := service.Storage.CreatePresignedURL(mediaTemp.MediaUrl.GetUrlKey(service.StaticLink), mediaTemp.MediaResource.ContentType.String())
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +92,7 @@ func (service *MediaDomainServiceImpl) ConfirmMediaTemp(dto *mediadto.ConfirmMed
 		return nil, responseutil.NewAppError(responseutil.ErrCodeConflict, responseutil.ErrMsgDataConflict)
 	}
 
-	mediaHead, err := service.Storage.GetHeadObject(mediaTemp.MediaTempUrl.GetUrlKey(service.StaticLink))
+	mediaHead, err := service.Storage.GetHeadObject(mediaTemp.MediaUrl.GetUrlKey(service.StaticLink))
 	if err != nil {
 		return nil, err
 	}
@@ -102,4 +105,43 @@ func (service *MediaDomainServiceImpl) ConfirmMediaTemp(dto *mediadto.ConfirmMed
 		return nil, err
 	}
 	return mediaTempUpdate, nil
+}
+
+func (service *MediaDomainServiceImpl) CreateMediaNft(dto *mediadto.CreateMediaNftDto) (*mediaaggregate.MediaNftAggregate, *mediaaggregate.MediaTempAggregate, *mediaaggregate.MediaTempAggregate, error) {
+	var mediaImage, mediaVideo *mediaaggregate.MediaTempAggregate
+	err := error(nil)
+
+	if dto.ImageId == nil {
+		return nil, nil, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid)
+	}
+
+	mediaImage, err = service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, "image", dto.Prefix), GetMediaTempOptions{CheckPublic: true})
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	if dto.VideoId != nil {
+		mediaVideo, err = service.GetMediaTemp(mediadto.NewGetMediaTempDto(dto.UserInfo, "video", dto.Prefix), GetMediaTempOptions{CheckPublic: true})
+		if err != nil {
+			return nil, nil, nil, err
+		}
+	}
+
+	factory := mediafactory.NewCreateMediaNftFactory(service.StaticLink)
+	mediaNft, err := factory.CreateMediaNftAggregate(dto, mediaImage, mediaVideo)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return mediaNft, mediaImage, mediaVideo, nil
+}
+
+func (service *MediaDomainServiceImpl) ConvertBoardDaosToMediaNft(daos []*dao.BoardDao) ([]*mediaaggregate.MediaNftAggregate, error) {
+	factory := mediafactory.NewCreateMediaNftFactory(service.StaticLink)
+	boards, err := factory.CreateMediaNftAggregateFromBoardDaos(daos)
+	if err != nil {
+		return nil, err
+	}
+
+	return boards, nil
 }
