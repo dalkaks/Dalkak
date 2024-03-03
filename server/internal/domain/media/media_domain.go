@@ -6,6 +6,7 @@ import (
 	mediafactory "dalkak/internal/domain/media/factory"
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
+	"dalkak/internal/infrastructure/database/dao"
 	mediadto "dalkak/pkg/dto/media"
 	responseutil "dalkak/pkg/utils/response"
 )
@@ -15,6 +16,7 @@ type MediaDomainService interface {
 	GetMediaTemp(dto *mediadto.GetMediaTempDto, options ...GetMediaTempOptions) (*mediaaggregate.MediaTempAggregate, error)
 	ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error)
 	CreateMediaNft(dto *mediadto.CreateMediaNftDto) (*mediaaggregate.MediaNftAggregate, *mediaaggregate.MediaTempAggregate, *mediaaggregate.MediaTempAggregate, error)
+	ConvertBoardDaosToMediaNft(daos []*dao.BoardDao) ([]*mediaaggregate.MediaNftAggregate, error)
 }
 
 type MediaDomainServiceImpl struct {
@@ -125,11 +127,21 @@ func (service *MediaDomainServiceImpl) CreateMediaNft(dto *mediadto.CreateMediaN
 		}
 	}
 
-	factory := mediafactory.NewCreateMediaNftDtoFactory(service.StaticLink, dto, mediaImage, mediaVideo)
-	mediaNft, err := factory.CreateMediaNftAggregate()
+	factory := mediafactory.NewCreateMediaNftFactory(service.StaticLink)
+	mediaNft, err := factory.CreateMediaNftAggregate(dto, mediaImage, mediaVideo)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	return mediaNft, mediaImage, mediaVideo, nil
+}
+
+func (service *MediaDomainServiceImpl) ConvertBoardDaosToMediaNft(daos []*dao.BoardDao) ([]*mediaaggregate.MediaNftAggregate, error) {
+	factory := mediafactory.NewCreateMediaNftFactory(service.StaticLink)
+	boards, err := factory.CreateMediaNftAggregateFromBoardDaos(daos)
+	if err != nil {
+		return nil, err
+	}
+
+	return boards, nil
 }

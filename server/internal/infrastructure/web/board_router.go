@@ -23,4 +23,19 @@ func SetupBoardRoute(group fiber.Router, eventManager core.EventManager) {
 
 		return PublishAndWaitResponse(eventManager, "post.board", user, req)
 	}))
+
+	group.Get("/list/processing", WarpHandler(func(c fiber.Ctx) interface{} {
+		user, err := GetUserInfoFromContext(c, true)
+		if err != nil {
+			return err
+		}
+
+		req := new(boarddto.GetBoardListProcessingRequest)
+		err = BindAndValidate(c, req)
+		if err != nil {
+			return err
+		}
+
+		return PublishAndWaitResponse(eventManager, "get.board.list.processing", user, req)
+	}))
 }

@@ -25,7 +25,8 @@ type Database struct {
 }
 
 const (
-	UserIdEntityTypeIndex = "UserId-EntityType-index"
+	UserIdEntityTypeIndex    = "UserId-EntityType-index"
+	EntityTypeTimestampIndex = "EntityType-Timestamp-index"
 )
 
 func NewDB(ctx context.Context, mode, queryKey string) (*Database, error) {
@@ -112,17 +113,18 @@ func (db *Database) QuerySingleItem(expr expression.Expression, dest interface{}
 
 func (db *Database) QueryItems(expr expression.Expression, index *string, pageDao *dao.RequestPageDao, dest interface{}) (*dao.ResponsePageDao, error) {
 	var exclusiveStartKey map[string]types.AttributeValue
+	var err error
 
-	if pageDao != nil && pageDao.ExclusiveStartKey != nil {
-		decryptedKey, err := db.decryptExclusiveStartKey(*pageDao.ExclusiveStartKey)
+	if pageDao != nil && pageDao.ExclusiveStartKey != nil && *pageDao.ExclusiveStartKey != "" {
+		exclusiveStartKey, err = db.decryptExclusiveStartKey(*pageDao.ExclusiveStartKey)
 		if err != nil {
 			return nil, err
 		}
-		exclusiveStartKey = decryptedKey
 	}
 
 	var items []map[string]types.AttributeValue
 	var count int
+	var nextPageToken *string
 
 	for {
 		input := &dynamodb.QueryInput{
@@ -147,25 +149,26 @@ func (db *Database) QueryItems(expr expression.Expression, index *string, pageDa
 		items = append(items, result.Items...)
 		count += len(result.Items)
 
-		exclusiveStartKey = result.LastEvaluatedKey
-		if pageDao != nil && len(result.Items) < pageDao.Limit && result.LastEvaluatedKey != nil {
-			continue
+		if len(result.LastEvaluatedKey) > 0 {
+			exclusiveStartKey = result.LastEvaluatedKey
+			encryptedKey, err := db.encryptExclusiveStartKey(exclusiveStartKey)
+			if err != nil {
+				return nil, err
+			}
+			nextPageToken = &encryptedKey
+		} else {
+			nextPageToken = nil
+			break
 		}
-		break
+
+		if pageDao != nil && pageDao.Limit > 0 && count >= pageDao.Limit {
+			break
+		}
 	}
 
-	err := attributevalue.UnmarshalListOfMaps(items, dest)
+	err = attributevalue.UnmarshalListOfMaps(items, dest)
 	if err != nil {
 		return nil, err
-	}
-
-	var nextPageToken *string
-	if len(exclusiveStartKey) > 0 {
-		encryptedKey, err := db.encryptExclusiveStartKey(exclusiveStartKey)
-		if err != nil {
-			return nil, err
-		}
-		nextPageToken = &encryptedKey
 	}
 
 	return &dao.ResponsePageDao{
@@ -205,12 +208,12 @@ func (db *Database) PutDynamoDBItem(data interface{}) error {
 
 func (db *Database) UpdateDynamoDBItem(key map[string]types.AttributeValue, expr expression.Expression) error {
 	input := &dynamodb.UpdateItemInput{
-		TableName:                 aws.String(db.table),
-		Key:                       key,
-		UpdateExpression:          expr.Update(),
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		ConditionExpression:       expr.Condition(),
+		TableName:                           aws.String(db.table),
+		Key:                                 key,
+		UpdateExpression:                    expr.Update(),
+		ExpressionAttributeNames:            expr.Names(),
+		ExpressionAttributeValues:           expr.Values(),
+		ConditionExpression:                 expr.Condition(),
 		ReturnValuesOnConditionCheckFailure: types.ReturnValuesOnConditionCheckFailureNone,
 	}
 
@@ -284,12 +287,10 @@ func (db *Database) decryptExclusiveStartKey(encodedKey string) (map[string]type
 
 	decodedKey := make(map[string]types.AttributeValue)
 	for k, v := range tempMap {
-		if val, ok := v["Value"].(string); ok {
-			decodedKey[k] = &types.AttributeValueMemberS{Value: val}
-		} else if val, ok := v["Value"].(float64); ok {
-			decodedKey[k] = &types.AttributeValueMemberN{Value: strconv.FormatFloat(val, 'f', -1, 64)}
+		if num, err := strconv.ParseFloat(v["Value"].(string), 64); err == nil {
+			decodedKey[k] = &types.AttributeValueMemberN{Value: strconv.FormatFloat(num, 'f', -1, 64)}
 		} else {
-			return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+			decodedKey[k] = &types.AttributeValueMemberS{Value: v["Value"].(string)}
 		}
 	}
 	return decodedKey, nil

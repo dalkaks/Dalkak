@@ -5,6 +5,7 @@ import (
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	ordervalueobject "dalkak/internal/domain/order/object/valueobject"
+	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
 	boarddto "dalkak/pkg/dto/board"
 	mediadto "dalkak/pkg/dto/media"
@@ -14,6 +15,7 @@ import (
 
 func (app *ApplicationImpl) RegisterBoardEventListeners() {
 	app.EventManager.Subscribe("post.board", app.handleCreateBoard)
+	app.EventManager.Subscribe("get.board.list.processing", app.handleGetBoardListProcessing)
 }
 
 func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
@@ -36,7 +38,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 
 	txResult, err := ExecuteOptimisticTransactionWithRetry(app, func(txId string) (*TransactionResult, error) {
 		// 보드 생성
-		boardCreateDto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
+		boardCreateDto := boarddto.NewCreateBoardDto(userInfo, payload.Name, payload.Description, payload.CategoryType, payload.Network, payload.ExternalLink, payload.BackgroundColor, payload.Attributes)
 		newBoard, err := app.BoardDomain.CreateBoard(boardCreateDto)
 		if err != nil {
 			return nil, err
@@ -84,4 +86,48 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 	// 리턴 // todo update
 	result := boarddto.NewCreateBoardResponse(txResult.newBoard, txResult.newOrder)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeCreated), nil)
+}
+
+func (app *ApplicationImpl) handleGetBoardListProcessing(event eventbus.Event) {
+	userInfo := event.UserInfo
+	if userInfo == nil {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgRequestUnauth))
+		return
+	}
+	payload, ok := event.Payload.(*boarddto.GetBoardListProcessingRequest)
+	if !ok {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid))
+		return
+	}
+
+	// 보드 리스트 조회
+	getBoardFilter := app.BoardDomain.GetBoardListProcessingFilter(userInfo, payload)
+	boardDaos, page, err := app.Database.FindBoardByUserId(getBoardFilter, &dao.RequestPageDao{Limit: payload.Limit, ExclusiveStartKey: &payload.ExclusiveStartKey})
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+	if len(boardDaos) == 0 {
+		result := boarddto.NewGetBoardListProcessingResponse(nil, nil, page)
+		app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
+		return
+	}
+
+	// 보드 리스트 변환
+	boards, err := app.BoardDomain.ConvertBoardDaos(boardDaos)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+
+	// 보드 리스트 미디어 변환
+	medias, err := app.MediaDomain.ConvertBoardDaosToMediaNft(boardDaos)
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+
+	// 리턴
+	result := boarddto.NewGetBoardListProcessingResponse(boards, medias, page)
+	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
 }

@@ -2,7 +2,6 @@ package database
 
 import (
 	boardaggregate "dalkak/internal/domain/board/object/aggregate"
-	boardentity "dalkak/internal/domain/board/object/entity"
 	boardvalueobject "dalkak/internal/domain/board/object/valueobject"
 	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
@@ -26,7 +25,10 @@ type BoardData struct {
 	Id     string
 	Status string
 	UserId string
-	Type   string
+
+	Type    string
+	TypeId  string
+	Network string
 
 	NftMetaName   string
 	NftMetaDesc   string
@@ -63,7 +65,10 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 		Id:     board.BoardEntity.Id,
 		Status: board.BoardEntity.Status.String(),
 		UserId: board.BoardEntity.UserId,
-		Type:   board.BoardEntity.Type.String(),
+
+		Type:    board.BoardCategory.GetCategoryType(),
+		TypeId:  board.BoardCategory.GetCategoryId(),
+		Network: board.BoardCategory.GetNetwork(),
 
 		NftMetaName:   board.BoardMetadata.Name,
 		NftMetaDesc:   board.BoardMetadata.Description,
@@ -78,7 +83,7 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 
 	orderData := CreateOrderData(order)
 	builder.AddPutItem(orderData)
-	
+
 	err := repo.WriteTransaction(builder)
 	if err != nil {
 		return err
@@ -88,24 +93,36 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 
 // get board by id(all) and sometimes filter
 
-func (repo *Database) FindBoardByUserId(userId string, status *boardentity.BoardStatus, pageDao *dao.RequestPageDao) ([]*dao.BoardDao, *dao.ResponsePageDao, error) {
-	index := UserIdEntityTypeIndex
-	pk := userId
-	sk := BoardDataType
+func (repo *Database) FindBoardByUserId(filter *dao.BoardFindFilter, pageDao *dao.RequestPageDao) ([]*dao.BoardDao, *dao.ResponsePageDao, error) {
+	index := EntityTypeTimestampIndex
+	pk := BoardDataType
 	var boardToFind []*BoardData
 
-	keyCond := expression.Key("UserId").Equal(expression.Value(pk)).
-		And(expression.Key("EntityType").Equal(expression.Value(sk)))
+	keyCond := expression.Key("EntityType").Equal(expression.Value(pk))
 
-	var expr expression.Expression
-	var err error
-	if status != nil {
-		statusStr := status.String()
-		filt := expression.Name("Status").Equal(expression.Value(statusStr))
-		expr, err = GenerateQueryExpression(keyCond, &filt)
-	} else {
-		expr, err = GenerateQueryExpression(keyCond, nil)
+	var builder expression.Builder
+	builder = builder.WithKeyCondition(keyCond)
+
+	if filter != nil {
+		if filter.UserId != "" {
+			builder = builder.WithFilter(expression.Name("UserId").Equal(expression.Value(filter.UserId)))
+		}
+		if filter.StatusIncluded != nil {
+			builder = builder.WithFilter(expression.Name("Status").Equal(expression.Value(filter.StatusIncluded)))
+		}
+		if filter.StatusExcluded != nil {
+			builder = builder.WithFilter(expression.Name("Status").NotEqual(expression.Value(filter.StatusExcluded)))
+		}
+
+		if filter.CategoryType != nil {
+			builder = builder.WithFilter(expression.Name("Type").Equal(expression.Value(*filter.CategoryType)))
+		}
+		if filter.CategoryId != nil {
+			builder = builder.WithFilter(expression.Name("TypeId").Equal(expression.Value(*filter.CategoryId)))
+		}
 	}
+
+	expr, err := builder.Build()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -124,8 +141,11 @@ func (repo *Database) FindBoardByUserId(userId string, status *boardentity.Board
 			Id:        board.Id,
 			Status:    board.Status,
 			UserId:    board.UserId,
-			Type:      board.Type,
 			Timestamp: board.Timestamp,
+
+			Type:    board.Type,
+			TypeId:  board.TypeId,
+			Network: board.Network,
 
 			NftMetaName:   board.NftMetaName,
 			NftMetaDesc:   board.NftMetaDesc,
