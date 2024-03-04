@@ -23,7 +23,7 @@ const ImageCarousel = ({ items }: Props) => {
     query: '(min-width: 640px)'
   });
   return (
-    <Carousel className="w-full p-4" opts={CAROUSEL_OPTIONS}>
+    <Carousel className="w-full max-w-[1200px] p-4" opts={CAROUSEL_OPTIONS}>
       <CarouselContent>
         {items.map((item, index) => (
           <CustomCarouselItem key={index} item={item} />
