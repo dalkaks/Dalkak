@@ -56,7 +56,7 @@ const MintingForm = ({ setFile }: Props) => {
   }
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           name="title"
           control={form.control}
@@ -128,7 +128,9 @@ const MintingForm = ({ setFile }: Props) => {
             );
           }}
         />
-        <Button type="submit">Submit</Button>
+        <Button type="submit" className="mt-4 w-full">
+          Submit
+        </Button>
       </form>
     </Form>
   );
