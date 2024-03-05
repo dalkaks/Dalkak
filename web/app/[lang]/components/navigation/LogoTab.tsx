@@ -2,10 +2,15 @@ import React from 'react';
 import SideTab from './containers/SideTab';
 import Link from 'next/link';
 import { useMediaQuery } from 'react-responsive';
+import Image from 'next/image';
 
 const LogoTab = () => {
   const Logo = () => (
-    <img className="h-[50%]" src="/images/dalkak_logo.png" alt="dalkak_logo" />
+    <Image
+      className="h-[50%]"
+      src="/images/dalkak_logo.png"
+      alt="dalkak_logo"
+    />
   );
 
   const isDesktopAndTablet = useMediaQuery({

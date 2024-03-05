@@ -5,6 +5,7 @@ import {
   HoverCardContent,
   HoverCardTrigger
 } from '@/components/ui/hover-card';
+import Image from 'next/image';
 
 type Props = {};
 
@@ -14,7 +15,7 @@ const WalletInfo = (props: Props) => {
   if (!connected) return <></>;
 
   const WalletIcon = () => (
-    <img className="h-full" src="/icons/wallet.svg" alt="wallet" />
+    <Image className="h-full" src="/icons/wallet.svg" alt="wallet" />
   );
 
   return (

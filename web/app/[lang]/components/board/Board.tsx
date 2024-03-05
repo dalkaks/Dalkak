@@ -10,7 +10,7 @@ const Board = ({ imageSrcs }: Props) => {
   return (
     <div className="container grid grid-cols-1 gap-4 sm:grid-cols-4">
       {imageSrcs.map((image, index) => (
-        <Card>
+        <Card key={image}>
           <CardContent className="overflow-hidden rounded-lg p-0 shadow-md hover:shadow-lg">
             <AspectRatio ratio={1 / 1} key={index}>
               <Image
