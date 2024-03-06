@@ -16,15 +16,30 @@ export const errorGuard = (arg: any): arg is ResponseError => {
   return arg.error;
 };
 
-const errorHandler = (res: ResponseError, errorCase?: typeof ERROR_CASE) => {
-  errorCase ?? ERROR_CASE;
-  if (!ERROR_CASE[res.status]) throw new Error('Unknown Error');
+const splitErrorMessage = (message: string) => {
+  const specificError = message.split(':');
+  return {
+    origin: specificError[0],
+    detail: specificError[1]
+  };
+};
 
-  const errorQuery = Object.keys(ERROR_CASE[res.status]);
-  const error = errorQuery.includes(res.error.message)
-    ? ERROR_CASE[res.status][res.error.message]
-    : ERROR_CASE[res.status]['DEFAULT'];
+const errorHandler = (
+  res: ResponseError,
+  customErrorCase?: typeof ERROR_CASE
+) => {
+  const errorCase = customErrorCase ?? ERROR_CASE;
+  if (!errorCase[res.status]) throw new Error('Unknown Error');
 
+  const errorQuery = Object.keys(errorCase[res.status]);
+  const { origin, detail } = splitErrorMessage(res.error);
+
+  if (errorQuery.includes(origin)) {
+    const error =
+      errorCase[res.status][origin][detail] ?? errorCase[res.status]['DEFAULT'];
+    return new Error(error);
+  }
+  const error = errorCase[res.status]['DEFAULT'];
   return new Error(error);
 };
 

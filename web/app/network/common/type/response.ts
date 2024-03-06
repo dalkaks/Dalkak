@@ -1,8 +1,6 @@
 export interface ResponseError {
   status: number;
-  error: {
-    message: string;
-  };
+  error: string;
 }
 
 export interface ResponseSuccess<T> {
