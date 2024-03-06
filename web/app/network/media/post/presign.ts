@@ -1,4 +1,4 @@
-'use server'
+'use server';
 
 import errorHandler, { errorGuard } from '../../common/util/errorHandler';
 import { ResponseSuccess } from '../../common/type/response';
@@ -6,16 +6,16 @@ import serviceModule from '../../serviceModule';
 import { NftFileExt } from '@/type/nft/fileExtension';
 import { cookies } from 'next/headers';
 
-interface RequestPresign {
-  mediaType: "image",
-  ext: NftFileExt,
-  prefix: "board"
+export interface RequestPresign {
+  mediaType: 'image';
+  ext: NftFileExt;
+  prefix: 'board';
 }
 
 interface ResponsePresign {
   id: string;
-  url: `https://${string}.${RequestPresign['ext']}` // https + 파일경로 + 확장자
-  presignedUrl: string;
+  accessUrl: `https://${string}.${RequestPresign['ext']}`; // https + 파일경로 + 확장자
+  uploadUrl: string;
 }
 
 const ERROR_CASE: { [key in number]: any } = {
@@ -24,26 +24,28 @@ const ERROR_CASE: { [key in number]: any } = {
   },
   '401': {
     DEFAULT: 'UNAUTHORIZED',
-    REFRESH_TOKEN_NOT_FOUND: 'REFRESH_TOKEN_NOT_FOUND',
+    REFRESH_TOKEN_NOT_FOUND: 'REFRESH_TOKEN_NOT_FOUND'
   },
   '500': {
-    DEFAULT: 'INTERNAL_SERVER_ERROR'
+    DEFAULT: 'INTERNAL_SERVER_ERROR',
+    REQUEST: {
+      INVALID_REQUEST: 'PRESIGN_INVALID_REQUEST'
+    }
   }
 };
 
 const presign = async (param: RequestPresign) => {
-  const token = cookies().get('access_token');
+  const token = cookies().get('access_token')?.value;
   if (!token) throw new Error('로그인이 필요합니다');
   const res = await serviceModule<ResponseSuccess<ResponsePresign>>(
     'POST',
-    'user/media/presigned',
+    'media/presigned',
     param,
     {
-      Authorization: `Bearer ${token.value}`
+      Authorization: `Bearer ${token}`
     }
   );
   if (errorGuard(res)) throw errorHandler(res, ERROR_CASE);
-  console.log(res)
   return res;
 };
 
