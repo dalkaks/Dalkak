@@ -15,7 +15,13 @@ const WalletInfo = (props: Props) => {
   if (!connected) return <></>;
 
   const WalletIcon = () => (
-    <Image className="h-full" src="/icons/wallet.svg" alt="wallet" />
+    <Image
+      className="h-full"
+      src="/icons/wallet.svg"
+      width={100}
+      height={100}
+      alt="wallet"
+    />
   );
 
   return (

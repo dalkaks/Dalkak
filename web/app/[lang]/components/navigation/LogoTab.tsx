@@ -10,6 +10,8 @@ const LogoTab = () => {
       className="h-[50%]"
       src="/images/dalkak_logo.png"
       alt="dalkak_logo"
+      width={50}
+      height={50}
     />
   );
 
