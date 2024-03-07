@@ -37,6 +37,7 @@ type DatabaseManager interface {
 
 	CreateBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate, imageResource, videoResource *mediavalueobject.MediaResource) error
 	FindBoardByUserId(dao *dao.BoardFindFilter, pageDao *dao.RequestPageDao) ([]*dao.BoardDao, *dao.ResponsePageDao, error)
+	FindBoardById(boardId string) (*dao.BoardDao, error)
 }
 
 type StorageManager interface {

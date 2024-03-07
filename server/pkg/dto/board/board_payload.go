@@ -103,3 +103,7 @@ func NewGetBoardListProcessingResponse(items []*boardaggregate.BoardAggregate, m
 		LastEvaluatedKey: page.ExclusiveStartKey,
 	}
 }
+
+type DeleteBoardRequest struct {
+	Id string `param:"id" validate:"required"`
+}

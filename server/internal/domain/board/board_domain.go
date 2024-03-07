@@ -15,7 +15,9 @@ import (
 type BoardDomainService interface {
 	CreateBoard(dto *boarddto.CreateBoardDto) (*boardaggregate.BoardAggregate, error)
 	ConvertBoardDaos(daos []*dao.BoardDao) ([]*boardaggregate.BoardAggregate, error)
+	ConvertBoardDao(dao *dao.BoardDao) (*boardaggregate.BoardAggregate, error)
 	GetBoardListProcessingFilter(userInfo *appdto.UserInfo, payload *boarddto.GetBoardListProcessingRequest) *dao.BoardFindFilter
+	GetBoardById(userInfo *appdto.UserInfo, id string) (*dao.BoardDao, error)
 }
 
 type BoardDomainServiceImpl struct {
@@ -58,7 +60,6 @@ func (service *BoardDomainServiceImpl) CreateBoard(dto *boarddto.CreateBoardDto)
 }
 
 func (service *BoardDomainServiceImpl) ConvertBoardDaos(daos []*dao.BoardDao) ([]*boardaggregate.BoardAggregate, error) {
-
 	factory := boardfactory.NewCreateBoardFactory()
 	boards, err := factory.CreateBoardAggregatesFromDaos(daos)
 	if err != nil {
@@ -66,6 +67,16 @@ func (service *BoardDomainServiceImpl) ConvertBoardDaos(daos []*dao.BoardDao) ([
 	}
 
 	return boards, nil
+}
+
+func (service *BoardDomainServiceImpl) ConvertBoardDao(dao *dao.BoardDao) (*boardaggregate.BoardAggregate, error) {
+	factory := boardfactory.NewCreateBoardFactory()
+	board, err := factory.CreateBoardAggregateFromDao(dao)
+	if err != nil {
+		return nil, err
+	}
+
+	return board, nil
 }
 
 func (service *BoardDomainServiceImpl) GetBoardListProcessingFilter(userInfo *appdto.UserInfo, payload *boarddto.GetBoardListProcessingRequest) *dao.BoardFindFilter {
@@ -78,4 +89,16 @@ func (service *BoardDomainServiceImpl) GetBoardListProcessingFilter(userInfo *ap
 		CategoryType:   &payload.CategoryType,
 		CategoryId:     &categoryId,
 	}
+}
+
+func (service *BoardDomainServiceImpl) GetBoardById(userInfo *appdto.UserInfo, id string) (*dao.BoardDao, error) {
+	board, err := service.Database.FindBoardById(id)
+	if err != nil {
+		return nil, err
+	}
+	if board == nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeNotFound, responseutil.ErrMsgDataNotFound)
+	}
+
+	return board, nil
 }

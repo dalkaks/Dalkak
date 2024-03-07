@@ -6,6 +6,7 @@ import (
 	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	"dalkak/internal/infrastructure/database/dao"
+	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 )
@@ -158,4 +159,45 @@ func (repo *Database) FindBoardByUserId(filter *dao.BoardFindFilter, pageDao *da
 		})
 	}
 	return boardDaos, page, nil
+}
+
+func (repo *Database) FindBoardById(boardId string) (*dao.BoardDao, error) {
+	pk := GenerateBoardDataPk(boardId)
+	var boardToFind *BoardData
+
+	keyCond := expression.Key("Pk").Equal(expression.Value(pk)).
+		And(expression.Key("Sk").Equal(expression.Value(pk)))
+	expr, err := GenerateQueryExpression(keyCond, nil)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	err = repo.QuerySingleItem(expr, &boardToFind)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+	if boardToFind == nil {
+		return nil, nil
+	}
+
+	boardDao := &dao.BoardDao{
+		Id:        boardToFind.Id,
+		Status:    boardToFind.Status,
+		UserId:    boardToFind.UserId,
+		Timestamp: boardToFind.Timestamp,
+
+		Type:    boardToFind.Type,
+		TypeId:  boardToFind.TypeId,
+		Network: boardToFind.Network,
+
+		NftMetaName:   boardToFind.NftMetaName,
+		NftMetaDesc:   boardToFind.NftMetaDesc,
+		NftMetaExtUrl: boardToFind.NftMetaExtUrl,
+		NftMetaBgCol:  boardToFind.NftMetaBgCol,
+		NftMetaAttrib: boardToFind.NftMetaAttrib,
+
+		NftImageExt: boardToFind.NftImageExt,
+		NftVideoExt: boardToFind.NftVideoExt,
+	}
+	return boardDao, nil
 }
