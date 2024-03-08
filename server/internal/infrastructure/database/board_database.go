@@ -9,6 +9,7 @@ import (
 	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 const BoardDataType = "Board"
@@ -64,7 +65,7 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 		Timestamp:  board.BoardEntity.Timestamp,
 
 		Id:     board.BoardEntity.Id,
-		Status: board.BoardEntity.Status.String(),
+		Status: board.BoardEntity.GetStatus(),
 		UserId: board.BoardEntity.UserId,
 
 		Type:    board.BoardCategory.GetCategoryType(),
@@ -200,4 +201,46 @@ func (repo *Database) FindBoardById(boardId string) (*dao.BoardDao, error) {
 		NftVideoExt: boardToFind.NftVideoExt,
 	}
 	return boardDao, nil
+}
+
+func (repo *Database) UpdateBoardCancel(txId string, board *boardaggregate.BoardAggregate) error {
+	builder := NewTransactionBuilder(repo.table, txId)
+
+	key := CreateBoardKey(board.BoardEntity.Id)
+
+	update := expression.Set(expression.Name("Status"), expression.Value(board.BoardEntity.Status)).
+		Set(expression.Name("Timestamp"), expression.Value(board.BoardEntity.Timestamp))
+	expr, err := GenerateUpdateExpression(update)
+	if err != nil {
+		return err
+	}
+	
+	builder.AddUpdateItem(key, expr)
+
+	err = repo.WriteTransaction(builder)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *Database) DeleteBoard(txId string, board *boardaggregate.BoardAggregate) error {
+	builder := NewTransactionBuilder(repo.table, txId)
+	
+	deleteBoardData := CreateBoardKey(board.BoardEntity.Id)
+	builder.AddDeleteItem(deleteBoardData)
+
+	err := repo.WriteTransaction(builder)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateBoardKey(boardId string) map[string]types.AttributeValue {
+	pk := GenerateBoardDataPk(boardId)
+	return map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: pk},
+		"Sk": &types.AttributeValueMemberS{Value: pk},
+	}
 }

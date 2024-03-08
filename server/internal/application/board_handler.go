@@ -153,22 +153,22 @@ func (app *ApplicationImpl) handleDeleteBoard(event eventbus.Event) {
 		}
 
 		// 보드 변환
-		_, err = app.BoardDomain.ConvertBoardDao(boardDao)
+		board, err := app.BoardDomain.ConvertBoardDao(boardDao)
 		if err != nil {
 			return nil, err
 		}
 
-		// 보드 상태 체크
+		// 보드 삭제
 
-		// // 트랜잭션 // 보드 삭제 // 오더 삭제
-		// err = app.Database.DeleteBoard(txId, board)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		// 보드 상태 체크 created 이면 삭제, 아니면 cancel로 변경
+		if board.CheckBoardDeleteAble() {
+			err = app.Database.DeleteBoard(txId, board)
 
-		// // 스토리지 삭제
-
-		return nil, nil
+			// 스토리지 삭제
+		} else {
+			err = app.Database.UpdateBoardCancel(txId, board)
+		}
+		return nil, err
 	})
 	if err != nil {
 		app.SendResponse(event.ResponseChan, nil, err)

@@ -1,6 +1,8 @@
 package database
 
-import orderaggregate "dalkak/internal/domain/order/object/aggregate"
+import (
+	orderaggregate "dalkak/internal/domain/order/object/aggregate"
+)
 
 const OrderDataType = "Order"
 
@@ -47,3 +49,10 @@ func CreateOrderData(order *orderaggregate.OrderAggregate) *OrderData {
 		PaymentPrice:  order.OrderPrice.PaymentPrice,
 	}
 }
+
+// func CreateOrderKey(orderId string) map[string]types.AttributeValue {
+// 	return map[string]types.AttributeValue{
+// 		"Pk": &types.AttributeValueMemberS{Value: GenerateOrderDataPk(orderId)},
+// 		"Sk": &types.AttributeValueMemberS{Value: GenerateOrderDataPk(orderId)},
+// 	}
+// }
