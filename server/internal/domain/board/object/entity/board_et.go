@@ -53,6 +53,11 @@ func (be BoardEntity) GetStatus() string {
 	return string(be.Status)
 }
 
+func (be *BoardEntity) SetStatus(status BoardStatus) {
+	be.Status = status
+	be.Timestamp = timeutil.GetTimestamp()
+}
+
 func NewBoardStatus(statusStr string) (BoardStatus, error) {
 	switch statusStr {
 	case string(BoardCreated):

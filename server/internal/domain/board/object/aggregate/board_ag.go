@@ -29,3 +29,7 @@ func NewBoardAggregate(board *boardentity.BoardEntity, category *boardvalueobjec
 func (ag *BoardAggregate) CheckBoardDeleteAble() bool {
 	return ag.BoardEntity.GetStatus() == string(boardentity.BoardCreated)
 }
+
+func (ag *BoardAggregate) UpdateBoardCancel() {
+	ag.BoardEntity.SetStatus(boardentity.BoardCancelled)
+}
