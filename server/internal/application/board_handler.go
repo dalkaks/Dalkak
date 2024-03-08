@@ -158,14 +158,28 @@ func (app *ApplicationImpl) handleDeleteBoard(event eventbus.Event) {
 			return nil, err
 		}
 
+		
 		// 보드 상태 체크 created 이면 삭제, 아니면 cancel로 변경
 		if board.CheckBoardDeleteAble() {
-			err = app.Database.DeleteBoard(txId, board)
+			// 오더 변환
+			order, err := app.OrderDomain.ConvertBoardDaoToOrder(boardDao)
+			if err != nil {
+				return nil, err
+			}
+
+			err = app.Database.DeleteBoard(txId, board, order)
+			if err != nil {
+				return nil, err
+			}
 
 			// 스토리지 삭제
 		} else {
 			board.UpdateBoardCancel()
+
 			err = app.Database.UpdateBoardCancel(txId, board)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return nil, err
 	})

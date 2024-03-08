@@ -2,6 +2,8 @@ package database
 
 import (
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 const OrderDataType = "Order"
@@ -49,9 +51,9 @@ func CreateOrderData(order *orderaggregate.OrderAggregate) *OrderData {
 	}
 }
 
-// func CreateOrderKey(orderId string) map[string]types.AttributeValue {
-// 	return map[string]types.AttributeValue{
-// 		"Pk": &types.AttributeValueMemberS{Value: GenerateOrderDataPk(orderId)},
-// 		"Sk": &types.AttributeValueMemberS{Value: GenerateOrderDataPk(orderId)},
-// 	}
-// }
+func CreateOrderKey(orderId string) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: GenerateOrderDataPk(orderId)},
+		"Sk": &types.AttributeValueMemberS{Value: GenerateOrderDataPk(orderId)},
+	}
+}

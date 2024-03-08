@@ -224,11 +224,14 @@ func (repo *Database) UpdateBoardCancel(txId string, board *boardaggregate.Board
 	return nil
 }
 
-func (repo *Database) DeleteBoard(txId string, board *boardaggregate.BoardAggregate) error {
+func (repo *Database) DeleteBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate) error {
 	builder := NewTransactionBuilder(repo.table, txId)
 	
-	deleteBoardData := CreateBoardKey(board.BoardEntity.Id)
-	builder.AddDeleteItem(deleteBoardData)
+	deleteBoardKey := CreateBoardKey(board.BoardEntity.Id)
+	builder.AddDeleteItem(deleteBoardKey)
+
+	deleteOrderKey := CreateOrderKey(order.OrderEntity.Id)
+	builder.AddDeleteItem(deleteOrderKey)
 
 	err := repo.WriteTransaction(builder)
 	if err != nil {

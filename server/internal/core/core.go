@@ -39,7 +39,7 @@ type DatabaseManager interface {
 	FindBoardByUserId(dao *dao.BoardFindFilter, pageDao *dao.RequestPageDao) ([]*dao.BoardDao, *dao.ResponsePageDao, error)
 	FindBoardById(boardId string) (*dao.BoardDao, error)
 	UpdateBoardCancel(txId string, board *boardaggregate.BoardAggregate) error
-	DeleteBoard(txId string, board *boardaggregate.BoardAggregate) error
+	DeleteBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate) error
 }
 
 type StorageManager interface {
