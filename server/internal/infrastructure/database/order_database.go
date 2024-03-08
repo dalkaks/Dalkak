@@ -40,9 +40,8 @@ func CreateOrderData(order *orderaggregate.OrderAggregate) *OrderData {
 		Name:   order.OrderEntity.Name,
 		Status: order.OrderEntity.Status.String(),
 		UserId: order.OrderEntity.UserId,
-
-		Type:   order.OrderCategory.CategoryType.String(),
-		TypeId: order.OrderCategory.CategoryId,
+		Type:   order.OrderEntity.CategoryType.String(),
+		TypeId: order.OrderEntity.CategoryId,
 
 		OriginPrice:   order.OrderPrice.OriginPrice,
 		DiscountPrice: order.OrderPrice.DiscountPrice,

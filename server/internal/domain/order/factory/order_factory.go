@@ -22,19 +22,18 @@ func NewCreateOrderDtoFactory(dto *orderdto.CreateOrderDto) *CreateOrderDtoFacto
 }
 
 func (factory *CreateOrderDtoFactory) CreateOrderAggregate() (*orderaggregate.OrderAggregate, error) {
-	order := orderentity.NewOrderEntity(factory.dto.UserInfo.GetUserId(), factory.dto.Name)
-	category, err := ordervalueobject.NewOrderCategory(factory.dto.CategoryType, factory.dto.CatetoryId)
+	order, err := orderentity.NewOrderEntity(factory.dto.UserInfo.GetUserId(), factory.dto.Name, factory.dto.CategoryType, factory.dto.CategoryId)
 	if err != nil {
 		return nil, err
 	}
-	price, err := ordervalueobject.NewOrderPrice(category)
+
+	price, err := ordervalueobject.NewOrderPrice(order.CategoryType)
 	if err != nil {
 		return nil, err
 	}
 
 	orderAggregate := orderaggregate.NewOrderAggregate(
 		order,
-		category,
 		price,
 	)
 	return orderAggregate, nil

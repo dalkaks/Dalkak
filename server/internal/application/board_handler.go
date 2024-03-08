@@ -4,7 +4,7 @@ import (
 	boardaggregate "dalkak/internal/domain/board/object/aggregate"
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
-	ordervalueobject "dalkak/internal/domain/order/object/valueobject"
+	orderentity "dalkak/internal/domain/order/object/entity"
 	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
 	boarddto "dalkak/pkg/dto/board"
@@ -53,7 +53,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		}
 
 		// 오더 생성
-		orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(ordervalueobject.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil)
+		orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(orderentity.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil)
 		newOrder, err := app.OrderDomain.CreateOrder(orderCreateDto)
 		if err != nil {
 			return nil, err
