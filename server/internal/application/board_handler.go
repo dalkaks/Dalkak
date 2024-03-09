@@ -66,16 +66,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		}
 
 		// 스토리지 이동
-		if tempImage != nil {
-			go func() {
-				app.Storage.CopyObject(tempImage.MediaUrl.AccessUrl, mediaNft.MediaImageUrl.AccessUrl)
-			}()
-		}
-		if tempVideo != nil {
-			go func() {
-				app.Storage.CopyObject(tempVideo.MediaUrl.AccessUrl, mediaNft.MediaVideoUrl.AccessUrl)
-			}()
-		}
+		app.MediaDomain.MoveMediaTempToFormal(mediaNft, tempImage, tempVideo)
 
 		return &TransactionResult{newBoard, mediaNft, newOrder}, nil
 	})
@@ -167,12 +158,19 @@ func (app *ApplicationImpl) handleDeleteBoard(event eventbus.Event) {
 				return nil, err
 			}
 
+			// 미디어 변환
+			media, err := app.MediaDomain.ConvertBoardDaoToMediaNft(boardDao)
+			if err != nil {
+				return nil, err
+			}
+
 			err = app.Database.DeleteBoard(txId, board, order)
 			if err != nil {
 				return nil, err
 			}
 
 			// 스토리지 삭제
+			app.MediaDomain.DeleteMediaNft(media)
 		} else {
 			board.UpdateBoardCancel()
 

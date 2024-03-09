@@ -15,6 +15,7 @@ const boardPrefix = "board"
 type MediaNftAggregateFactory interface {
 	CreateMediaNftAggregateFromDto(dto *mediadto.CreateMediaNftDto, mediaImage *mediaaggregate.MediaTempAggregate, mediaVideo *mediaaggregate.MediaTempAggregate) (*mediaaggregate.MediaNftAggregate, error)
 	CreateMediaNftAggregateFromBoardDaos(daos []*dao.BoardDao) ([]*mediaaggregate.MediaNftAggregate, error)
+	CreateMediaNftAggregateFromBoardDao(dao *dao.BoardDao) (*mediaaggregate.MediaNftAggregate, error)
 }
 
 type CreateMediaNftFactory struct {
@@ -61,33 +62,41 @@ func (factory *CreateMediaNftFactory) CreateMediaNftAggregate(dto *mediadto.Crea
 }
 
 func (factory *CreateMediaNftFactory) CreateMediaNftAggregateFromBoardDaos(daos []*dao.BoardDao) ([]*mediaaggregate.MediaNftAggregate, error) {
-	var mediaNfts []*mediaaggregate.MediaNftAggregate
+	var mediaNftAggregates []*mediaaggregate.MediaNftAggregate
 	for _, dao := range daos {
-		media := mediaentity.ConvertMediaEntity(dao.Id, true, dao.Timestamp)
-
-		var options []mediaaggregate.MediaNftAggregateOption
-		if dao.NftImageExt != nil && *dao.NftImageExt != "" {
-			imageOptions, err := createMediaNftAggregateOptionFromExt(factory.staticLink, "image", *dao.NftImageExt, boardPrefix, dao.Id)
-			if err != nil {
-				return nil, err
-			}
-			options = append(options, imageOptions...)
-		}
-		if dao.NftVideoExt != nil && *dao.NftVideoExt != "" {
-			videoOptions, err := createMediaNftAggregateOptionFromExt(factory.staticLink, "video", *dao.NftVideoExt, boardPrefix, dao.Id)
-			if err != nil {
-				return nil, err
-			}
-			options = append(options, videoOptions...)
-		}
-
-		mediaNftAggregate, err := mediaaggregate.NewMediaNftAggregate(media, options...)
+		mediaNftAggregate, err := factory.CreateMediaNftAggregateFromBoardDao(dao)
 		if err != nil {
 			return nil, err
 		}
-		mediaNfts = append(mediaNfts, mediaNftAggregate)
+		mediaNftAggregates = append(mediaNftAggregates, mediaNftAggregate)
 	}
-	return mediaNfts, nil
+	return mediaNftAggregates, nil
+}
+
+func (factory *CreateMediaNftFactory) CreateMediaNftAggregateFromBoardDao(dao *dao.BoardDao) (*mediaaggregate.MediaNftAggregate, error) {
+	media := mediaentity.ConvertMediaEntity(dao.Id, true, dao.Timestamp)
+
+	var options []mediaaggregate.MediaNftAggregateOption
+	if dao.NftImageExt != nil && *dao.NftImageExt != "" {
+		imageOptions, err := createMediaNftAggregateOptionFromExt(factory.staticLink, "image", *dao.NftImageExt, boardPrefix, dao.Id)
+		if err != nil {
+			return nil, err
+		}
+		options = append(options, imageOptions...)
+	}
+	if dao.NftVideoExt != nil && *dao.NftVideoExt != "" {
+		videoOptions, err := createMediaNftAggregateOptionFromExt(factory.staticLink, "video", *dao.NftVideoExt, boardPrefix, dao.Id)
+		if err != nil {
+			return nil, err
+		}
+		options = append(options, videoOptions...)
+	}
+
+	mediaNftAggregate, err := mediaaggregate.NewMediaNftAggregate(media, options...)
+	if err != nil {
+		return nil, err
+	}
+	return mediaNftAggregate, nil
 }
 
 func createMediaNftAggregateOptionFromExt(staticLink, mediaTypeStr, ext, prefix, id string) ([]mediaaggregate.MediaNftAggregateOption, error) {
