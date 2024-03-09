@@ -5,6 +5,7 @@ import { ResponseSuccess } from '../../common/type/response';
 import serviceModule from '../../serviceModule';
 import { NftFileExt } from '@/type/nft/fileExtension';
 import { cookies } from 'next/headers';
+import { UploadUrl } from '../type/media';
 
 export interface RequestPresign {
   mediaType: 'image';
@@ -15,7 +16,7 @@ export interface RequestPresign {
 interface ResponsePresign {
   id: string;
   accessUrl: `https://${string}.${RequestPresign['ext']}`; // https + 파일경로 + 확장자
-  uploadUrl: string;
+  uploadUrl: UploadUrl;
 }
 
 const ERROR_CASE: { [key in number]: any } = {
@@ -46,6 +47,7 @@ const presign = async (param: RequestPresign) => {
     }
   );
   if (errorGuard(res)) throw errorHandler(res, ERROR_CASE);
+  console.log('PRESIGN:', res.data);
   return res;
 };
 
