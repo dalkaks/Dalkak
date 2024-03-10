@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	storagedto "dalkak/internal/infrastructure/storage/type"
-	parseutil "dalkak/pkg/utils/parse"
 	responseutil "dalkak/pkg/utils/response"
 	"errors"
 	"log"
@@ -64,17 +63,12 @@ func (storage *Storage) CreatePresignedURL(mediaKey string, contentType string) 
 	return presignedURL.URL, nil
 }
 
-func (storage *Storage) CopyObject(srcUrl, descUrl string) error {
-	srcKey := parseutil.ConvertStaticLinkToKey(storage.staticLink, srcUrl)
-	descKey := parseutil.ConvertStaticLinkToKey(storage.staticLink, descUrl)
-	log.Println(srcKey, descKey)
-
+func (storage *Storage) CopyObject(srcKey, descKey string) error {
 	_, err := storage.client.CopyObject(context.Background(), &s3.CopyObjectInput{
 		Bucket:     aws.String(storage.bucket),
 		CopySource: aws.String(storage.bucket + "/" + srcKey),
 		Key:        aws.String(descKey),
 	})
-	// todo log
 	if err != nil {
 		log.Println(err)
 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgStorageInternal, err)
@@ -105,6 +99,7 @@ func (storage *Storage) DeleteObject(key string) error {
 		Key:    aws.String(key),
 	})
 	if err != nil {
+		log.Println(err)
 		return responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgStorageInternal, err)
 	}
 	return nil

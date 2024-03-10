@@ -54,3 +54,11 @@ func NewMediaNftAggregate(media *mediaentity.MediaEntity, options ...MediaNftAgg
 	}
 	return aggregate, nil
 }
+
+func (ag *MediaNftAggregate) IsImage() bool {
+	return ag.MediaImageResource != nil
+}
+
+func (ag *MediaNftAggregate) IsVideo() bool {
+	return ag.MediaVideoResource != nil
+}
