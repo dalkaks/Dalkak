@@ -18,7 +18,6 @@ const PUBLIC_PATHS = ['/images', '/icons'];
 export function middleware(request: NextRequest) {
   // Check if there is any supported locale in the pathname
   const { pathname } = request.nextUrl;
-  console.log(pathname);
 
   if (PUBLIC_PATHS.some((path) => pathname.startsWith(path)))
     return NextResponse.next();

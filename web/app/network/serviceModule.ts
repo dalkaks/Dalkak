@@ -46,12 +46,12 @@ const putService = async <S>(path: string, param?: any, header?: object) => {
 
   const res = await fetch(path, {
     method: 'PUT',
+    credentials: 'include',
     body: param,
     headers: {
-      'Content-Type': 'application/octet-stream',
+      'Content-Type': 'image/*',
       ...header
-    },
-    credentials: 'include'
+    }
   });
   if (res.ok) {
     return res.json() as Promise<S>;

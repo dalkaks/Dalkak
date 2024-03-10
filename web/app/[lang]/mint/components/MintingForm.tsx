@@ -16,8 +16,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import presign, { RequestPresign } from '@/app/network/media/post/presign';
 import { NftFileExt } from '@/type/nft/fileExtension';
+import uploadMedia, {
+  RequestUploadMedia
+} from '@/app/network/media/uploadMedia';
+import deleteMedia from '@/app/network/media/delete/deleteMedia';
 
 const MAX_FILE_SIZE = 5000000;
 const ACCEPTED_IMAGE_TYPES = [
@@ -53,21 +56,33 @@ const MintingForm = ({ setFile }: Props) => {
     }
   });
   function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log(data);
     alert('Form submitted');
   }
   async function onImageUpload(e: React.FormEvent<HTMLInputElement>) {
     if (e.currentTarget.files) {
-      form.setValue('file', e.currentTarget.files[0]);
-      setFile(e.currentTarget.files[0]);
+      const file = e.currentTarget.files[0];
+      form.setValue('file', file);
+      setFile(file);
 
-      const reqDto: RequestPresign = {
-        mediaType: 'image',
-        ext: e.currentTarget.files[0].type.split('/')[1] as NftFileExt, //임시로 타입단언
-        prefix: 'board'
+      const reqDto: RequestUploadMedia = {
+        file: file,
+        presign: {
+          mediaType: 'image',
+          ext: file.type.split('/')[1] as NftFileExt, //임시로 타입단언
+          prefix: 'board'
+        }
       };
-      const presignResult = await presign(reqDto);
-      // TODO : presignResult를 이용하여 이미지 업로드
+
+      uploadMedia(reqDto)
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((e) => {
+          deleteMedia().then((res) => {
+            console.log(res);
+          });
+          console.log(e);
+        });
     }
   }
   return (
