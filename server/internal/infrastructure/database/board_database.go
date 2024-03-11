@@ -6,8 +6,10 @@ import (
 	mediavalueobject "dalkak/internal/domain/media/object/valueobject"
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
 	"dalkak/internal/infrastructure/database/dao"
+	responseutil "dalkak/pkg/utils/response"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 const BoardDataType = "Board"
@@ -63,7 +65,7 @@ func (repo *Database) CreateBoard(txId string, board *boardaggregate.BoardAggreg
 		Timestamp:  board.BoardEntity.Timestamp,
 
 		Id:     board.BoardEntity.Id,
-		Status: board.BoardEntity.Status.String(),
+		Status: board.BoardEntity.GetStatus(),
 		UserId: board.BoardEntity.UserId,
 
 		Type:    board.BoardCategory.GetCategoryType(),
@@ -158,4 +160,90 @@ func (repo *Database) FindBoardByUserId(filter *dao.BoardFindFilter, pageDao *da
 		})
 	}
 	return boardDaos, page, nil
+}
+
+func (repo *Database) FindBoardById(boardId string) (*dao.BoardDao, error) {
+	pk := GenerateBoardDataPk(boardId)
+	var boardToFind *BoardData
+
+	keyCond := expression.Key("Pk").Equal(expression.Value(pk)).
+		And(expression.Key("Sk").Equal(expression.Value(pk)))
+	expr, err := GenerateQueryExpression(keyCond, nil)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+
+	err = repo.QuerySingleItem(expr, &boardToFind)
+	if err != nil {
+		return nil, responseutil.NewAppError(responseutil.ErrCodeInternal, responseutil.ErrMsgDBInternal, err)
+	}
+	if boardToFind == nil {
+		return nil, nil
+	}
+
+	boardDao := &dao.BoardDao{
+		Id:        boardToFind.Id,
+		Status:    boardToFind.Status,
+		UserId:    boardToFind.UserId,
+		Timestamp: boardToFind.Timestamp,
+
+		Type:    boardToFind.Type,
+		TypeId:  boardToFind.TypeId,
+		Network: boardToFind.Network,
+
+		NftMetaName:   boardToFind.NftMetaName,
+		NftMetaDesc:   boardToFind.NftMetaDesc,
+		NftMetaExtUrl: boardToFind.NftMetaExtUrl,
+		NftMetaBgCol:  boardToFind.NftMetaBgCol,
+		NftMetaAttrib: boardToFind.NftMetaAttrib,
+
+		NftImageExt: boardToFind.NftImageExt,
+		NftVideoExt: boardToFind.NftVideoExt,
+	}
+	return boardDao, nil
+}
+
+func (repo *Database) UpdateBoardCancel(txId string, board *boardaggregate.BoardAggregate) error {
+	builder := NewTransactionBuilder(repo.table, txId)
+
+	key := CreateBoardKey(board.BoardEntity.Id)
+
+	update := expression.Set(expression.Name("Status"), expression.Value(board.BoardEntity.Status)).
+		Set(expression.Name("Timestamp"), expression.Value(board.BoardEntity.Timestamp))
+	expr, err := GenerateUpdateExpression(update)
+	if err != nil {
+		return err
+	}
+	
+	builder.AddUpdateItem(key, expr)
+
+	err = repo.WriteTransaction(builder)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *Database) DeleteBoard(txId string, board *boardaggregate.BoardAggregate, order *orderaggregate.OrderAggregate) error {
+	builder := NewTransactionBuilder(repo.table, txId)
+	
+	deleteBoardKey := CreateBoardKey(board.BoardEntity.Id)
+	builder.AddDeleteItem(deleteBoardKey)
+
+	deleteOrderKey := CreateOrderKey(order.OrderEntity.Id)
+	builder.AddDeleteItem(deleteOrderKey)
+
+	err := repo.WriteTransaction(builder)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateBoardKey(boardId string) map[string]types.AttributeValue {
+	pk := GenerateBoardDataPk(boardId)
+	return map[string]types.AttributeValue{
+		"Pk": &types.AttributeValueMemberS{Value: pk},
+		"Sk": &types.AttributeValueMemberS{Value: pk},
+	}
 }

@@ -17,6 +17,9 @@ type MediaDomainService interface {
 	ConfirmMediaTemp(dto *mediadto.ConfirmMediaTempDto) (*mediaaggregate.MediaTempUpdate, error)
 	CreateMediaNft(dto *mediadto.CreateMediaNftDto) (*mediaaggregate.MediaNftAggregate, *mediaaggregate.MediaTempAggregate, *mediaaggregate.MediaTempAggregate, error)
 	ConvertBoardDaosToMediaNft(daos []*dao.BoardDao) ([]*mediaaggregate.MediaNftAggregate, error)
+	ConvertBoardDaoToMediaNft(dao *dao.BoardDao) (*mediaaggregate.MediaNftAggregate, error)
+	MoveMediaTempToFormal(mediaNft *mediaaggregate.MediaNftAggregate, tempImage *mediaaggregate.MediaTempAggregate, tempVideo *mediaaggregate.MediaTempAggregate)
+	DeleteMediaNft(mediaNft *mediaaggregate.MediaNftAggregate)
 }
 
 type MediaDomainServiceImpl struct {
@@ -144,4 +147,46 @@ func (service *MediaDomainServiceImpl) ConvertBoardDaosToMediaNft(daos []*dao.Bo
 	}
 
 	return boards, nil
+}
+
+func (service *MediaDomainServiceImpl) ConvertBoardDaoToMediaNft(dao *dao.BoardDao) (*mediaaggregate.MediaNftAggregate, error) {
+	factory := mediafactory.NewCreateMediaNftFactory(service.StaticLink)
+	board, err := factory.CreateMediaNftAggregateFromBoardDao(dao)
+	if err != nil {
+		return nil, err
+	}
+
+	return board, nil
+}
+
+func (service *MediaDomainServiceImpl) MoveMediaTempToFormal(mediaNft *mediaaggregate.MediaNftAggregate, tempImage *mediaaggregate.MediaTempAggregate, tempVideo *mediaaggregate.MediaTempAggregate) {
+	if tempImage != nil {
+		go func() {
+			service.Storage.CopyObject(
+				tempImage.MediaUrl.GetUrlKey(service.StaticLink),
+				mediaNft.MediaImageUrl.GetUrlKey(service.StaticLink),
+			)
+		}()
+	}
+	if tempVideo != nil {
+		go func() {
+			service.Storage.CopyObject(
+				tempVideo.MediaUrl.GetUrlKey(service.StaticLink),
+				mediaNft.MediaVideoUrl.GetUrlKey(service.StaticLink),
+			)
+		}()
+	}
+}
+
+func (service *MediaDomainServiceImpl) DeleteMediaNft(mediaNft *mediaaggregate.MediaNftAggregate) {
+	if mediaNft.IsImage() {
+		go func() {
+			service.Storage.DeleteObject(mediaNft.MediaImageUrl.GetUrlKey(service.StaticLink))
+		}()
+	}
+	if mediaNft.IsVideo() {
+		go func() {
+			service.Storage.DeleteObject(mediaNft.MediaVideoUrl.GetUrlKey(service.StaticLink))
+		}()
+	}
 }

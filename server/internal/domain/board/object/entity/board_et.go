@@ -23,6 +23,7 @@ const (
 	ContractUploadFailed BoardStatus = "contractUploadFailed"
 	NFTUploaded          BoardStatus = "nftUpload"
 	NFTUploadFailed      BoardStatus = "nftUploadFailed"
+	BoardCancelled       BoardStatus = "cancelled"
 	BoardPosted          BoardStatus = "posted"
 )
 
@@ -48,8 +49,13 @@ func ConvertBoardEntity(id, userId string, timestamp int64, statusStr string) (*
 	}, nil
 }
 
-func (bs BoardStatus) String() string {
-	return string(bs)
+func (be BoardEntity) GetStatus() string {
+	return string(be.Status)
+}
+
+func (be *BoardEntity) SetStatus(status BoardStatus) {
+	be.Status = status
+	be.Timestamp = timeutil.GetTimestamp()
 }
 
 func NewBoardStatus(statusStr string) (BoardStatus, error) {
@@ -68,6 +74,8 @@ func NewBoardStatus(statusStr string) (BoardStatus, error) {
 		return NFTUploaded, nil
 	case string(NFTUploadFailed):
 		return NFTUploadFailed, nil
+	case string(BoardCancelled):
+		return BoardCancelled, nil
 	case string(BoardPosted):
 		return BoardPosted, nil
 	default:

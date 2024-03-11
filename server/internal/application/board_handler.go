@@ -4,7 +4,7 @@ import (
 	boardaggregate "dalkak/internal/domain/board/object/aggregate"
 	mediaaggregate "dalkak/internal/domain/media/object/aggregate"
 	orderaggregate "dalkak/internal/domain/order/object/aggregate"
-	ordervalueobject "dalkak/internal/domain/order/object/valueobject"
+	orderentity "dalkak/internal/domain/order/object/entity"
 	"dalkak/internal/infrastructure/database/dao"
 	"dalkak/internal/infrastructure/eventbus"
 	boarddto "dalkak/pkg/dto/board"
@@ -16,6 +16,7 @@ import (
 func (app *ApplicationImpl) RegisterBoardEventListeners() {
 	app.EventManager.Subscribe("post.board", app.handleCreateBoard)
 	app.EventManager.Subscribe("get.board.list.processing", app.handleGetBoardListProcessing)
+	app.EventManager.Subscribe("delete.board", app.handleDeleteBoard)
 }
 
 func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
@@ -52,7 +53,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		}
 
 		// 오더 생성
-		orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(ordervalueobject.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil)
+		orderCreateDto := orderdto.NewCreateOrderDto(userInfo, string(orderentity.OrderCategoryTypeNft), newBoard.BoardEntity.Id, newBoard.BoardMetadata.Name, nil)
 		newOrder, err := app.OrderDomain.CreateOrder(orderCreateDto)
 		if err != nil {
 			return nil, err
@@ -65,16 +66,7 @@ func (app *ApplicationImpl) handleCreateBoard(event eventbus.Event) {
 		}
 
 		// 스토리지 이동
-		if tempImage != nil {
-			go func() {
-				app.Storage.CopyObject(tempImage.MediaUrl.AccessUrl, mediaNft.MediaImageUrl.AccessUrl)
-			}()
-		}
-		if tempVideo != nil {
-			go func() {
-				app.Storage.CopyObject(tempVideo.MediaUrl.AccessUrl, mediaNft.MediaVideoUrl.AccessUrl)
-			}()
-		}
+		app.MediaDomain.MoveMediaTempToFormal(mediaNft, tempImage, tempVideo)
 
 		return &TransactionResult{newBoard, mediaNft, newOrder}, nil
 	})
@@ -130,4 +122,70 @@ func (app *ApplicationImpl) handleGetBoardListProcessing(event eventbus.Event) {
 	// 리턴
 	result := boarddto.NewGetBoardListProcessingResponse(boards, medias, page)
 	app.SendResponse(event.ResponseChan, responseutil.NewAppData(result, responseutil.DataCodeSuccess), nil)
+}
+
+func (app *ApplicationImpl) handleDeleteBoard(event eventbus.Event) {
+	userInfo := event.UserInfo
+	if userInfo == nil {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeUnauthorized, responseutil.ErrMsgRequestUnauth))
+		return
+	}
+	payload, ok := event.Payload.(*boarddto.DeleteBoardRequest)
+	if !ok {
+		app.SendResponse(event.ResponseChan, nil, responseutil.NewAppError(responseutil.ErrCodeBadRequest, responseutil.ErrMsgRequestInvalid))
+		return
+	}
+
+	_, err := ExecuteOptimisticTransactionWithRetry(app, func(txId string) (interface{}, error) {
+		// 보드 조회
+		boardDao, err := app.BoardDomain.GetBoardById(userInfo, payload.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		// 보드 변환
+		board, err := app.BoardDomain.ConvertBoardDao(boardDao)
+		if err != nil {
+			return nil, err
+		}
+
+		
+		// 보드 상태 체크 created 이면 삭제, 아니면 cancel로 변경
+		if board.CheckBoardDeleteAble() {
+			// 오더 변환
+			order, err := app.OrderDomain.ConvertBoardDaoToOrder(boardDao)
+			if err != nil {
+				return nil, err
+			}
+
+			// 미디어 변환
+			media, err := app.MediaDomain.ConvertBoardDaoToMediaNft(boardDao)
+			if err != nil {
+				return nil, err
+			}
+
+			err = app.Database.DeleteBoard(txId, board, order)
+			if err != nil {
+				return nil, err
+			}
+
+			// 스토리지 삭제
+			app.MediaDomain.DeleteMediaNft(media)
+		} else {
+			board.UpdateBoardCancel()
+
+			err = app.Database.UpdateBoardCancel(txId, board)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return nil, err
+	})
+	if err != nil {
+		app.SendResponse(event.ResponseChan, nil, err)
+		return
+	}
+
+	// 리턴
+	app.SendResponse(event.ResponseChan, responseutil.NewAppData(nil, responseutil.DataCodeSuccess), nil)
 }

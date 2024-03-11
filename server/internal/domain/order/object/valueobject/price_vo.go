@@ -1,6 +1,9 @@
 package ordervalueobject
 
-import responseutil "dalkak/pkg/utils/response"
+import (
+	orderentity "dalkak/internal/domain/order/object/entity"
+	responseutil "dalkak/pkg/utils/response"
+)
 
 type OrderPrice struct {
 	OriginPrice   int64
@@ -8,9 +11,9 @@ type OrderPrice struct {
 	PaymentPrice  int64
 }
 
-func NewOrderPrice(categoryType *OrderCategory) (*OrderPrice, error) {
+func NewOrderPrice(categoryType orderentity.OrderCategoryType) (*OrderPrice, error) {
 	// todo : get price from categoryType
-	if categoryType.CategoryType == OrderCategoryTypeNft {
+	if categoryType == orderentity.OrderCategoryTypeNft {
 		return &OrderPrice{
 			OriginPrice:   2000,
 			DiscountPrice: 0,

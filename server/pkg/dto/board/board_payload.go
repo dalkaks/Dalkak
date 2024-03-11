@@ -78,7 +78,7 @@ func NewGetBoardListProcessingResponse(items []*boardaggregate.BoardAggregate, m
 		processingItems = append(processingItems, &BoardProcessing{
 			BoardId:         board.BoardEntity.Id,
 			Timestamp:       board.BoardEntity.Timestamp,
-			Status:          board.BoardEntity.Status.String(),
+			Status:          board.BoardEntity.GetStatus(),
 			CategoryType:    board.BoardCategory.GetCategoryType(),
 			CategoryId:      board.BoardCategory.GetCategoryId(),
 			Network:         board.BoardCategory.GetNetwork(),
@@ -102,4 +102,8 @@ func NewGetBoardListProcessingResponse(items []*boardaggregate.BoardAggregate, m
 		Count:            page.Count,
 		LastEvaluatedKey: page.ExclusiveStartKey,
 	}
+}
+
+type DeleteBoardRequest struct {
+	Id string `param:"id" validate:"required"`
 }

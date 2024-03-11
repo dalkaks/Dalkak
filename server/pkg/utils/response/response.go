@@ -1,10 +1,11 @@
 package responseutil
 
 import (
-	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -78,10 +79,13 @@ func NewAppData(data interface{}, code ...int) *AppData {
 func NewAppError(code int, message string, cause ...error) *AppError {
 	var errCauese error
 	if len(cause) > 0 && cause[0] != nil {
-		errCauese = cause[0]
+		errCauese = errors.WithStack(cause[0])
 	} else {
 		errCauese = errors.New(message)
+		errCauese = errors.WithStack(errCauese)
 	}
+
+	log.Printf("ERROR: %+v\n", errCauese)
 
 	return &AppError{
 		Code:    code,
